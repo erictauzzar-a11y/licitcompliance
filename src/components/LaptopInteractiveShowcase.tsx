@@ -71,7 +71,7 @@ export function LaptopInteractiveShowcase() {
     if (!isPlaying) return;
     const interval = setInterval(() => {
       setActiveTab((prev) => (prev + 1) % SLIDES.length);
-    }, 5000);
+    }, 2000);
     return () => clearInterval(interval);
   }, [isPlaying]);
 
@@ -229,14 +229,14 @@ export function LaptopInteractiveShowcase() {
               </div>
 
               {/* ÁREA DA TELA DO SISTEMA EM TRANSIÇÃO */}
-              <div className="relative aspect-[16/9] w-full bg-slate-900 overflow-hidden group">
+              <div className="relative aspect-[1024/517] w-full bg-slate-900 overflow-hidden group">
                 {SLIDES.map((slide, idx) => (
                   <div
                     key={slide.id}
-                    className={`absolute inset-0 transition-all duration-700 ease-in-out ${
+                    className={`absolute inset-0 transition-all duration-500 ease-in-out ${
                       activeTab === idx
                         ? "opacity-100 scale-100 z-10 pointer-events-auto"
-                        : "opacity-0 scale-95 z-0 pointer-events-none"
+                        : "opacity-0 scale-[0.98] z-0 pointer-events-none"
                     }`}
                   >
                     <Image
@@ -244,27 +244,16 @@ export function LaptopInteractiveShowcase() {
                       alt={slide.title}
                       fill
                       priority={idx === 0}
-                      quality={95}
-                      className="object-cover object-top"
+                      quality={100}
+                      className="object-fill object-left-top"
                     />
 
-                    {/* Overlay sutil inferior para garantir leitura do card flutuante */}
-                    <div className="absolute inset-0 bg-gradient-to-t from-slate-950/70 via-transparent to-transparent pointer-events-none" />
-
-                    {/* Card Flutuante de Destaque no Canto da Tela */}
-                    <div className="absolute bottom-4 sm:bottom-6 left-4 sm:left-6 z-20 max-w-sm sm:max-w-md p-3.5 sm:p-4 rounded-xl bg-slate-950/85 border border-slate-700/80 backdrop-blur-md shadow-2xl text-left space-y-1.5 animate-in fade-in slide-in-from-bottom-2 duration-500">
-                      <div className="flex items-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
-                        <span className="text-[11px] font-bold text-blue-300 uppercase tracking-wider">
-                          {slide.pilar}
-                        </span>
-                      </div>
-                      <h4 className="text-xs sm:text-sm font-bold text-white leading-tight">
-                        {slide.title}
-                      </h4>
-                      <p className="text-[11px] text-slate-300 leading-snug hidden sm:block">
-                        {slide.description}
-                      </p>
+                    {/* Tag compacta flutuante no canto superior direito para NÃO cobrir o menu lateral à esquerda */}
+                    <div className="hidden sm:flex items-center gap-2 absolute top-3 right-4 z-20 px-3 py-1.5 rounded-lg bg-slate-950/85 border border-slate-700/80 backdrop-blur-md shadow-xl text-left">
+                      <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                      <span className="text-[11px] font-bold text-blue-300 uppercase tracking-wider">
+                        {slide.pilar}
+                      </span>
                     </div>
                   </div>
                 ))}
