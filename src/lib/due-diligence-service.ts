@@ -222,7 +222,7 @@ export async function generateDueDiligenceReportPDF(
   });
 
   const supplier = record.supplier;
-  const canonicalUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://licitcompliance.vercel.app");
+  const canonicalUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://techcompliance.vercel.app");
   const validationUrl = `${canonicalUrl}/validar/${record.report_hash}`;
 
   let qrCodeDataUrl = "";

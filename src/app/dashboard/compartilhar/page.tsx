@@ -34,7 +34,7 @@ export default function CompartilharProgramaPage() {
   const [generatingPoster, setGeneratingPoster] = useState(false);
   const [showPolicyModal, setShowPolicyModal] = useState(false);
 
-  const origin = typeof window !== "undefined" ? window.location.origin : "https://licitcompliance.vercel.app";
+  const origin = typeof window !== "undefined" ? window.location.origin : "https://techcompliance.vercel.app";
 
   const publicResources = [
     {

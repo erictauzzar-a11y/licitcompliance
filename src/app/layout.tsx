@@ -31,11 +31,11 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: "TechCompliance Tecnologia" }],
   creator: "TechCompliance",
-  metadataBase: new URL("https://licitcompliance.vercel.app"),
+  metadataBase: new URL("https://techcompliance.vercel.app"),
   openGraph: {
     type: "website",
     locale: "pt_BR",
-    url: "https://licitcompliance.vercel.app",
+    url: "https://techcompliance.vercel.app",
     title: "TechCompliance | Gestão de Integridade para Licitações Públicas",
     description:
       "Plataforma completa para estruturação, capacitação e emissão de dossiês de integridade exigidos pela Nova Lei de Licitações (Lei 14.133/2021).",
