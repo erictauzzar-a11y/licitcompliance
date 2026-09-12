@@ -57,7 +57,7 @@ const FAQS = [
   {
     question: "Quais formas de pagamento são aceitas?",
     answer:
-      "Aceitamos cartão de crédito e PIX com ativação instantânea da conta.",
+      "Como se trata de uma assinatura mensal recorrente (SaaS), aceitamos exclusivamente Cartão de Crédito (Visa, Mastercard, Elo, Hipercard e American Express) com renovação automática e ativação instantânea da conta.",
   },
 ];
 
