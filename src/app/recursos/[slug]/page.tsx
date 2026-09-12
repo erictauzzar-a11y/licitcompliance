@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CheckoutButton } from "@/components/CheckoutButton";
 import { RESOURCES_ITEMS } from "@/config/navigation";
 
 interface ResourceDetail {
@@ -372,13 +373,10 @@ export default async function RecursoPage({ params }: { params: Promise<{ slug: 
             Sem custos ocultos. Plano único de <strong className="text-white">R$ 189,90/mês</strong> com suporte e atualizações inclusas.
           </p>
           <div className="pt-2">
-            <Link
-              href="/cadastro"
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 transition-all text-sm inline-flex items-center gap-2"
-            >
-              <span>Cadastrar Empresa por R$ 189,90</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <CheckoutButton
+              label="Cadastrar Empresa por R$ 189,90"
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
+            />
           </div>
         </div>
       </section>

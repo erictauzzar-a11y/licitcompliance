@@ -72,13 +72,11 @@ export default function HomePage() {
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
-                  <Link
-                    href="/cadastro"
-                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/40 transition-all text-sm flex items-center justify-center gap-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 active:scale-[0.98]"
-                  >
-                    <span>Começar agora</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
+                  <CheckoutButton
+                    label="Começar agora"
+                    showIcon={false}
+                    className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/40 text-sm"
+                  />
 
                   <Link
                     href="#como-funciona"

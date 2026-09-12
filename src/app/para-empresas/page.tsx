@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CheckoutButton } from "@/components/CheckoutButton";
 
 export const metadata: Metadata = {
   title: "Para Empresas Licitantes e Fornecedores do Poder Público | TechCompliance",
@@ -116,13 +117,11 @@ export default function ParaEmpresasPage() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-            <Link
-              href="/cadastro"
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/30 transition-all text-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>Começar teste por R$ 189,90/mês</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <CheckoutButton
+              label="Começar teste por R$ 189,90/mês"
+              showIcon={false}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/30 text-sm"
+            />
             <Link
               href="/como-funciona"
               className="bg-white/10 hover:bg-white/15 text-white font-semibold px-6 py-3.5 rounded-xl border border-white/15 transition-all text-sm"
@@ -250,13 +249,10 @@ export default function ParaEmpresasPage() {
           Tenha acesso imediato a todas as ferramentas por R$ 189,90/mês, sem taxa de adesão ou fidelidade.
         </p>
         <div className="pt-2">
-          <Link
-            href="/cadastro"
-            className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 transition-all text-sm inline-flex items-center gap-2"
-          >
-            <span>Cadastrar Minha Empresa</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          <CheckoutButton
+            label="Cadastrar Minha Empresa • R$ 189,90"
+            className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
+          />
         </div>
       </section>
 

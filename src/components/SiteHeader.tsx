@@ -28,6 +28,7 @@ import {
   LEGISLATION_ITEMS,
   NavItem,
 } from "@/config/navigation";
+import { CheckoutButton } from "@/components/CheckoutButton";
 
 // Mapeamento dinâmico de ícones
 const ICON_MAP: Record<string, any> = {
@@ -312,23 +313,20 @@ export function SiteHeader() {
           >
             Entrar
           </Link>
-          <Link
-            href="/cadastro"
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 active:scale-[0.98]"
-          >
-            <span>Começar agora</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
+          <CheckoutButton
+            label="Começar agora"
+            showIcon={false}
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 text-xs"
+          />
         </div>
 
         {/* BOTÃO MOBILE (MENU HAMBÚRGUER) */}
         <div className="flex lg:hidden items-center gap-2">
-          <Link
-            href="/cadastro"
+          <CheckoutButton
+            label="Começar"
+            showIcon={false}
             className="bg-blue-600 text-white text-xs font-bold px-3.5 py-2 rounded-lg"
-          >
-            Começar
-          </Link>
+          />
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
@@ -479,13 +477,11 @@ export function SiteHeader() {
             >
               Acessar Conta (Entrar)
             </Link>
-            <Link
-              href="/cadastro"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-3 rounded-xl bg-blue-600 text-center text-sm font-bold text-white block shadow-lg shadow-blue-600/40"
-            >
-              Começar agora por R$ 189,90
-            </Link>
+            <CheckoutButton
+              label="Começar agora por R$ 189,90"
+              showIcon={false}
+              className="w-full py-3 rounded-xl bg-blue-600 text-center text-sm font-bold text-white shadow-lg shadow-blue-600/40"
+            />
           </div>
         </div>
       )}

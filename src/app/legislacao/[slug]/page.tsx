@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CheckoutButton } from "@/components/CheckoutButton";
 import { LEGISLATION_ITEMS } from "@/config/navigation";
 
 interface LegislationDetail {
@@ -379,13 +380,10 @@ export default async function LegislacaoPage({ params }: { params: Promise<{ slu
             Acesso imediato a todas as ferramentas por apenas <strong className="text-white">R$ 189,90/mês</strong>.
           </p>
           <div className="pt-2">
-            <Link
-              href="/cadastro"
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 transition-all text-sm inline-flex items-center gap-2"
-            >
-              <span>Começar agora por R$ 189,90</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <CheckoutButton
+              label="Começar agora por R$ 189,90"
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
+            />
           </div>
         </div>
       </section>

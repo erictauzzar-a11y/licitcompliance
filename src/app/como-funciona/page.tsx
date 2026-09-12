@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CheckoutButton } from "@/components/CheckoutButton";
 
 export const metadata: Metadata = {
   title: "Como Funciona | TechCompliance",
@@ -172,13 +173,11 @@ export default function ComoFuncionaPage() {
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
-            <Link
-              href="/cadastro"
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/30 transition-all text-sm flex items-center gap-2 active:scale-95"
-            >
-              <span>Começar teste da sua empresa</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <CheckoutButton
+              label="Começar teste da sua empresa"
+              showIcon={false}
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/30 text-sm"
+            />
             <Link
               href="/precos"
               className="bg-white/10 hover:bg-white/15 text-white font-semibold px-6 py-3.5 rounded-xl border border-white/15 transition-all text-sm"
@@ -337,13 +336,10 @@ export default function ComoFuncionaPage() {
             Comece hoje mesmo a organizar suas evidências e evite riscos em pregões e contratações públicas.
           </p>
           <div className="pt-2">
-            <Link
-              href="/cadastro"
-              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 transition-all text-sm inline-flex items-center gap-2"
-            >
-              <span>Cadastrar empresa por R$ 189,90/mês</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
+            <CheckoutButton
+              label="Cadastrar empresa por R$ 189,90/mês"
+              className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
+            />
           </div>
         </div>
       </section>
