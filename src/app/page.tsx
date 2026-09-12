@@ -335,47 +335,47 @@ export default function HomePage() {
 
             {/* Lado Direito: Chamada Comercial e Benefícios */}
             <div className="lg:col-span-5 space-y-6 text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20">
-                <Sparkles className="w-3.5 h-3.5 text-blue-400" />
-                <span>GESTÃO EM QUALQUER LUGAR</span>
+              <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20 backdrop-blur-sm">
+                <Smartphone className="w-3.5 h-3.5 text-blue-400" />
+                <span>EXPERIÊNCIA MOBILE COMPLETA</span>
               </div>
 
-              <h2 className="text-3xl sm:text-4xl font-black text-white tracking-tight leading-tight">
-                Conformidade que gera <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-sky-200">oportunidades</span>.
+              <h2 className="text-3xl sm:text-4xl lg:text-4xl font-black text-white tracking-tight leading-tight">
+                Acompanhe e gerencie também pelo celular, com o <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-sky-200">nosso App</span>.
               </h2>
 
               <p className="text-slate-300 text-sm sm:text-base leading-relaxed">
-                Acompanhe o status do seu programa de integridade, resolva pendências, consulte análises de editais e acesse dossiês probatórios diretamente pelo celular ou computador.
+                Tenha o controle total do seu programa de integridade na palma da sua mão. Resolva pendências prioritárias, aprove evidências, acompanhe denúncias e consulte análises de editais a qualquer hora e em qualquer lugar.
               </p>
 
               <div className="space-y-3.5 pt-2">
                 <div className="flex items-start gap-3 text-left">
-                  <div className="p-1 rounded-lg bg-blue-500/10 text-blue-400 mt-0.5 border border-blue-500/20">
-                    <CheckCircle2 className="w-4 h-4 text-blue-400" />
+                  <div className="p-1.5 rounded-lg bg-blue-500/10 text-blue-400 mt-0.5 border border-blue-500/20">
+                    <Smartphone className="w-4 h-4 text-blue-400" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white">Mais controle para sua gestão</h4>
-                    <p className="text-xs text-slate-400">Visão em tempo real de diagnósticos e prazos de regularização.</p>
+                    <h4 className="text-sm font-bold text-white">App Ágil e Intuitivo</h4>
+                    <p className="text-xs text-slate-400">Design responsivo pensado para tomadas de decisão rápidas direto pelo smartphone.</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 text-left">
-                  <div className="p-1 rounded-lg bg-emerald-500/10 text-emerald-400 mt-0.5 border border-emerald-500/20">
+                  <div className="p-1.5 rounded-lg bg-emerald-500/10 text-emerald-400 mt-0.5 border border-emerald-500/20">
                     <CheckCircle2 className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white">Menos riscos, mais oportunidades</h4>
-                    <p className="text-xs text-slate-400">Evite inabilitações e desclassificações em pregões e concorrências.</p>
+                    <h4 className="text-sm font-bold text-white">Notificações e Prazos em Tempo Real</h4>
+                    <p className="text-xs text-slate-400">Alertas automáticos de pendências que podem impactar sua participação em editais.</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3 text-left">
-                  <div className="p-1 rounded-lg bg-indigo-500/10 text-indigo-400 mt-0.5 border border-indigo-500/20">
-                    <CheckCircle2 className="w-4 h-4 text-indigo-400" />
+                  <div className="p-1.5 rounded-lg bg-indigo-500/10 text-indigo-400 mt-0.5 border border-indigo-500/20">
+                    <ShieldCheck className="w-4 h-4 text-indigo-400" />
                   </div>
                   <div>
-                    <h4 className="text-sm font-bold text-white">Dossiê pronto para apresentação</h4>
-                    <p className="text-xs text-slate-400">Validação pública instantânea por QR Code perante comissões de licitação.</p>
+                    <h4 className="text-sm font-bold text-white">Dossiê Probatório Rápido</h4>
+                    <p className="text-xs text-slate-400">Compartilhe o QR Code de validação pública com comissões de licitação em segundos.</p>
                   </div>
                 </div>
               </div>
