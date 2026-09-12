@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   FileText,
@@ -21,24 +21,57 @@ import {
   Layers,
   Sparkles
 } from "lucide-react";
-import { mockStore } from "@/lib/mock-data";
-import { Policy, PolicyVersion } from "@/types";
+import { Policy, PolicyVersion, Employee } from "@/types";
 import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
 import { updatePolicyAction } from "@/app/actions/management";
+import { useCompany } from "@/contexts/CompanyContext";
+import { getPolicyAction } from "@/app/actions/policies";
+import { getEmployeesAction } from "@/app/actions/employees";
 
 export default function PoliciesManagementPage() {
-  const [policy, setPolicy] = useState<Policy>(() => mockStore.getPolicy());
-  const [content, setContent] = useState(policy.content);
-  const [title, setTitle] = useState(policy.title);
+  const { company, isLoading: companyLoading } = useCompany();
+  const [policy, setPolicy] = useState<Policy | null>(null);
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [content, setContent] = useState("");
+  const [title, setTitle] = useState("");
   const [publishToEmployees, setPublishToEmployees] = useState(true);
   const [activeTab, setActiveTab] = useState<"EDITAR" | "VISUALIZAR">("EDITAR");
   const [viewingVersion, setViewingVersion] = useState<PolicyVersion | null>(null);
+  const [isLoadingPolicy, setIsLoadingPolicy] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [savedSuccess, setSavedSuccess] = useState(false);
 
-  // Consome métricas do Motor de Conformidade
-  const diagnostic = evaluateCompanyCompliance();
-  const codePillar = diagnostic.pillars.CODIGO_CONDUTA;
-  const employees = mockStore.getEmployees();
+  // Carrega dados reais do Supabase quando empresa estiver disponível
+  useEffect(() => {
+    if (!company) return;
+    setIsLoadingPolicy(true);
+    setLoadError(null);
+
+    getPolicyAction()
+      .then((res) => {
+        if (res.success && res.policy) {
+          setPolicy(res.policy);
+          setContent(res.policy.content);
+          setTitle(res.policy.title);
+        } else if (!res.success && res.error) {
+          setLoadError(res.error);
+        }
+      })
+      .catch((err) => {
+        setLoadError("Falha de comunicação ao buscar política.");
+      })
+      .finally(() => {
+        setIsLoadingPolicy(false);
+      });
+
+    getEmployeesAction().then((res) => {
+      if (res.success) setEmployees(res.employees);
+    });
+  }, [company]);
+
+  // Métricas calculadas com dados reais
+  const diagnostic = company ? evaluateCompanyCompliance(company.id) : null;
+  const codePillar = diagnostic?.pillars?.CODIGO_CONDUTA;
   const totalEmployees = employees.length;
   const acceptedPolicies = employees.filter((e) => !!e.policy_accepted_at).length;
 
@@ -51,6 +84,46 @@ export default function PoliciesManagementPage() {
       setTimeout(() => setSavedSuccess(false), 3000);
     }
   };
+
+  if (companyLoading || isLoadingPolicy || !policy) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 animate-pulse pb-12">
+        <div className="h-14 w-80 bg-slate-200 rounded-2xl" />
+        <div className="h-32 bg-slate-200 rounded-3xl" />
+        <div className="h-96 bg-slate-200 rounded-3xl" />
+      </div>
+    );
+  }
+
+  if (loadError && !policy) {
+    return (
+      <div className="max-w-xl mx-auto py-16 text-center space-y-4">
+        <div className="w-12 h-12 rounded-2xl bg-red-100 text-red-600 flex items-center justify-center mx-auto">
+          <AlertCircle className="w-6 h-6" />
+        </div>
+        <h2 className="text-lg font-bold text-slate-900">Não foi possível carregar as políticas</h2>
+        <p className="text-xs text-slate-500">{loadError}</p>
+        <button
+          onClick={() => {
+            if (company) {
+              setIsLoadingPolicy(true);
+              getPolicyAction().then((res) => {
+                if (res.success && res.policy) {
+                  setPolicy(res.policy);
+                  setContent(res.policy.content);
+                  setTitle(res.policy.title);
+                }
+                setIsLoadingPolicy(false);
+              });
+            }
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-xl text-xs font-bold hover:bg-blue-500 transition-colors"
+        >
+          Tentar Novamente
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in pb-12 font-sans">
@@ -137,7 +210,7 @@ export default function PoliciesManagementPage() {
               Motor de Conformidade
             </span>
             <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-400/30">
-              {codePillar.score}% Atendido
+              {codePillar?.score ?? 100}% Atendido
             </span>
           </div>
           <h3 className="text-sm font-bold">Requisito: Código de Conduta e Integridade</h3>

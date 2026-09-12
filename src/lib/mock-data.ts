@@ -7,6 +7,7 @@ import {
   WhistleblowerReport,
   ReportCategory,
   ReportStatus,
+  CompanyDocument,
 } from "@/types";
 import { generateProtocol, generateAccessKey, generateHash, generateSecureToken } from "./utils";
 
@@ -359,7 +360,10 @@ export interface TenantState {
   employees: Employee[];
   employeeTrainings: EmployeeTraining[];
   reports: WhistleblowerReport[];
+  documents: CompanyDocument[];
 }
+
+const CLIENT_TENANT_STORAGE_KEY = "techcompliance_active_tenant";
 
 // GERENCIADOR DE ESTADO LOCAL MULTI-TENANT (COMPLIANCE MULTI-TENANT STORE)
 class ComplianceMockStore {
@@ -380,16 +384,135 @@ class ComplianceMockStore {
       employees: [...INITIAL_EMPLOYEES],
       employeeTrainings: [...INITIAL_EMPLOYEE_TRAININGS],
       reports: [...INITIAL_REPORTS],
+      documents: [],
     });
 
     // Mapeia a sessão demo
     this.sessionToCompanyId.set("demo-session-token", INITIAL_COMPANY.id);
+
+    // No ambiente do navegador, tenta hidratar imediatamente a partir do localStorage
+    this.hydrateFromLocalStorage();
+  }
+
+  /**
+   * Hidrata o estado do tenant ativo a partir do localStorage do navegador
+   */
+  hydrateFromLocalStorage(): boolean {
+    if (typeof window === "undefined") return false;
+    try {
+      const stored = localStorage.getItem(CLIENT_TENANT_STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        if (parsed && parsed.id && parsed.cnpj) {
+          if (!this.tenants.has(parsed.id)) {
+            // Recria ou restaura o tenant no cache da memória local
+            const tailoredPolicyContent = buildStructuredCodeOfConduct(parsed.legal_name || parsed.trade_name);
+            this.tenants.set(parsed.id, {
+              company: parsed,
+              policy: {
+                id: "pol-" + parsed.id,
+                company_id: parsed.id,
+                title: `Código de Ética, Integridade e Conduta - ${parsed.trade_name || parsed.legal_name}`,
+                content: tailoredPolicyContent,
+                version: "1.0",
+                is_active: true,
+                created_at: parsed.created_at || new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+                approved_by: parsed.integrity_officer_name || "Diretoria de Integridade",
+                approved_at: new Date().toISOString(),
+                next_review_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+                published_to_employees: true,
+                published_at: new Date().toISOString(),
+                history: [],
+              },
+              employees: [],
+              employeeTrainings: [],
+              reports: [],
+              documents: [],
+            });
+          }
+          this.activeCompanyId = parsed.id;
+          return true;
+        }
+      }
+    } catch (e) {
+      console.warn("Falha ao hidratar tenant do localStorage:", e);
+    }
+    return false;
+  }
+
+  /**
+   * Salva e ativa o tenant no cliente (memória + localStorage)
+   */
+  saveClientTenant(company: Company) {
+    if (!company || !company.id) return;
+    
+    // Registra na memória do store
+    if (!this.tenants.has(company.id)) {
+      const tailoredPolicyContent = buildStructuredCodeOfConduct(company.legal_name || company.trade_name);
+      this.tenants.set(company.id, {
+        company: { ...company },
+        policy: {
+          id: "pol-" + company.id,
+          company_id: company.id,
+          title: `Código de Ética, Integridade e Conduta - ${company.trade_name || company.legal_name}`,
+          content: tailoredPolicyContent,
+          version: "1.0",
+          is_active: true,
+          created_at: company.created_at || new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+          approved_by: company.integrity_officer_name || "Diretoria de Integridade",
+          approved_at: new Date().toISOString(),
+          next_review_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+          published_to_employees: true,
+          published_at: new Date().toISOString(),
+          history: [],
+        },
+        employees: [],
+        employeeTrainings: [],
+        reports: [],
+        documents: [],
+      });
+    } else {
+      const state = this.tenants.get(company.id)!;
+      state.company = { ...company };
+    }
+
+    this.activeCompanyId = company.id;
+
+    // Persiste no localStorage
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(CLIENT_TENANT_STORAGE_KEY, JSON.stringify(company));
+      } catch (e) {
+        console.warn("Erro ao salvar tenant no localStorage:", e);
+      }
+    }
+  }
+
+  /**
+   * Limpa o tenant salvo no cliente (usado no logout)
+   */
+  clearClientTenant() {
+    this.activeCompanyId = INITIAL_COMPANY.id;
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.removeItem(CLIENT_TENANT_STORAGE_KEY);
+      } catch (e) {
+        // ignore
+      }
+    }
   }
 
   /**
    * Obtém o estado de um tenant específico. Se não existir, retorna o ativo ou cria vazio se id válido.
    */
   getTenantState(companyId?: string): TenantState {
+    // Se estiver no browser e o activeCompanyId for o padrão/demo, tenta checar se o localStorage tem uma empresa cadastrada
+    if (typeof window !== "undefined" && this.activeCompanyId === INITIAL_COMPANY.id) {
+      this.hydrateFromLocalStorage();
+    }
+
     const id = companyId || this.activeCompanyId;
     let state = this.tenants.get(id);
     if (!state) {
@@ -410,6 +533,7 @@ class ComplianceMockStore {
         employees: [],
         employeeTrainings: [],
         reports: [],
+        documents: [],
       };
     }
     return state;
@@ -425,6 +549,9 @@ class ComplianceMockStore {
   }
 
   getActiveCompanyId(): string {
+    if (typeof window !== "undefined" && this.activeCompanyId === INITIAL_COMPANY.id) {
+      this.hydrateFromLocalStorage();
+    }
     return this.activeCompanyId;
   }
 
@@ -530,6 +657,7 @@ class ComplianceMockStore {
       employees: [],
       employeeTrainings: [],
       reports: [],
+      documents: [],
     });
 
     this.activeCompanyId = companyId;
@@ -814,7 +942,7 @@ class ComplianceMockStore {
     return newReport;
   }
 
-  getReportByProtocol(protocol: string, accessKey: string, companyId?: string): WhistleblowerReport | undefined {
+  getReportByProtocol(protocol: string, accessKey?: string, companyId?: string): WhistleblowerReport | undefined {
     const searchTenants = companyId
       ? [this.getTenantState(companyId)]
       : Array.from(this.tenants.values());
@@ -823,7 +951,7 @@ class ComplianceMockStore {
       const report = state.reports.find(
         (r) =>
           r.protocol.trim().toUpperCase() === protocol.trim().toUpperCase() &&
-          r.access_key.trim() === accessKey.trim() &&
+          (!accessKey || r.access_key.trim() === accessKey.trim()) &&
           (!companyId || r.company_id === companyId)
       );
       if (report) return report;
@@ -923,10 +1051,74 @@ class ComplianceMockStore {
       employees: [],
       employeeTrainings: [],
       reports: [],
+      documents: [],
     });
 
     this.activeCompanyId = companyId;
     return newCompany;
+  }
+
+  // --- MÉTODOS DE DOCUMENTOS DA BIBLIOTECA / EMPRESA ---
+  getDocuments(companyId?: string): CompanyDocument[] {
+    const targetId = companyId || this.activeCompanyId;
+    let tenant = this.tenants.get(targetId);
+    if (!tenant) {
+      this.getCompany(targetId);
+      tenant = this.tenants.get(targetId);
+    }
+    if (!tenant) return [];
+    if (!tenant.documents) tenant.documents = [];
+    return [...tenant.documents];
+  }
+
+  getDocumentById(docId: string, companyId?: string): CompanyDocument | null {
+    const docs = this.getDocuments(companyId);
+    return docs.find((d) => d.id === docId) || null;
+  }
+
+  saveDocument(doc: CompanyDocument, companyId?: string): CompanyDocument {
+    const targetId = companyId || doc.company_id || this.activeCompanyId;
+    let tenant = this.tenants.get(targetId);
+    if (!tenant) {
+      this.getCompany(targetId);
+      tenant = this.tenants.get(targetId);
+    }
+    if (!tenant) {
+      const comp = this.getCompany(targetId);
+      tenant = {
+        company: comp,
+        policy: INITIAL_POLICY,
+        employees: [],
+        employeeTrainings: [],
+        reports: [],
+        documents: [],
+      };
+      this.tenants.set(targetId, tenant);
+    }
+    if (!tenant.documents) {
+      tenant.documents = [];
+    }
+    const idx = tenant.documents.findIndex((d) => d.id === doc.id);
+    if (idx >= 0) {
+      tenant.documents[idx] = { ...doc, updated_at: new Date().toISOString() };
+    } else {
+      tenant.documents.push({
+        ...doc,
+        company_id: targetId,
+        created_at: doc.created_at || new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      });
+    }
+    return doc;
+  }
+
+  deleteDocument(docId: string, companyId?: string): boolean {
+    const targetId = companyId || this.activeCompanyId;
+    const tenant = this.tenants.get(targetId);
+    if (!tenant) return false;
+    const initialLen = tenant.documents.length;
+    tenant.documents = tenant.documents.filter((d) => d.id !== docId);
+    return tenant.documents.length < initialLen;
   }
 }
 

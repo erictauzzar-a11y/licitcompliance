@@ -31,7 +31,7 @@ export async function loginAdminAction(email: string, password: string): Promise
 
   const cleanEmail = email.trim().toLowerCase();
 
-  // 2. Se Supabase estiver conectado, autentica via Supabase Auth
+  // 2. Se Supabase estiver conectado, autentica nativamente via Supabase Auth
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
@@ -54,7 +54,7 @@ export async function loginAdminAction(email: string, password: string): Promise
       path: "/",
     });
 
-    cookieStore.set("licit_session", data.user.id, {
+    cookieStore.set("sb-user-id", data.user.id, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "lax",
@@ -62,11 +62,29 @@ export async function loginAdminAction(email: string, password: string): Promise
       path: "/",
     });
 
+    // Busca perfil da empresa vinculado ao usuário no banco
+    const { getSupabaseAdmin } = await import("@/lib/supabase/client");
+    const admin = getSupabaseAdmin();
+    const { data: profile } = await admin
+      .from("profiles")
+      .select("company_id")
+      .eq("id", data.user.id)
+      .maybeSingle();
+
+    if (profile?.company_id) {
+      cookieStore.set("licit_session", profile.company_id, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+        sameSite: "lax",
+        maxAge: 60 * 60 * 24,
+        path: "/",
+      });
+    }
+
     return { success: true };
   }
 
-  // 3. Fallback controlado para ambiente local / demo
-  // Aceita credencial segura pré-definida ou demonstração
+  // 3. Fallback para demonstração offline (apenas se Supabase não estiver configurado)
   if (
     cleanEmail === "compliance@translog.com.br" &&
     (password === "TechCompliance#2026" || password === "LicitCompliance#2026")
@@ -95,42 +113,84 @@ export async function logoutAdminAction() {
   const cookieStore = await cookies();
   cookieStore.delete("licit_session");
   cookieStore.delete("sb-access-token");
+  cookieStore.delete("sb-user-id");
+
+  if (isSupabaseConfigured && supabase) {
+    try {
+      await supabase.auth.signOut();
+    } catch {
+      // ignore
+    }
+  }
+
   return { success: true };
 }
 
 /**
  * Validação de sessão segura no Servidor (Zero-Trust Frontend)
- * Identifica o usuário e o tenant real associado à sessão.
+ * Identifica o usuário e o tenant real associado à sessão diretamente no Supabase.
  */
 export async function getAuthenticatedAdmin() {
   const cookieStore = await cookies();
   const session = cookieStore.get("licit_session")?.value;
   const token = cookieStore.get("sb-access-token")?.value;
+  const userId = cookieStore.get("sb-user-id")?.value;
 
-  if (!session && !token) {
+  if (!session && !token && !userId) {
     return null;
   }
 
-  const { mockStore } = await import("@/lib/mock-data");
+  const { isSupabaseConfigured, getSupabaseAdmin } = await import("@/lib/supabase/client");
 
-  // 1. Se autenticado via Supabase Auth
-  if (isSupabaseConfigured && supabase && token) {
-    const { data: { user }, error } = await supabase.auth.getUser(token);
-    if (!error && user) {
-      const company = mockStore.getCompany(user.id);
-      return {
-        userId: user.id,
-        email: user.email,
-        role: "ADMIN",
-        companyId: company.id,
-        company,
-      };
+  // 1. Se autenticado via Supabase
+  if (isSupabaseConfigured) {
+    const admin = getSupabaseAdmin();
+
+    // 1.1 Se temos o token JWT, valida com Supabase Auth
+    let user = null;
+    if (token) {
+      const { data: authData, error } = await admin.auth.getUser(token);
+      if (!error && authData?.user) {
+        user = authData.user;
+      }
+    }
+
+    const currentUserId = user?.id || userId;
+
+    if (currentUserId) {
+      // Consulta perfil e empresa correspondente
+      const { data: profile } = await admin
+        .from("profiles")
+        .select("company_id, full_name, role")
+        .eq("id", currentUserId)
+        .maybeSingle();
+
+      const targetCompanyId = profile?.company_id || session;
+
+      if (targetCompanyId) {
+        const { data: companyRow } = await admin
+          .from("companies")
+          .select("*")
+          .eq("id", targetCompanyId)
+          .maybeSingle();
+
+        if (companyRow) {
+          return {
+            userId: currentUserId,
+            email: user?.email || companyRow.integrity_officer_email || "gestor@techcompliance.com.br",
+            role: profile?.role || "ADMIN",
+            companyId: companyRow.id,
+            company: companyRow,
+          };
+        }
+      }
     }
   }
 
-  // 2. Se autenticado via sessão de tenant
+  // 2. Fallback de sessão mock
+  const { mockStore } = await import("@/lib/mock-data");
   if (session) {
-    const company = mockStore.getCompanyBySession(session) || mockStore.getCompany();
+    const company = mockStore.getCompanyBySession(session) || mockStore.getCompany(session);
     return {
       userId: session,
       email: company.integrity_officer_email || "gestor@techcompliance.com.br",
@@ -141,5 +201,16 @@ export async function getAuthenticatedAdmin() {
   }
 
   return null;
+}
+
+/**
+ * Retorna os dados da empresa ativa vinculada à sessão autenticada (usado por Client Components)
+ */
+export async function getActiveAdminCompanyAction() {
+  const admin = await getAuthenticatedAdmin();
+  if (admin && admin.company) {
+    return { success: true, company: admin.company };
+  }
+  return { success: false, company: null };
 }
 

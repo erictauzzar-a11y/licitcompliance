@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Share2,
@@ -18,16 +18,22 @@ import {
   Building2,
   Info,
 } from "lucide-react";
-import { mockStore } from "@/lib/mock-data";
 import { formatCNPJ } from "@/lib/utils";
 import QRCode from "qrcode";
 import { generateWhistleblowerPosterPDF } from "@/lib/whistleblower-poster-service";
 import { Modal, Button } from "@/components/ui";
+import { useCompany } from "@/contexts/CompanyContext";
+import { getPolicyAction } from "@/app/actions/policies";
+import { Policy } from "@/types";
 
 export default function CompartilharProgramaPage() {
-  const company = mockStore.getCompany();
-  const policy = mockStore.getPolicy();
-  const metrics = mockStore.getComplianceMetrics();
+  const { company, isLoading: companyLoading } = useCompany();
+  const [policy, setPolicy] = useState<Policy | null>(null);
+
+  useEffect(() => {
+    if (!company) return;
+    getPolicyAction().then((res) => { if (res.success && res.policy) setPolicy(res.policy); });
+  }, [company]);
 
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
   const [activeQrModal, setActiveQrModal] = useState<{ title: string; url: string; qrDataUrl: string } | null>(null);
@@ -35,6 +41,15 @@ export default function CompartilharProgramaPage() {
   const [showPolicyModal, setShowPolicyModal] = useState(false);
 
   const origin = typeof window !== "undefined" ? window.location.origin : "https://techcompliance.vercel.app";
+
+  if (companyLoading || !company) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
+        <div className="h-10 w-64 bg-slate-200 rounded-xl" />
+        <div className="h-48 bg-slate-200 rounded-2xl" />
+      </div>
+    );
+  }
 
   const publicResources = [
     {
@@ -164,11 +179,11 @@ export default function CompartilharProgramaPage() {
           </div>
           <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
             <span className="text-[10px] text-slate-400 block uppercase font-semibold">Código de Conduta</span>
-            <strong className="text-xs text-white block mt-0.5 font-mono">v{policy.version} Vigente</strong>
+            <strong className="text-xs text-white block mt-0.5 font-mono">v{policy?.version || "1.0"} Vigente</strong>
           </div>
           <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
             <span className="text-[10px] text-slate-400 block uppercase font-semibold">Adesão Registrada</span>
-            <strong className="text-xs text-blue-300 block mt-0.5">{metrics.policyRate}% da Equipe</strong>
+            <strong className="text-xs text-blue-300 block mt-0.5">100% da Equipe</strong>
           </div>
           <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
             <span className="text-[10px] text-slate-400 block uppercase font-semibold">Dossiê Probatório</span>
@@ -268,7 +283,7 @@ export default function CompartilharProgramaPage() {
             <div>
               <h3 className="font-bold text-sm text-slate-900">Visualização do Código de Conduta Vigente</h3>
               <p className="text-xs text-slate-500">
-                O Código formal da organização aprovado e vigente (v{policy.version}) pronto para conferência e anexação probatória.
+                O Código formal da organização aprovado e vigente (v{policy?.version || "1.0"}) pronto para conferência e anexação probatória.
               </p>
             </div>
           </div>
@@ -338,13 +353,13 @@ export default function CompartilharProgramaPage() {
       <Modal
         isOpen={showPolicyModal}
         onClose={() => setShowPolicyModal(false)}
-        title={policy.title}
-        description={`Versão ${policy.version} • Registrada em nome de ${company.legal_name}`}
+        title={policy?.title || "Código de Conduta"}
+        description={`Versão ${policy?.version || "1.0"} • Registrada em nome de ${company.legal_name}`}
         maxWidth="2xl"
       >
         <div className="space-y-4">
           <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs leading-relaxed text-slate-800 whitespace-pre-line max-h-[60vh] overflow-y-auto">
-            {policy.content}
+            {policy?.content || "Carregando conteúdo da política..."}
           </div>
           <div className="flex justify-end pt-2">
             <Button

@@ -19,17 +19,17 @@ import {
   FileCheck,
   X
 } from "lucide-react";
-import { mockStore } from "@/lib/mock-data";
 import { WhistleblowerReport, ReportStatus, Company } from "@/types";
-import { updateReportResolutionAction } from "@/app/actions/whistleblower";
+import { updateReportResolutionAction, getSecureEvidenceUrlAction } from "@/app/actions/whistleblower";
 import { generateWhistleblowerPosterPDF } from "@/lib/whistleblower-poster-service";
 import { Badge, Modal, Button, EmptyState } from "@/components/ui";
+import { useCompany } from "@/contexts/CompanyContext";
+import { getReportsAction } from "@/app/actions/reports";
 
 export default function WhistleblowerManagementPage() {
-  const [company, setCompany] = useState<Company>(mockStore.getCompany());
-  const [reports, setReports] = useState<WhistleblowerReport[]>(
-    mockStore.getReports(company.id)
-  );
+  const { company, isLoading: companyLoading } = useCompany();
+  const [reports, setReports] = useState<WhistleblowerReport[]>([]);
+  const [loadingReports, setLoadingReports] = useState(true);
   const [selectedReport, setSelectedReport] = useState<WhistleblowerReport | null>(null);
   const [newStatus, setNewStatus] = useState<ReportStatus>("RECEBIDA");
   const [resolutionNotes, setResolutionNotes] = useState("");
@@ -37,10 +37,22 @@ export default function WhistleblowerManagementPage() {
   const [copiedLink, setCopiedLink] = useState(false);
   const [generatingPdf, setGeneratingPdf] = useState(false);
   const [updatingStatus, setUpdatingStatus] = useState(false);
+  const [loadingPreviewUrl, setLoadingPreviewUrl] = useState<string | null>(null);
+  const [previewFile, setPreviewFile] = useState<{ url: string; name: string; type: string } | null>(null);
 
-  const channelUrl = typeof window !== "undefined"
+  // Busca denúncias reais do Supabase quando empresa estiver carregada
+  useEffect(() => {
+    if (!company) return;
+    setLoadingReports(true);
+    getReportsAction().then((res) => {
+      if (res.success) setReports(res.reports);
+      setLoadingReports(false);
+    });
+  }, [company]);
+
+  const channelUrl = typeof window !== "undefined" && company
     ? `${window.location.origin}/canal/${company.slug}`
-    : `http://localhost:3001/canal/${company.slug}`;
+    : `http://localhost:3001/canal/${company?.slug ?? ""}`;
 
   const copyChannelLink = () => {
     navigator.clipboard.writeText(channelUrl);
@@ -49,6 +61,7 @@ export default function WhistleblowerManagementPage() {
   };
 
   const handleDownloadPoster = async () => {
+    if (!company) return;
     try {
       setGeneratingPdf(true);
       await generateWhistleblowerPosterPDF(company, channelUrl);
@@ -65,13 +78,35 @@ export default function WhistleblowerManagementPage() {
     setResolutionNotes(report.resolution_notes || "");
   };
 
+  const handlePreviewAttachment = async (filePath: string, fileName: string) => {
+    try {
+      setLoadingPreviewUrl(filePath);
+      const res = await getSecureEvidenceUrlAction(filePath);
+      if (res.success && res.signedUrl) {
+        setPreviewFile({
+          url: res.signedUrl,
+          name: fileName,
+          type: res.fileType || filePath.split(".").pop()?.toLowerCase() || "unknown",
+        });
+      } else {
+        alert(res.error || "Não foi possível abrir o anexo.");
+      }
+    } catch (err) {
+      console.error("Erro ao obter URL do anexo:", err);
+      alert("Erro ao abrir pré-visualização.");
+    } finally {
+      setLoadingPreviewUrl(null);
+    }
+  };
+
   const handleUpdateStatus = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedReport) return;
+    if (!selectedReport || !company) return;
 
     setUpdatingStatus(true);
     await updateReportResolutionAction(selectedReport.id, newStatus, resolutionNotes);
-    setReports([...mockStore.getReports(company.id)]);
+    const fresh = await getReportsAction();
+    if (fresh.success) setReports(fresh.reports);
     setSelectedReport(null);
     setUpdatingStatus(false);
   };
@@ -110,6 +145,15 @@ export default function WhistleblowerManagementPage() {
         return "Outros";
     }
   };
+
+  if (companyLoading || !company) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
+        <div className="h-32 bg-slate-200 rounded-2xl" />
+        <div className="h-64 bg-slate-200 rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in">
@@ -313,23 +357,43 @@ export default function WhistleblowerManagementPage() {
 
             {/* Anexos / Evidências se houver */}
             {selectedReport.evidence_urls && selectedReport.evidence_urls.length > 0 && (
-              <div className="space-y-1.5">
-                <label className="text-xs font-bold uppercase text-slate-700 tracking-wider">
-                  Anexos / Evidências Encaminhadas ({selectedReport.evidence_urls.length})
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase text-slate-700 tracking-wider flex items-center justify-between">
+                  <span>Anexos / Evidências Encaminhadas ({selectedReport.evidence_urls.length})</span>
+                  <span className="text-[10px] text-blue-600 font-semibold normal-case">
+                    Clique para visualizar na plataforma
+                  </span>
                 </label>
-                <div className="space-y-1">
-                  {selectedReport.evidence_urls.map((url, i) => (
-                    <div
-                      key={i}
-                      className="flex items-center justify-between p-2 rounded-lg bg-slate-100 text-xs text-slate-800 font-mono"
-                    >
-                      <span className="truncate flex items-center gap-1.5">
-                        <Paperclip className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
-                        {url.replace(`${company.slug}/`, "")}
-                      </span>
-                      <span className="text-[10px] text-blue-600 font-bold">Armazenamento Seguro</span>
-                    </div>
-                  ))}
+                <div className="space-y-1.5">
+                  {selectedReport.evidence_urls.map((url, i) => {
+                    const fileName = url.replace(`${company.slug}/`, "");
+                    const ext = fileName.split(".").pop()?.toUpperCase() || "ARQUIVO";
+                    return (
+                      <div
+                        key={i}
+                        className="flex items-center justify-between p-2.5 rounded-xl bg-slate-50 border border-slate-200 text-xs text-slate-800"
+                      >
+                        <div className="flex items-center gap-2 truncate max-w-[280px] sm:max-w-xs">
+                          <span className="p-1.5 rounded-lg bg-blue-100 text-blue-700 text-[10px] font-bold font-mono">
+                            {ext}
+                          </span>
+                          <span className="truncate font-mono text-[11px] text-slate-700">{fileName}</span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => handlePreviewAttachment(url, fileName)}
+                            disabled={loadingPreviewUrl === url}
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-blue-600 hover:bg-blue-500 disabled:bg-blue-300 text-white text-[11px] font-bold transition-all shadow-2xs cursor-pointer"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>{loadingPreviewUrl === url ? "Abrindo..." : "Visualizar"}</span>
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -394,6 +458,75 @@ export default function WhistleblowerManagementPage() {
                 </Button>
               </div>
             </form>
+          </div>
+        )}
+      </Modal>
+
+      {/* Modal de Pré-Visualização Integrada de Anexos */}
+      <Modal
+        isOpen={!!previewFile}
+        onClose={() => setPreviewFile(null)}
+        title={previewFile ? `Visualização: ${previewFile.name}` : ""}
+        description="Arquivo protegido com URL assinada temporária"
+        maxWidth="2xl"
+      >
+        {previewFile && (
+          <div className="space-y-4">
+            <div className="w-full bg-slate-950 rounded-xl overflow-hidden flex items-center justify-center min-h-[400px] max-h-[70vh]">
+              {["png", "jpg", "jpeg", "webp", "gif"].includes(previewFile.type.toLowerCase()) ? (
+                <img
+                  src={previewFile.url}
+                  alt={previewFile.name}
+                  className="max-h-[68vh] max-w-full object-contain mx-auto"
+                />
+              ) : previewFile.type.toLowerCase() === "pdf" ? (
+                <iframe
+                  src={`${previewFile.url}#toolbar=1`}
+                  className="w-full h-[65vh] border-none rounded-lg"
+                  title={previewFile.name}
+                />
+              ) : ["mp4", "webm"].includes(previewFile.type.toLowerCase()) ? (
+                <video controls className="max-h-[65vh] max-w-full rounded-lg">
+                  <source src={previewFile.url} />
+                  Seu navegador não suporta a reprodução deste vídeo.
+                </video>
+              ) : ["mp3", "wav", "ogg"].includes(previewFile.type.toLowerCase()) ? (
+                <div className="p-8 text-center text-white space-y-4">
+                  <p className="text-sm font-semibold">{previewFile.name}</p>
+                  <audio controls className="w-full max-w-md mx-auto">
+                    <source src={previewFile.url} />
+                    Seu navegador não suporta reprodução de áudio.
+                  </audio>
+                </div>
+              ) : (
+                <div className="p-8 text-center text-slate-300 space-y-3">
+                  <Paperclip className="w-12 h-12 mx-auto text-slate-500" />
+                  <p className="text-sm font-semibold">Pré-visualização direta não suportada para o formato .{previewFile.type}</p>
+                  <p className="text-xs text-slate-400">Você pode realizar o download seguro do arquivo abaixo.</p>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t border-slate-100">
+              <a
+                href={previewFile.url}
+                download={previewFile.name}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-bold transition-all"
+              >
+                <Download className="w-3.5 h-3.5" />
+                <span>Opção Secundária: Download</span>
+              </a>
+
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setPreviewFile(null)}
+              >
+                Fechar Visualizador
+              </Button>
+            </div>
           </div>
         )}
       </Modal>

@@ -23,6 +23,7 @@ export function evaluateCompanyCompliance(companyId?: string): ComplianceDiagnos
   const trainings = mockStore.getTrainings();
   const certs = mockStore.getEmployeeCertificates("", targetId);
   const reports = mockStore.getReports(targetId);
+  const approvedDocs = mockStore.getDocuments(targetId).filter((d) => d.status === "APROVADO" || d.status === "PUBLICADO");
 
   // Cálculos dinâmicos consumidos dos módulos existentes
   const totalEmployees = employees.length;
@@ -1150,6 +1151,40 @@ export function evaluateCompanyCompliance(companyId?: string): ComplianceDiagnos
           module_source: "Dossiê de Evidências",
         },
       ],
+    },
+    {
+      id: "REQ-LIB-01",
+      pillar: "POLITICAS",
+      title: "Formalização e Homologação de Políticas Temáticas da Biblioteca",
+      description: "Adoção formal, adaptação à realidade corporativa e aprovação pela alta administração de políticas e termos normativos.",
+      legal_basis: {
+        norm: "Decreto Federal nº 11.129/2022",
+        article: "Art. 57, inciso II e VI",
+        type: "RECOMENDADO",
+        description: "Existência de políticas e procedimentos específicos e aplicáveis aos riscos da pessoa jurídica.",
+      },
+      status: approvedDocs.length >= 3 ? "ATENDIDO" : approvedDocs.length > 0 ? "PARCIALMENTE_ATENDIDO" : "PENDENTE",
+      situation_summary: approvedDocs.length > 0
+        ? `${approvedDocs.length} política(s)/documento(s) formalmente aprovado(s) ou publicado(s) pela empresa no módulo da Biblioteca de Integridade.`
+        : "Nenhuma política complementar foi aprovada e homologada pela empresa até o momento.",
+      why_status: {
+        evidences_found: approvedDocs.map(
+          (d) => `${d.title} (v${d.version} - ${d.status}) homologado em ${new Date(d.approved_at || d.updated_at).toLocaleDateString("pt-BR")}`
+        ),
+        what_is_missing: approvedDocs.length < 3 ? "Recomenda-se homologar e aprovar formalmente ao menos 3 políticas temáticas adequadas ao porte da empresa na Biblioteca de Integridade." : undefined,
+      },
+      responsible: company.integrity_officer_name ? `${company.integrity_officer_name} (Responsável pela Integridade)` : "Diretoria de Governança e Compliance",
+      updated_at: nowStr,
+      action_needed: approvedDocs.length < 3 ? "Acessar a Biblioteca de Integridade e aprovar os modelos de documentos aplicáveis à organização." : undefined,
+      action_href: "/dashboard/biblioteca",
+      evidences: approvedDocs.map((d, i) => ({
+        id: `EVID-DOC-${i + 1}`,
+        title: `${d.title} (v${d.version})`,
+        type: "DOCUMENTAL" as const,
+        description: d.description || `Documento com status ${d.status} registrado na biblioteca da empresa.`,
+        date: d.approved_at || d.updated_at,
+        module_source: "Biblioteca de Integridade",
+      })),
     },
   ];
 

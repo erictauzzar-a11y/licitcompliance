@@ -17,13 +17,13 @@ import {
   ShieldCheck,
   AlertOctagon,
 } from "lucide-react";
-import { mockStore } from "@/lib/mock-data";
 import { DueDiligenceRecord } from "@/types";
 import { formatCNPJ, formatCPF } from "@/lib/utils";
 import { generateDueDiligenceReportPDF } from "@/lib/due-diligence-service";
+import { useCompany } from "@/contexts/CompanyContext";
 
 export default function DueDiligencePage() {
-  const company = mockStore.getCompany();
+  const { company, isLoading: companyLoading } = useCompany();
 
   const [cnpj, setCnpj] = useState("");
   const [loading, setLoading] = useState(false);
@@ -68,6 +68,7 @@ export default function DueDiligencePage() {
   };
 
   const handleDownloadPDF = async (record: DueDiligenceRecord) => {
+    if (!company) return;
     setDownloadingPdf(true);
     try {
       await generateDueDiligenceReportPDF(record, company.legal_name);
@@ -77,6 +78,15 @@ export default function DueDiligencePage() {
       setDownloadingPdf(false);
     }
   };
+
+  if (companyLoading || !company) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
+        <div className="h-10 w-64 bg-slate-200 rounded-xl" />
+        <div className="h-48 bg-slate-200 rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in font-sans">

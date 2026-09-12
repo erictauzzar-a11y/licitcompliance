@@ -68,21 +68,20 @@ export async function submitWhistleblowerReportAction(
     const accessKey = generateAccessKey();
 
     // Persistência com Supabase se configurado
-    if (isSupabaseConfigured && supabase) {
-      let companyId = company?.id;
+    if (isSupabaseConfigured) {
+      const { getSupabaseAdmin } = await import("@/lib/supabase/client");
+      const db = getSupabaseAdmin();
 
-      const { data: compData } = await supabase
+      const { data: compData } = await db
         .from("companies")
         .select("id")
         .eq("slug", data.slug)
         .maybeSingle();
 
-      if (compData?.id) {
-        companyId = compData.id;
-      }
+      const companyId = compData?.id || company?.id;
 
       if (companyId) {
-        const { error: insertError } = await supabase
+        const { error: insertError } = await db
           .from("whistleblower_reports")
           .insert({
             company_id: companyId,
@@ -98,7 +97,7 @@ export async function submitWhistleblowerReportAction(
           });
 
         if (insertError) {
-          console.warn("[Whistleblower] Falha ao persistir no Supabase:", insertError.message);
+          console.error("[Whistleblower] Falha ao persistir no Supabase:", insertError.message);
         }
       }
     }
@@ -131,23 +130,23 @@ export async function submitWhistleblowerReportAction(
 }
 
 /**
- * 2. ACOMPANHAMENTO DE DENÚNCIA VIA PROTOCOLO + CHAVE
+ * 2. ACOMPANHAMENTO DE DENÚNCIA VIA PROTOCOLO ÚNICO
  * Protegido contra Enumeração, Brute-Force e Isolado Estritamente pelo Slug da Empresa
  */
 export async function trackWhistleblowerReportAction(
   slug: string,
   protocol: string,
-  accessKey: string
+  accessKey?: string
 ): Promise<TrackReportResponse> {
   try {
     const reqHeaders = await headers();
     const ip = getClientIp(reqHeaders);
 
-    // Rate Limiting anti-Brute Force (5 tentativas / minuto por IP)
+    // Rate Limiting anti-Brute Force (6 tentativas / minuto por IP com bloqueio de 10 min)
     const rateCheck = checkRateLimit(`report_track_${ip}`, {
       windowMs: 60000,
       maxRequests: 6,
-      blockDurationMs: 600000, // 10 minutos de bloqueio se forçado
+      blockDurationMs: 600000,
     });
 
     if (!rateCheck.success) {
@@ -157,61 +156,72 @@ export async function trackWhistleblowerReportAction(
       };
     }
 
-    const cleanProtocol = protocol.trim().toUpperCase();
-    const cleanKey = accessKey.trim();
-    const company = mockStore.getCompany(slug);
-
-    if (!company) {
-      // Mensagem genérica neutra que não auxilia enumeração
+    const cleanProtocol = protocol.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
+    if (cleanProtocol.length < 8) {
       return {
         success: false,
-        error: "Credenciais de acompanhamento não localizadas.",
+        error: "Protocolo informado inválido. Verifique o código recebido.",
       };
     }
 
-    // Consulta segura no Supabase através da RPC com SECURITY DEFINER
-    if (isSupabaseConfigured && supabase) {
-      const { data: dbReport, error } = await supabase.rpc("track_whistleblower_report", {
-        p_company_slug: slug,
-        p_protocol: cleanProtocol,
-        p_access_key: cleanKey,
-      });
+    // Consulta no Supabase se configurado
+    if (isSupabaseConfigured) {
+      const { getSupabaseAdmin } = await import("@/lib/supabase/client");
+      const db = getSupabaseAdmin();
 
-      if (!error && Array.isArray(dbReport) && dbReport.length > 0) {
-        const found = dbReport[0];
+      // 1. Resolve a empresa pelo slug
+      const { data: comp } = await db
+        .from("companies")
+        .select("id, slug")
+        .eq("slug", slug)
+        .maybeSingle();
+
+      if (comp?.id) {
+        // Busca a denúncia vinculada àquela empresa pelo protocolo
+        const { data: dbReport } = await db
+          .from("whistleblower_reports")
+          .select("id, company_id, protocol, access_key, category, description, evidence_urls, status, resolution_notes, created_at, updated_at")
+          .eq("company_id", comp.id)
+          .eq("protocol", cleanProtocol)
+          .maybeSingle();
+
+        if (dbReport) {
+          return {
+            success: true,
+            report: {
+              id: dbReport.id,
+              company_id: dbReport.company_id,
+              protocol: dbReport.protocol,
+              access_key: dbReport.access_key || "",
+              is_anonymous: true,
+              category: dbReport.category,
+              description: dbReport.description,
+              evidence_urls: dbReport.evidence_urls || [],
+              status: dbReport.status,
+              resolution_notes: dbReport.resolution_notes,
+              created_at: dbReport.created_at || new Date().toISOString(),
+              updated_at: dbReport.updated_at || new Date().toISOString(),
+            },
+          };
+        }
+      }
+    }
+
+    // Consulta de fallback em memória isolada pelo slug
+    const company = mockStore.getCompany(slug);
+    if (company) {
+      const localReport = mockStore.getReportByProtocol(cleanProtocol, accessKey, company.id);
+      if (localReport) {
         return {
           success: true,
-          report: {
-            id: found.id,
-            company_id: found.company_id || company.id,
-            protocol: found.protocol,
-            access_key: cleanKey,
-            is_anonymous: true,
-            category: found.category,
-            description: found.description,
-            evidence_urls: found.evidence_urls || [],
-            status: found.status,
-            resolution_notes: found.resolution_notes,
-            created_at: found.created_at || new Date().toISOString(),
-            updated_at: found.updated_at || new Date().toISOString(),
-          },
+          report: localReport,
         };
       }
     }
 
-    // Consulta no mockStore isolada pelo company_id
-    const localReport = mockStore.getReportByProtocol(cleanProtocol, cleanKey, company.id);
-
-    if (localReport) {
-      return {
-        success: true,
-        report: localReport,
-      };
-    }
-
     return {
       success: false,
-      error: "Protocolo ou chave de acesso não localizados para esta organização.",
+      error: "Protocolo não localizado para esta organização. Verifique se o código foi digitado corretamente.",
     };
   } catch (err: any) {
     return {
@@ -271,5 +281,65 @@ export async function updateReportResolutionAction(
     return { success: true };
   } catch (err: any) {
     return { success: false, error: "Erro ao atualizar apuração." };
+  }
+}
+
+/**
+ * 4. GERAÇÃO DE URL SEGURA PARA VISUALIZAÇÃO DE ANEXOS
+ * Valida autorização do gestor e garante isolamento por company_id
+ */
+export async function getSecureEvidenceUrlAction(filePath: string): Promise<{
+  success: boolean;
+  signedUrl?: string;
+  fileType?: string;
+  error?: string;
+}> {
+  try {
+    const admin = await getAuthenticatedAdmin();
+    if (!admin?.companyId) {
+      return { success: false, error: "Sessão inválida ou não autorizada." };
+    }
+
+    const { getSupabaseAdmin } = await import("@/lib/supabase/client");
+    const db = getSupabaseAdmin();
+
+    // 1. Confirmação se o anexo pertence a uma denúncia da empresa do gestor
+    const { data: report, error: repErr } = await db
+      .from("whistleblower_reports")
+      .select("id, company_id, evidence_urls")
+      .eq("company_id", admin.companyId)
+      .filter("evidence_urls", "cs", JSON.stringify([filePath]))
+      .maybeSingle();
+
+    // Fallback: se não encontrou via contains array, confere se o filePath inicia com o slug da empresa
+    const isCompanyFile = report || (admin.company?.slug && filePath.startsWith(`${admin.company.slug}/`));
+
+    if (!isCompanyFile) {
+      return { success: false, error: "Acesso negado: anexo não pertence à sua organização." };
+    }
+
+    // 2. Gera Signed URL com validade de 15 minutos (900 segundos)
+    const { data: signedData, error: signErr } = await db.storage
+      .from("whistleblower-evidence")
+      .createSignedUrl(filePath, 900);
+
+    if (signErr || !signedData?.signedUrl) {
+      // Se não estiver no bucket Supabase (ex: arquivo em modo local/mock)
+      return {
+        success: true,
+        signedUrl: `/api/evidence-mock?path=${encodeURIComponent(filePath)}`,
+        fileType: filePath.split(".").pop()?.toLowerCase() || "unknown",
+      };
+    }
+
+    const ext = filePath.split(".").pop()?.toLowerCase() || "unknown";
+
+    return {
+      success: true,
+      signedUrl: signedData.signedUrl,
+      fileType: ext,
+    };
+  } catch (err: any) {
+    return { success: false, error: "Falha ao gerar visualização do arquivo." };
   }
 }

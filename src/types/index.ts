@@ -209,3 +209,86 @@ export interface DueDiligenceRecord {
   queried_at: string;
 }
 
+// ==========================================
+// BIBLIOTECA DE INTEGRIDADE E DOCUMENTOS
+// ==========================================
+
+export type IntegrityCategory =
+  | "ESSENCIAIS"
+  | "ETICA_CONDUTA"
+  | "ANTICORRUPCAO"
+  | "CONFLITOS_INTERESSE"
+  | "TERCEIROS"
+  | "PODER_PUBLICO"
+  | "PESSOAS_AMBIENTE"
+  | "GOVERNANCA_RISCOS"
+  | "DADOS_SEGURANCA";
+
+export type NormativeNature =
+  | "REQUISITO_LEGAL"
+  | "BOA_PRATICA"
+  | "DIRETRIZ_RECOMENDADA"
+  | "REGRA_INTERNA";
+
+export type DocumentStatus =
+  | "RASCUNHO"
+  | "AGUARDANDO_APROVACAO"
+  | "APROVADO"
+  | "PUBLICADO";
+
+export interface IntegrityTemplate {
+  id: string;
+  category: IntegrityCategory;
+  order: number;
+  title: string;
+  subtitle: string;
+  description: string;
+  normative_nature: NormativeNature;
+  legal_basis: string;
+  recommended_for: string;
+  default_content: string;
+  governance_fields: {
+    field: string;
+    label: string;
+    description: string;
+    default_value?: string;
+  }[];
+}
+
+export interface DocumentVersionLog {
+  version: string;
+  status: DocumentStatus;
+  changed_by: string;
+  changed_at: string;
+  notes?: string;
+}
+
+export interface CompanyDocument {
+  id: string;
+  company_id: string;
+  template_id?: string | null;
+  category: IntegrityCategory;
+  title: string;
+  description?: string;
+  content: string;
+  version: string;
+  status: DocumentStatus;
+  is_active: boolean;
+  normative_nature: NormativeNature;
+  legal_basis?: string;
+  // Campos de upload próprio
+  file_url?: string | null;
+  file_name?: string | null;
+  file_size?: string | null;
+  file_type?: "PDF" | "DOCX" | "TEXTO";
+  // Metadados de aprovação e publicação
+  created_by?: string;
+  created_at: string;
+  updated_at: string;
+  approved_by?: string | null;
+  approved_at?: string | null;
+  published_at?: string | null;
+  history?: DocumentVersionLog[];
+}
+
+

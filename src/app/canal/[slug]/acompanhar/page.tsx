@@ -33,36 +33,34 @@ export default function PublicWhistleblowerTrackingPage({
   const company = mockStore.getCompany(resolvedParams.slug);
 
   const initialP = searchParams.get("p") || "";
-  const initialK = searchParams.get("k") || "";
 
   const [protocol, setProtocol] = useState(initialP);
-  const [accessKey, setAccessKey] = useState(initialK);
   const [report, setReport] = useState<WhistleblowerReport | null>(null);
   const [searched, setSearched] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState("");
 
   useEffect(() => {
-    if (initialP && initialK) {
-      handleSearch(null, initialP, initialK);
+    if (initialP) {
+      handleSearch(null, initialP);
     }
-  }, [initialP, initialK]);
+  }, [initialP]);
 
-  const handleSearch = async (e: React.FormEvent | null, p = protocol, k = accessKey) => {
+  const handleSearch = async (e: React.FormEvent | null, p = protocol) => {
     if (e) e.preventDefault();
-    if (!p.trim() || !k.trim()) return;
+    if (!p.trim()) return;
 
     setLoading(true);
     setErrorMessage("");
     setSearched(false);
 
     try {
-      const res = await trackWhistleblowerReportAction(resolvedParams.slug, p, k);
+      const res = await trackWhistleblowerReportAction(resolvedParams.slug, p);
       if (res.success && res.report) {
         setReport(res.report);
       } else {
         setReport(null);
-        setErrorMessage(res.error || "Protocolo ou Chave de Acesso inválidos.");
+        setErrorMessage(res.error || "Protocolo não localizado para esta organização.");
       }
       setSearched(true);
     } catch (err: any) {
@@ -165,43 +163,34 @@ export default function PublicWhistleblowerTrackingPage({
             </p>
           </div>
 
-          <form onSubmit={(e) => handleSearch(e)} className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <form onSubmit={(e) => handleSearch(e)} className="space-y-4">
             <div>
               <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                Número do Protocolo *
+                Número do Protocolo Oficial *
               </label>
-              <input
-                type="text"
-                value={protocol}
-                onChange={(e) => setProtocol(e.target.value)}
-                placeholder="Ex: DEN-2026-X89B42"
-                required
-                className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono uppercase bg-slate-50/40"
-              />
+              <div className="relative">
+                <input
+                  type="text"
+                  value={protocol}
+                  onChange={(e) => setProtocol(e.target.value)}
+                  placeholder="Ex: DEN2026K8M4P9X2A1"
+                  required
+                  className="w-full text-base sm:text-lg px-4 py-3 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono uppercase bg-slate-50/50 tracking-wider font-bold text-slate-900"
+                />
+              </div>
+              <p className="text-[11px] text-slate-500 mt-1.5">
+                Informe o protocolo alfanumérico fornecido no momento do registro da sua denúncia.
+              </p>
             </div>
 
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1">
-                Chave de Acesso Sigilosa *
-              </label>
-              <input
-                type="text"
-                value={accessKey}
-                onChange={(e) => setAccessKey(e.target.value)}
-                placeholder="Ex: Ab9#xK2"
-                required
-                className="w-full text-sm px-3.5 py-2.5 border border-slate-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-600 font-mono bg-slate-50/40"
-              />
-            </div>
-
-            <div className="sm:col-span-2 pt-1">
+            <div className="pt-2">
               <button
                 type="submit"
-                disabled={loading}
-                className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-bold py-3 rounded-xl text-sm transition-colors flex items-center justify-center gap-2 shadow-xs"
+                disabled={loading || !protocol.trim()}
+                className="w-full bg-blue-600 hover:bg-blue-500 disabled:bg-slate-300 text-white font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
               >
                 <Search className="w-4 h-4" />
-                {loading ? "Consultando bases seguras..." : "Consultar Andamento do Protocolo"}
+                {loading ? "Localizando manifestação..." : "Acompanhar Situação da Denúncia"}
               </button>
             </div>
           </form>

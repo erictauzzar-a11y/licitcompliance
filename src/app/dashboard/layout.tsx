@@ -10,21 +10,24 @@ import {
   FileText,
   ExternalLink,
   Building2,
-  Lock,
   LogOut,
   HelpCircle,
-  Mail,
+  BookOpen,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { logoutAdminAction } from "@/app/actions/auth";
 import { mockStore } from "@/lib/mock-data";
 import { formatCNPJ } from "@/lib/utils";
 import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
+import { CompanyProvider, useCompany } from "@/contexts/CompanyContext";
 
-export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+// Componente interno que consome o contexto
+function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const company = mockStore.getCompany();
-  const diagnostic = evaluateCompanyCompliance(company.id);
+  const { company, isLoading } = useCompany();
+
+  // Calcula o diagnostico apenas quando a empresa real estiver carregada
+  const diagnostic = company ? evaluateCompanyCompliance(company.id) : null;
 
   const navItems = [
     {
@@ -38,6 +41,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       href: "/dashboard/diagnostico",
       icon: ShieldCheck,
       active: pathname.startsWith("/dashboard/diagnostico"),
+    },
+    {
+      label: "Biblioteca de Integridade",
+      href: "/dashboard/biblioteca",
+      icon: BookOpen,
+      active: pathname.startsWith("/dashboard/biblioteca"),
     },
     {
       label: "Analisar Edital",
@@ -105,8 +114,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <Building2 className="w-3.5 h-3.5 text-blue-400" />
             Empresa / Fornecedor
           </div>
-          <div className="font-bold text-sm text-white truncate">{company.trade_name}</div>
-          <div className="text-[11px] text-slate-400 font-mono mt-0.5">CNPJ: {formatCNPJ(company.cnpj)}</div>
+          {isLoading ? (
+            <div className="h-4 w-32 bg-slate-700 rounded animate-pulse" />
+          ) : (
+            <>
+              <div className="font-bold text-sm text-white truncate">{company?.trade_name ?? "—"}</div>
+              <div className="text-[11px] text-slate-400 font-mono mt-0.5">
+                CNPJ: {company ? formatCNPJ(company.cnpj) : "—"}
+              </div>
+            </>
+          )}
         </div>
 
         {/* Links de Navegação */}
@@ -141,22 +158,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               Gerenciar
             </Link>
           </div>
-          <Link
-            href={`/canal/${company.slug}`}
-            target="_blank"
-            className="flex items-center justify-between p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
-          >
-            <span className="truncate">Canal de Denúncias</span>
-            <ExternalLink className="w-3.5 h-3.5 shrink-0 text-red-400" />
-          </Link>
-          <Link
-            href={`/treinar/${company.slug}`}
-            target="_blank"
-            className="flex items-center justify-between p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-semibold transition-colors"
-          >
-            <span className="truncate">Treinamento Rápido</span>
-            <ExternalLink className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
-          </Link>
+          {company && (
+            <>
+              <Link
+                href={`/canal/${company.slug}`}
+                target="_blank"
+                className="flex items-center justify-between p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
+              >
+                <span className="truncate">Canal de Denúncias</span>
+                <ExternalLink className="w-3.5 h-3.5 shrink-0 text-red-400" />
+              </Link>
+              <Link
+                href={`/treinar/${company.slug}`}
+                target="_blank"
+                className="flex items-center justify-between p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-semibold transition-colors"
+              >
+                <span className="truncate">Treinamento Rápido</span>
+                <ExternalLink className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+              </Link>
+            </>
+          )}
         </div>
       </aside>
 
@@ -167,13 +188,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             Painel de Gestão de Integridade Licitatória (Lei 14.133) e NR-1 (Lei 14.457)
           </div>
           <div className="flex items-center gap-3 ml-auto">
-            <Link
-              href="/dashboard/diagnostico"
-              className="inline-flex items-center gap-1.5 text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-full transition-colors shadow-sm"
-            >
-              <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Programa Estruturado ({diagnostic.overall_score}%) • {diagnostic.met_count}/{diagnostic.total_requirements} Requisitos
-            </Link>
+            {diagnostic && (
+              <Link
+                href="/dashboard/diagnostico"
+                className="inline-flex items-center gap-1.5 text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-full transition-colors shadow-sm"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                Programa Estruturado ({diagnostic.overall_score}%) • {diagnostic.met_count}/{diagnostic.total_requirements} Requisitos
+              </Link>
+            )}
             <Link
               href="/dashboard/ajuda"
               title="Ajuda e Suporte Técnico"
@@ -185,6 +208,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <button
               type="button"
               onClick={async () => {
+                mockStore.clearClientTenant();
+                // Limpa o localStorage do tenant
+                if (typeof window !== "undefined") {
+                  localStorage.removeItem("techcompliance_active_tenant");
+                }
                 await logoutAdminAction();
                 window.location.href = "/login";
               }}
@@ -211,5 +239,13 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </main>
       </div>
     </div>
+  );
+}
+
+export default function DashboardLayout({ children }: { children: React.ReactNode }) {
+  return (
+    <CompanyProvider>
+      <DashboardLayoutInner>{children}</DashboardLayoutInner>
+    </CompanyProvider>
   );
 }

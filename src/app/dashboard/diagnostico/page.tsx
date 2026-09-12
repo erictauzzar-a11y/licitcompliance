@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   ShieldCheck,
@@ -30,26 +30,44 @@ import {
   RequirementStatus,
 } from "@/types/compliance";
 import { generateDossierPDF } from "@/lib/pdf-generator";
+import { useCompany } from "@/contexts/CompanyContext";
 
 export default function ProgramDiagnosticPage() {
+  const { company, isLoading } = useCompany();
   const [diagnostic, setDiagnostic] = useState<ComplianceDiagnostic>(() =>
-    evaluateCompanyCompliance()
+    evaluateCompanyCompliance(company?.id)
   );
   const [selectedPillar, setSelectedPillar] = useState<PillarCategory | "TODOS">("TODOS");
   const [selectedStatus, setSelectedStatus] = useState<RequirementStatus | "TODOS">("TODOS");
   const [activeReqModal, setActiveReqModal] = useState<ComplianceRequirement | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
+  useEffect(() => {
+    if (company?.id) {
+      setDiagnostic(evaluateCompanyCompliance(company.id));
+    }
+  }, [company?.id]);
+
   const handleDownloadDossier = async () => {
     try {
       setGeneratingPdf(true);
-      await generateDossierPDF();
+      await generateDossierPDF(undefined, company?.id);
     } catch (err) {
       console.error(err);
     } finally {
       setGeneratingPdf(false);
     }
   };
+
+  if (isLoading || !company) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
+        <div className="h-48 bg-slate-200 rounded-3xl" />
+        <div className="h-32 bg-slate-200 rounded-2xl" />
+        <div className="h-64 bg-slate-200 rounded-2xl" />
+      </div>
+    );
+  }
 
   const filteredRequirements = diagnostic.requirements.filter((req) => {
     if (selectedPillar !== "TODOS" && req.pillar !== selectedPillar) return false;

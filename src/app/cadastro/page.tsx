@@ -21,6 +21,7 @@ import {
   User,
   Edit3,
   Check,
+  Lock,
 } from "lucide-react";
 import { formatCNPJ, maskCNPJInput, cleanCNPJ, isValidCNPJFormat } from "@/lib/utils";
 import { mockStore } from "@/lib/mock-data";
@@ -67,7 +68,7 @@ export default function RegisterCompanyPage() {
   const [isEditingData, setIsEditingData] = useState(false);
 
   // Dados retornados e editáveis da empresa
-  const [formData, setFormData] = useState<Partial<Company>>({
+  const [formData, setFormData] = useState<Partial<Company> & { password?: string }>({
     cnpj: "",
     legal_name: "",
     trade_name: "",
@@ -99,6 +100,7 @@ export default function RegisterCompanyPage() {
     compliance_officer_name: "",
     approximate_employees_count: 10,
     conducts_public_contracts: true,
+    password: "",
   });
 
   const handleCnpjInputChange = (val: string) => {
@@ -201,6 +203,22 @@ export default function RegisterCompanyPage() {
         setErrorMsg(res.error || "Falha ao criar ambiente da empresa.");
         setStep("COMPLIANCE_DETAILS");
         return;
+      }
+
+      // Sincroniza o tenant imediatamente no client mockStore e localStorage do browser
+      if (res.company) {
+        mockStore.saveClientTenant(res.company);
+      } else {
+        mockStore.saveClientTenant({
+          id: res.companyId || "comp-" + Date.now(),
+          trade_name: formData.trade_name || formData.legal_name || "Sua Empresa",
+          legal_name: formData.legal_name || "Sua Empresa",
+          cnpj: cleanCNPJ(formData.cnpj || ""),
+          slug: res.slug || formData.slug || "minha-empresa",
+          created_at: new Date().toISOString(),
+          status: formData.status || "ATIVA",
+          ...formData,
+        } as Company);
       }
 
       await new Promise((resolve) => setTimeout(resolve, 900));
@@ -747,6 +765,28 @@ export default function RegisterCompanyPage() {
                 </div>
               </div>
 
+              {/* Senha de Acesso do Gestor para Login Seguro */}
+              <div className="p-4 rounded-2xl bg-blue-950/30 border border-blue-800/50 space-y-2">
+                <label className="block text-xs font-bold uppercase tracking-wider text-blue-300 mb-1.5 flex items-center gap-1.5">
+                  <Lock className="w-4 h-4 text-blue-400" />
+                  Defina a Senha de Acesso do Gestor *
+                </label>
+                <div className="relative">
+                  <input
+                    type="password"
+                    value={(formData as any).password || ""}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value } as any)}
+                    placeholder="Mínimo 8 caracteres (letras, números, símbolos)"
+                    required
+                    minLength={8}
+                    className="w-full text-xs sm:text-sm px-4 py-3 bg-slate-900 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  />
+                </div>
+                <p className="text-[11px] text-slate-400">
+                  Esta senha será utilizada para acessar o painel de integridade pelo e-mail informado acima.
+                </p>
+              </div>
+
               {/* Porte e Quantidade aproximada de colaboradores */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -870,7 +910,9 @@ export default function RegisterCompanyPage() {
             <div className="w-full max-w-sm pt-4">
               <button
                 type="button"
-                onClick={() => router.push("/dashboard")}
+                onClick={() => {
+                  window.location.href = "/dashboard";
+                }}
                 className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-98"
               >
                 <span>Entrar no meu programa de integridade</span>

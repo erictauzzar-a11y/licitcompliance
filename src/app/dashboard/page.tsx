@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { CheckoutButton } from "@/components/CheckoutButton";
@@ -35,6 +35,7 @@ import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
 import { generateDossierPDF } from "@/lib/pdf-generator";
 import { formatCNPJ } from "@/lib/utils";
 import { CompliancePendingItem } from "@/types/compliance";
+import { Company } from "@/types";
 
 // Helper de badge para severidade de pendência
 function getSeverityBadge(severity: CompliancePendingItem["severity"]) {
@@ -61,7 +62,7 @@ function StripeSuccessBanner() {
           <CheckCircle2 className="w-5 h-5" />
         </div>
         <div>
-          <h3 className="text-sm font-bold text-white">
+          <h3 className="text-sm font-bold text-emerald-200">
             Assinatura TechCompliance confirmada com sucesso!
           </h3>
           <p className="text-xs text-emerald-200/90">
@@ -76,19 +77,57 @@ function StripeSuccessBanner() {
   );
 }
 
-export default function DashboardOverviewPage() {
-  const company = mockStore.getCompany();
-  const metrics = mockStore.getComplianceMetrics(company.id);
-  const employees = mockStore.getEmployees(company.id);
-  const reports = mockStore.getReports(company.id);
-  const policy = mockStore.getPolicy(company.id);
+import { useCompany } from "@/contexts/CompanyContext";
+import { getEmployeesAction } from "@/app/actions/employees";
+import { getReportsAction } from "@/app/actions/reports";
+import { getPolicyAction } from "@/app/actions/policies";
+import { Employee, Policy, WhistleblowerReport } from "@/types";
 
-  // Motor dinâmico de conformidade
-  const diagnostic = evaluateCompanyCompliance(company.id);
+export default function DashboardOverviewPage() {
+  const { company, isLoading } = useCompany();
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [reports, setReports] = useState<WhistleblowerReport[]>([]);
+  const [policy, setPolicy] = useState<Policy | null>(null);
+
+  // Busca dados reais do Supabase quando a empresa estiver carregada
+  useEffect(() => {
+    if (!company) return;
+    getEmployeesAction().then((res) => { if (res.success) setEmployees(res.employees); });
+    getReportsAction().then((res) => { if (res.success) setReports(res.reports); });
+    getPolicyAction().then((res) => { if (res.success && res.policy) setPolicy(res.policy); });
+  }, [company]);
+
+  // Motor dinâmico de conformidade — só executa com empresa real
+  // Após o guard isLoading||!company, company é sempre definido aqui
+  const _rawDiagnostic = company ? evaluateCompanyCompliance(company.id) : null;
+  const diagnostic = _rawDiagnostic ?? {
+    overall_score: 0,
+    met_count: 0,
+    partial_count: 0,
+    pending_count: 0,
+    total_requirements: 0,
+    total_evidences: 0,
+    pending_items: [] as import("@/types/compliance").CompliancePendingItem[],
+    evaluated_at: new Date().toISOString(),
+  };
+
+  // Métricas calculadas com dados reais
+  const totalEmployees = employees.length;
+  const acceptedPolicies = employees.filter((e) => !!e.policy_accepted_at).length;
+  const policyRate = totalEmployees > 0 ? Math.round((acceptedPolicies / totalEmployees) * 100) : 0;
+  const completedTrainings = 0;
+  const trainingRate = 0;
+  const totalReports = reports.length;
+  const resolvedReports = reports.filter((r) =>
+    r.status === "PROCEDENTE" || r.status === "IMPROCEDENTE" || r.status === "ARQUIVADA"
+  ).length;
+
+  const metrics = { totalEmployees, acceptedPolicies, policyRate, completedTrainings, trainingRate, totalReports, resolvedReports };
 
   const [generatingPdf, setGeneratingPdf] = useState(false);
 
   const handleGenerateDossier = async () => {
+    if (!company) return;
     setGeneratingPdf(true);
     try {
       await generateDossierPDF(undefined, company.id);
@@ -99,21 +138,36 @@ export default function DashboardOverviewPage() {
     }
   };
 
+  // Loading state: enquanto a empresa não carrega, exibe skeleton
+  if (isLoading || !company) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-8 animate-pulse pb-12">
+        <div className="h-48 rounded-3xl bg-slate-200" />
+        <div className="h-32 rounded-2xl bg-slate-200" />
+        <div className="grid grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <div key={i} className="h-28 rounded-2xl bg-slate-200" />)}
+        </div>
+      </div>
+    );
+  }
+
   // 6 Áreas estruturadas do Programa com evidências e pendências mapeadas
   const programAreas = [
     {
       title: "Código & Conduta",
       href: "/dashboard/politicas",
       score: 100,
-      statusBadge: "Vigente v1.2",
+      statusBadge: policy ? "Vigente v" + (policy.version ?? "1.0") : "Ativo",
       badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
-      mainEvidence: `Código com 15 seções aprovado e vigente (${new Date(policy.updated_at).toLocaleDateString("pt-BR")})`,
+      mainEvidence: policy
+        ? `Código aprovado e vigente (${new Date(policy.updated_at).toLocaleDateString("pt-BR")})`
+        : "Código de Conduta disponível para revisão",
       mainPending: null,
     },
     {
       title: "Treinamentos",
       href: "/dashboard/colaboradores",
-      score: metrics.trainingRate || 87,
+      score: metrics.trainingRate || 0,
       statusBadge: metrics.trainingRate >= 80 ? "Alto Nível" : "Em Andamento",
       badgeColor: "text-blue-700 bg-blue-50 border-blue-200",
       mainEvidence: `${metrics.completedTrainings} de ${employees.length} colaboradores capacitados com certificado emitido`,
@@ -135,7 +189,7 @@ export default function DashboardOverviewPage() {
       statusBadge: "Em Monitoramento",
       badgeColor: "text-blue-700 bg-blue-50 border-blue-200",
       mainEvidence: "Verificação prévia automática de CNPJs e Sócios contra sanções e impedimentos",
-      mainPending: "4 fornecedores cadastrados aguardando renovação de certidões",
+      mainPending: null,
     },
     {
       title: "Controles Internos",
@@ -152,7 +206,7 @@ export default function DashboardOverviewPage() {
       score: 80,
       statusBadge: "Dossiê Ativo",
       badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
-      mainEvidence: `${diagnostic.total_evidences} evidências auditáveis consolidadas no repositório`,
+      mainEvidence: diagnostic ? `${diagnostic.total_evidences} evidências auditáveis consolidadas no repositório` : "Repositório de evidências ativo",
       mainPending: "Revisão periódica programada para o próximo semestre",
     },
   ];
@@ -174,10 +228,10 @@ export default function DashboardOverviewPage() {
           
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-baseline gap-2">
-              Status de Preparação: <span className="text-emerald-400 font-mono">{diagnostic.overall_score}%</span> estruturado
+              Status de Preparação: <span className="text-emerald-400 font-mono">{diagnostic?.overall_score ?? 0}%</span> estruturado
             </h1>
             <p className="text-sm font-semibold text-slate-300 mt-1">
-              <span className="text-emerald-300 font-bold">{diagnostic.met_count} de {diagnostic.total_requirements} requisitos atendidos</span> no padrão exigido em contratações públicas.
+              <span className="text-emerald-300 font-bold">{diagnostic?.met_count ?? 0} de {diagnostic?.total_requirements ?? 0} requisitos atendidos</span> no padrão exigido em contratações públicas.
             </p>
           </div>
 

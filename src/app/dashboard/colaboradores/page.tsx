@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Users,
@@ -15,19 +15,31 @@ import {
   FileSpreadsheet,
   Sparkles,
 } from "lucide-react";
-import { mockStore } from "@/lib/mock-data";
 import { Employee } from "@/types";
 import { formatCPF, maskCPF } from "@/lib/utils";
 import { createEmployeeAction, batchCreateEmployeesAction } from "@/app/actions/management";
+import { useCompany } from "@/contexts/CompanyContext";
+import { getEmployeesAction } from "@/app/actions/employees";
 
 export default function EmployeesManagementPage() {
-  const company = mockStore.getCompany();
-  const [employees, setEmployees] = useState<Employee[]>(mockStore.getEmployees());
+  const { company, isLoading: companyLoading } = useCompany();
+  const [employees, setEmployees] = useState<Employee[]>([]);
+  const [loadingEmployees, setLoadingEmployees] = useState(true);
   const [search, setSearch] = useState("");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showBatchModal, setShowBatchModal] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [copiedGeneralLink, setCopiedGeneralLink] = useState(false);
+
+  // Busca colaboradores reais do Supabase quando empresa está carregada
+  useEffect(() => {
+    if (!company) return;
+    setLoadingEmployees(true);
+    getEmployeesAction().then((res) => {
+      if (res.success) setEmployees(res.employees);
+      setLoadingEmployees(false);
+    });
+  }, [company]);
 
   // Form Individual
   const [fullName, setFullName] = useState("");
@@ -54,7 +66,9 @@ export default function EmployeesManagementPage() {
     });
 
     if (res.success) {
-      setEmployees([...mockStore.getEmployees()]);
+      // Recarrega do Supabase para garantir dados frescos
+      const fresh = await getEmployeesAction();
+      if (fresh.success) setEmployees(fresh.employees);
       setShowAddModal(false);
       setFullName("");
       setCpf("");
@@ -68,7 +82,8 @@ export default function EmployeesManagementPage() {
     e.preventDefault();
     const res = await batchCreateEmployeesAction(batchText);
     if (res.success) {
-      setEmployees([...mockStore.getEmployees()]);
+      const fresh = await getEmployeesAction();
+      if (fresh.success) setEmployees(fresh.employees);
       setShowBatchModal(false);
     }
   };
@@ -96,6 +111,17 @@ export default function EmployeesManagementPage() {
       e.cpf.includes(search) ||
       e.role.toLowerCase().includes(search.toLowerCase())
   );
+
+  // Loading: aguarda empresa e colaboradores
+  if (companyLoading || !company) {
+    return (
+      <div className="max-w-6xl mx-auto space-y-6 animate-pulse">
+        <div className="h-10 w-64 bg-slate-200 rounded-xl" />
+        <div className="h-24 bg-slate-200 rounded-2xl" />
+        <div className="h-64 bg-slate-200 rounded-2xl" />
+      </div>
+    );
+  }
 
   return (
     <div className="max-w-6xl mx-auto space-y-6 animate-in fade-in">
@@ -196,7 +222,7 @@ export default function EmployeesManagementPage() {
             </thead>
             <tbody className="divide-y divide-slate-100 text-slate-700">
               {filteredEmployees.map((emp) => {
-                const certs = mockStore.getEmployeeCertificates(emp.id);
+                const certs: any[] = [];
                 return (
                   <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-3.5 px-4 font-semibold text-slate-900">

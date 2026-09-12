@@ -64,17 +64,19 @@ export function generateHash(prefix: string = "LC"): string {
 }
 
 /**
- * CSPRNG Criptograficamente Seguro para Protocolos de Denúncia
+ * CSPRNG Criptograficamente Seguro para Protocolo Único de Denúncia
+ * Formato limpo sem caracteres especiais: DEN + ANO + 10 caracteres (ex: DEN2026K8M4P9X2A1)
+ * Elimina caracteres ambíguos (0, O, 1, I, L) para facilitar cópia e digitação
  */
 export function generateProtocol(): string {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const chars = "ABCDEFGHJKMNPQRSTUVWXYZ23456789";
   let randomPart = "";
-  for (let i = 0; i < 8; i++) {
+  for (let i = 0; i < 10; i++) {
     const idx = crypto.randomInt(0, chars.length);
     randomPart += chars.charAt(idx);
   }
   const year = new Date().getFullYear();
-  return `DEN-${year}-${randomPart}`;
+  return `DEN${year}${randomPart}`;
 }
 
 /**

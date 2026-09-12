@@ -145,7 +145,7 @@ export default function PublicWhistleblowerPage({
 
   const copyCredentials = () => {
     if (!submittedData) return;
-    const text = `TECHCOMPLIANCE - DADOS DE ACOMPANHAMENTO DA DENÚNCIA\nOrganização: ${company.trade_name}\nProtocolo: ${submittedData.protocol}\nChave de Acesso: ${submittedData.access_key}\nLink de Consulta: ${window.location.origin}/canal/${resolvedParams.slug}/acompanhar`;
+    const text = `TECHCOMPLIANCE - PROTOCOLO DE ACOMPANHAMENTO DA DENÚNCIA\nOrganização: ${company.trade_name}\nProtocolo: ${submittedData.protocol}\nLink de Consulta: ${window.location.origin}/canal/${resolvedParams.slug}/acompanhar?p=${submittedData.protocol}`;
     navigator.clipboard.writeText(text);
     setCopiedSuccess(true);
     setTimeout(() => setCopiedSuccess(false), 2500);
@@ -163,28 +163,28 @@ export default function PublicWhistleblowerPage({
                   src={company.logo_url}
                   alt={company.trade_name}
                   fill
-                  className="object-cover"
+                  className="object-contain"
                 />
               </div>
             ) : (
-              <div className="w-8 h-8 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold text-sm">
-                <Building2 className="w-4 h-4" />
+              <div className="p-2 rounded-lg bg-blue-50 text-blue-700">
+                <Building2 className="w-5 h-5" />
               </div>
             )}
             <div>
-              <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider block leading-none">
-                Canal Oficial de Ética & Integridade
-              </span>
-              <strong className="text-sm font-bold text-slate-900 block truncate max-w-[200px] sm:max-w-none">
+              <div className="font-black text-sm text-slate-900 leading-tight">
                 {company.trade_name}
-              </strong>
+              </div>
+              <span className="text-[11px] text-slate-500 font-medium">
+                Canal Oficial de Ética e Integridade
+              </span>
             </div>
           </div>
 
           <div className="flex items-center gap-2">
             <Link
               href={`/canal/${resolvedParams.slug}/acompanhar`}
-              className="inline-flex items-center gap-1.5 text-xs font-semibold text-blue-700 hover:text-blue-900 bg-blue-50 hover:bg-blue-100/70 px-3 py-1.5 rounded-lg border border-blue-200 transition-colors"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-300 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
             >
               <Search className="w-3.5 h-3.5" />
               <span>Consultar Protocolo</span>
@@ -197,7 +197,7 @@ export default function PublicWhistleblowerPage({
       <main className="max-w-3xl mx-auto px-4 py-8 w-full flex-1">
         {submittedData ? (
           /* ============================================================ */
-          /* 3. TELA DE SUCESSO, PROTOCOLO E CHAVE DE ACESSO              */
+          /* 3. TELA DE SUCESSO E PROTOCOLO ÚNICO                         */
           /* ============================================================ */
           <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-10 shadow-lg text-center space-y-6 animate-in fade-in zoom-in-95">
             <div className="w-16 h-16 bg-emerald-100 text-emerald-600 rounded-full flex items-center justify-center mx-auto shadow-inner">
@@ -206,7 +206,7 @@ export default function PublicWhistleblowerPage({
 
             <div className="space-y-2">
               <span className="text-[11px] font-bold uppercase tracking-widest text-emerald-700 bg-emerald-50 px-3 py-1 rounded-full border border-emerald-200">
-                Transmissão Criptografada Concluída
+                Transmissão Segura Concluída
               </span>
               <h1 className="text-2xl sm:text-3xl font-black text-slate-900">
                 SUA DENÚNCIA FOI REGISTRADA COM SUCESSO!
@@ -218,47 +218,49 @@ export default function PublicWhistleblowerPage({
               </p>
             </div>
 
-            {/* Card de Destaque com Protocolo e Chave */}
-            <div className="bg-amber-50 border-2 border-amber-300 rounded-2xl p-6 text-left max-w-lg mx-auto space-y-4 shadow-sm">
+            {/* Card de Destaque com Protocolo Único */}
+            <div className="bg-blue-50 border-2 border-blue-200 rounded-2xl p-6 text-left max-w-lg mx-auto space-y-4 shadow-sm">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                <ShieldCheck className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
                 <div>
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-amber-900">
-                    Atenção: Salve seus dados agora
+                  <h3 className="text-xs font-bold uppercase tracking-wider text-blue-900">
+                    Protocolo de Acompanhamento Exclusivo
                   </h3>
-                  <p className="text-xs text-amber-800 mt-0.5 leading-relaxed">
-                    Anote ou salve o <strong>Protocolo</strong> e a <strong>Chave de Acesso</strong> abaixo. Esta é a <strong>ÚNICA</strong> forma de você acompanhar o andamento da apuração e ler a resposta da comissão sem quebrar o sigilo.
+                  <p className="text-xs text-blue-800 mt-0.5 leading-relaxed">
+                    Copie ou anote o seu <strong>Protocolo Único</strong> abaixo. Você só precisará dele para acompanhar o andamento da apuração e ler a manifestação oficial da empresa.
                   </p>
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
-                <div className="bg-white p-3.5 rounded-xl border border-amber-200 shadow-2xs">
-                  <span className="text-[11px] text-slate-500 font-bold block uppercase tracking-wider">
-                    Protocolo Oficial
-                  </span>
-                  <strong className="text-lg text-slate-900 font-mono select-all tracking-wide">
-                    {submittedData.protocol}
-                  </strong>
-                </div>
-
-                <div className="bg-white p-3.5 rounded-xl border border-amber-200 shadow-2xs">
-                  <span className="text-[11px] text-slate-500 font-bold block uppercase tracking-wider">
-                    Chave de Acesso Sigilosa
-                  </span>
-                  <strong className="text-lg text-blue-700 font-mono select-all tracking-wide">
-                    {submittedData.access_key}
-                  </strong>
-                </div>
+              <div className="bg-white p-4 rounded-xl border border-blue-200 shadow-2xs text-center space-y-1">
+                <span className="text-[11px] text-slate-500 font-bold block uppercase tracking-wider">
+                  PROTOCOLO DA DENÚNCIA
+                </span>
+                <strong className="text-2xl sm:text-3xl text-blue-700 font-mono select-all tracking-wider block">
+                  {submittedData.protocol}
+                </strong>
+                <span className="text-[11px] text-slate-400 block font-sans">
+                  Código alfanumérico único e permanente
+                </span>
               </div>
 
-              <button
-                onClick={copyCredentials}
-                className="w-full bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-xl transition-all text-xs flex items-center justify-center gap-2 shadow-xs"
-              >
-                <Copy className="w-4 h-4" />
-                {copiedSuccess ? "✓ Dados Copiados para a Área de Transferência!" : "Copiar Dados de Acompanhamento"}
-              </button>
+              <div className="flex flex-col sm:flex-row gap-2 pt-1">
+                <button
+                  onClick={copyCredentials}
+                  className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-xl transition-all text-xs flex items-center justify-center gap-2 shadow-xs cursor-pointer active:scale-98"
+                >
+                  <Copy className="w-4 h-4" />
+                  {copiedSuccess ? "✓ Protocolo Copiado!" : "Copiar Protocolo"}
+                </button>
+
+                <Link
+                  href={`/canal/${resolvedParams.slug}/acompanhar?p=${submittedData.protocol}`}
+                  className="bg-white hover:bg-slate-100 text-slate-800 border border-slate-300 font-bold py-3 px-4 rounded-xl transition-all text-xs flex items-center justify-center gap-1.5 shadow-2xs text-center"
+                >
+                  <span>Ir para Acompanhamento</span>
+                  <ArrowRight className="w-3.5 h-3.5" />
+                </Link>
+              </div>
             </div>
 
             {/* Ações pós-submissão */}

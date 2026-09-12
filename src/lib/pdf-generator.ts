@@ -2,20 +2,38 @@ import jsPDF from "jspdf";
 import QRCode from "qrcode";
 import { formatCNPJ, formatCPF } from "./utils";
 import { mockStore } from "./mock-data";
+import { getDossierDataAction, DossierData } from "@/app/actions/dossier";
 
-export async function generateDossierPDF(originUrl?: string, companyId?: string): Promise<void> {
+export async function generateDossierPDF(
+  originUrl?: string,
+  companyId?: string,
+  providedData?: DossierData
+): Promise<void> {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "a4",
   });
 
-  const company = mockStore.getCompany(companyId);
+  // Tenta obter dados reais do Supabase
+  let dossierData = providedData;
+  if (!dossierData) {
+    try {
+      const res = await getDossierDataAction(companyId);
+      if (res.success && res.data) {
+        dossierData = res.data;
+      }
+    } catch (e) {
+      console.warn("[generateDossierPDF] Falha ao obter dados via action, usando fallback:", e);
+    }
+  }
+
+  const company = dossierData?.company || mockStore.getCompany(companyId);
   const targetId = company.id;
-  const policy = mockStore.getPolicy(targetId);
-  const employees = mockStore.getEmployees(targetId);
-  const metrics = mockStore.getComplianceMetrics(targetId);
-  const validationCode = `DOSSIE-${new Date().getFullYear()}-${company.cnpj.substring(0, 8)}`;
+  const policy = dossierData?.policy || mockStore.getPolicy(targetId);
+  const employees = dossierData?.employees || mockStore.getEmployees(targetId);
+  const metrics = dossierData?.metrics || mockStore.getComplianceMetrics(targetId);
+  const validationCode = `DOSSIE-${new Date().getFullYear()}-${company.cnpj.replace(/\D/g, "").substring(0, 8)}`;
   
   const canonicalUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://techcompliance.vercel.app");
   const validationUrl = `${canonicalUrl}/validar/${validationCode}`;
@@ -192,7 +210,12 @@ export async function generateDossierPDF(originUrl?: string, companyId?: string)
       doc.text("Pendente", 140, y + 4.5);
     }
 
-    const completed = mockStore.getEmployeeCertificates(emp.id).length;
+    let completed = 0;
+    try {
+      completed = mockStore.getEmployeeCertificates(emp.id).length;
+    } catch {
+      completed = 0;
+    }
     if (completed >= 2) {
       doc.setTextColor(16, 185, 129);
       doc.text("100% Concluído", 172, y + 4.5);
@@ -242,6 +265,100 @@ export async function generateDossierPDF(originUrl?: string, companyId?: string)
   doc.text(`Acesse a rota ou aponte a câmera para o QR Code ao lado para conferência de autenticidade:`, 46, 274);
   doc.setTextColor(37, 99, 235);
   doc.text(validationUrl, 46, 279);
+
+  // --- SEÇÃO 6: DOCUMENTOS INSTITUCIONAIS DA BIBLIOTECA DE INTEGRIDADE (PÁGINA 2) ---
+  const docsToDisplay = (dossierData?.companyDocuments || []).filter(
+    (d) => d.status === "APROVADO" || d.status === "PUBLICADO"
+  );
+
+  if (docsToDisplay.length > 0) {
+    doc.addPage("a4", "portrait");
+
+    // Cabeçalho da Página 2
+    doc.setFillColor(15, 23, 42);
+    doc.rect(0, 0, 210, 24, "F");
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("6. POLÍTICAS E DOCUMENTOS CORPORATIVOS HOMOLOGADOS", 14, 12);
+
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(203, 213, 225);
+    doc.text(`Normativas internas, códigos e termos formalmente adotados pela ${company.legal_name}`, 14, 18);
+
+    let y2 = 32;
+    doc.setFontSize(8);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(51, 65, 85);
+    doc.text(
+      "A relação abaixo consolida os documentos institucionais, políticas de conduta e termos probatórios vigentes da organização, elaborados ou homologados a partir dos referenciais normativos da Lei nº 14.133/2021 e Lei nº 12.846/2013:",
+      14,
+      y2
+    );
+
+    y2 += 8;
+    // Tabela de Documentos
+    doc.setFillColor(241, 245, 249);
+    doc.rect(14, y2, 182, 7, "F");
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(51, 65, 85);
+    doc.text("TÍTULO DO DOCUMENTO", 16, y2 + 4.5);
+    doc.text("CATEGORIA", 95, y2 + 4.5);
+    doc.text("VERSÃO", 135, y2 + 4.5);
+    doc.text("STATUS", 155, y2 + 4.5);
+    doc.text("DATA DE APROVAÇÃO", 175, y2 + 4.5);
+
+    y2 += 7;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(7);
+
+    docsToDisplay.slice(0, 18).forEach((d, idx) => {
+      const isEven = idx % 2 === 0;
+      if (isEven) {
+        doc.setFillColor(248, 250, 252);
+        doc.rect(14, y2, 182, 6.5, "F");
+      }
+      doc.setTextColor(30, 41, 59);
+      doc.text(d.title.substring(0, 48), 16, y2 + 4.5);
+      doc.text(d.category.replace(/_/g, " "), 95, y2 + 4.5);
+      doc.text(`v${d.version}`, 135, y2 + 4.5);
+      
+      doc.setTextColor(16, 185, 129);
+      doc.text(d.status, 155, y2 + 4.5);
+
+      doc.setTextColor(71, 85, 105);
+      const appDate = d.approved_at
+        ? new Date(d.approved_at).toLocaleDateString("pt-BR")
+        : new Date(d.created_at).toLocaleDateString("pt-BR");
+      doc.text(appDate, 175, y2 + 4.5);
+
+      y2 += 6.5;
+    });
+
+    // Rodapé de Autenticação da Página 2
+    doc.setDrawColor(203, 213, 225);
+    doc.line(14, 260, 196, 260);
+
+    if (qrCodeDataUrl) {
+      doc.addImage(qrCodeDataUrl, "PNG", 14, 263, 24, 24);
+    }
+
+    doc.setFontSize(7.5);
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(15, 23, 42);
+    doc.text("VALIDAÇÃO DE DOCUMENTOS DO PROGRAMA DE INTEGRIDADE", 42, 268);
+
+    doc.setFontSize(7);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(71, 85, 105);
+    doc.text(`Empresa: ${company.legal_name} • CNPJ: ${formatCNPJ(company.cnpj)}`, 42, 273);
+    doc.text(`Chave Auditável: ${validationCode} • Registro eletrônico emitido via TechCompliance`, 42, 278);
+    doc.setTextColor(37, 99, 235);
+    doc.text(validationUrl, 42, 283);
+  }
 
   // Salvar PDF
   doc.save(`Dossie_Integridade_${company.slug.toUpperCase()}_${new Date().getFullYear()}.pdf`);
