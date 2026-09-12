@@ -19,6 +19,7 @@ import {
   AlertTriangle,
 } from "lucide-react";
 import { HeroLiveSoftwareDemo } from "@/components/HeroLiveSoftwareDemo";
+import { LaptopInteractiveShowcase } from "@/components/LaptopInteractiveShowcase";
 
 export default function HomePage() {
   return (
@@ -309,40 +310,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* 3 PILARES NORMATIVOS */}
-      <section className="py-16 px-4 max-w-6xl mx-auto w-full">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-3">
-            <div className="p-3 bg-blue-500/20 text-blue-400 rounded-xl w-fit">
-              <FileCheck2 className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-bold text-white">Lei nº 14.133/2021 (Integridade)</h2>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Cumprimento prático do Programa de Integridade exigido em contratações de grande vulto e desempate licitatório. Proibição de vantagens e lealdade concorrencial.
-            </p>
-          </div>
-
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-3">
-            <div className="p-3 bg-indigo-500/20 text-indigo-400 rounded-xl w-fit">
-              <Lock className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-bold text-white">NR-1 / Lei nº 14.457/2022</h2>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Prevenção obrigatória ao assédio moral e sexual, capacitação continuada da equipe e disponibilização de Canal de Denúncias seguro com garantia de não retaliação.
-            </p>
-          </div>
-
-          <div className="bg-slate-900 border border-slate-800 p-6 rounded-2xl space-y-3">
-            <div className="p-3 bg-emerald-500/20 text-emerald-400 rounded-xl w-fit">
-              <Award className="w-6 h-6" />
-            </div>
-            <h2 className="text-lg font-bold text-white">Dossiê e QR Code Auditável</h2>
-            <p className="text-xs text-slate-300 leading-relaxed">
-              Geração de relatório probatório em PDF com validação pública por QR Code e hash de auditoria em segundos para comprovação perante comissões de contratação.
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* SEÇÃO NOTEBOOK REALISTA: AS 3 TELAS DO SOFTWARE PASSANDO DENTRO DA TELA */}
+      <LaptopInteractiveShowcase />
 
       {/* SEÇÃO INFERIOR — GESTÃO NA PALMA DA MÃO (SHOWCASE MULTIDISPOSITIVO) */}
       <section className="py-20 px-4 sm:px-6 lg:px-8 bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 border-t border-slate-800/80 relative overflow-hidden">
