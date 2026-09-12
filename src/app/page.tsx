@@ -168,136 +168,140 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* SEÇÃO 6 PASSOS — EXATAMENTE COMO NA REFERÊNCIA */}
-      <section id="como-funciona" className="py-20 px-4 sm:px-6 lg:px-8 bg-white text-slate-900">
-        <div className="max-w-7xl mx-auto space-y-12">
+      {/* SEÇÃO 6 PASSOS — REFINADA COM DESIGN SYSTEM ESCURO E ELEGANTE */}
+      <section id="como-funciona" className="py-24 px-4 sm:px-6 lg:px-8 bg-slate-900/70 border-t border-b border-white/5 text-white relative overflow-hidden">
+        {/* Glow de fundo sutil */}
+        <div className="absolute -top-40 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-blue-600/10 blur-[120px] pointer-events-none -z-10" />
+
+        <div className="max-w-7xl mx-auto space-y-14">
           <div className="text-center space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-50 text-blue-700 text-xs font-bold border border-blue-200">
-              COMO FUNCIONA
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-500/10 text-blue-400 text-xs font-bold border border-blue-500/20 backdrop-blur-sm">
+              <Sparkles className="w-3.5 h-3.5 text-blue-400" />
+              <span>COMO FUNCIONA</span>
             </div>
-            <h2 className="text-2xl sm:text-4xl font-black text-slate-900 tracking-tight">
+            <h2 className="text-2xl sm:text-4xl font-black text-white tracking-tight">
               Em 6 passos, sua empresa mais preparada
             </h2>
-            <p className="text-slate-500 text-sm max-w-xl mx-auto">
+            <p className="text-slate-400 text-sm max-w-xl mx-auto leading-relaxed">
               Simplicidade e rigor técnico para atender a todas as exigências de integridade do poder público.
             </p>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
             {/* Passo 1 */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3">
-              <div className="space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 hover:border-blue-500/40 transition-all flex flex-col justify-between space-y-3 group shadow-lg">
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">1</span>
-                  <h3 className="font-bold text-xs text-slate-900">Cadastre a empresa</h3>
+                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-blue-500/30">1</span>
+                  <h3 className="font-bold text-xs text-white">Cadastre a empresa</h3>
                 </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200 text-[10px] space-y-1 font-mono">
+                <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800 text-[10px] space-y-1 font-mono">
                   <div className="text-slate-400">CNPJ: 33.000.167/0001-01</div>
-                  <div className="font-bold text-slate-800 truncate">TransLog Brasil S/A</div>
-                  <span className="inline-block bg-emerald-100 text-emerald-800 px-1.5 py-0.2 rounded font-sans font-bold text-[9px]">Ativa</span>
+                  <div className="font-bold text-slate-200 truncate">TransLog Brasil S/A</div>
+                  <span className="inline-block bg-emerald-500/15 text-emerald-400 border border-emerald-500/30 px-1.5 py-0.2 rounded font-sans font-bold text-[9px]">Ativa</span>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-400 leading-relaxed">
                 Informe apenas o CNPJ e o sistema consulta os dados públicos automaticamente.
               </p>
             </div>
 
             {/* Passo 2 */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3">
-              <div className="space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 hover:border-emerald-500/40 transition-all flex flex-col justify-between space-y-3 group shadow-lg">
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">2</span>
-                  <h3 className="font-bold text-xs text-slate-900">Realize o diagnóstico</h3>
+                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-blue-500/30">2</span>
+                  <h3 className="font-bold text-xs text-white">Realize o diagnóstico</h3>
                 </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200 text-center">
-                  <div className="text-lg font-black text-emerald-600">82%</div>
-                  <span className="text-[9px] text-slate-400 uppercase font-bold">Conformidade</span>
+                <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800 text-center">
+                  <div className="text-lg font-black text-emerald-400">82%</div>
+                  <span className="text-[9px] text-slate-400 uppercase font-bold tracking-wider">Conformidade</span>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-400 leading-relaxed">
                 O motor avalia instantaneamente a aderência aos pilares da Lei 14.133.
               </p>
             </div>
 
             {/* Passo 3 */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3">
-              <div className="space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 hover:border-amber-500/40 transition-all flex flex-col justify-between space-y-3 group shadow-lg">
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">3</span>
-                  <h3 className="font-bold text-xs text-slate-900">Resolva pendências</h3>
+                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-blue-500/30">3</span>
+                  <h3 className="font-bold text-xs text-white">Resolva pendências</h3>
                 </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200 text-[10px] space-y-1">
-                  <div className="flex items-center gap-1 text-red-600 font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-red-500" />
+                <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800 text-[10px] space-y-1">
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
                     <span>0 Críticas</span>
                   </div>
-                  <div className="flex items-center gap-1 text-amber-600 font-bold">
-                    <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                  <div className="flex items-center gap-1.5 text-amber-400 font-bold">
+                    <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />
                     <span>3 Orientações</span>
                   </div>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-400 leading-relaxed">
                 Receba planos de ação objetivos para regularizar tudo com poucos cliques.
               </p>
             </div>
 
             {/* Passo 4 */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3">
-              <div className="space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 hover:border-blue-500/40 transition-all flex flex-col justify-between space-y-3 group shadow-lg">
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">4</span>
-                  <h3 className="font-bold text-xs text-slate-900">Organize evidências</h3>
+                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-blue-500/30">4</span>
+                  <h3 className="font-bold text-xs text-white">Organize evidências</h3>
                 </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200 text-[10px] space-y-1">
-                  <div className="flex items-center gap-1 text-emerald-700 font-bold">
-                    <Check className="w-3 h-3 text-emerald-600" />
+                <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800 text-[10px] space-y-1">
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <Check className="w-3 h-3 text-emerald-400" />
                     <span>Código Vigente</span>
                   </div>
-                  <div className="flex items-center gap-1 text-emerald-700 font-bold">
-                    <Check className="w-3 h-3 text-emerald-600" />
+                  <div className="flex items-center gap-1.5 text-emerald-400 font-bold">
+                    <Check className="w-3 h-3 text-emerald-400" />
                     <span>Canal Ativo</span>
                   </div>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">
-                Centralize certificados, termos e atas com hash de autenticidade.
+              <p className="text-[11px] text-slate-400 leading-relaxed">
+                Centralize certificados, termos e atas com hash de autenticidade SHA-256.
               </p>
             </div>
 
             {/* Passo 5 */}
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 flex flex-col justify-between space-y-3">
-              <div className="space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-950/60 border border-slate-800/80 hover:border-cyan-500/40 transition-all flex flex-col justify-between space-y-3 group shadow-lg">
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">5</span>
-                  <h3 className="font-bold text-xs text-slate-900">Analise os editais</h3>
+                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-blue-500/30">5</span>
+                  <h3 className="font-bold text-xs text-white">Analise os editais</h3>
                 </div>
-                <div className="p-2.5 bg-white rounded-xl border border-slate-200 text-[10px] space-y-1">
-                  <div className="flex items-center gap-1 text-blue-700 font-bold">
+                <div className="p-2.5 bg-slate-900/90 rounded-xl border border-slate-800 text-[10px] space-y-1">
+                  <div className="flex items-center gap-1.5 text-cyan-400 font-bold">
                     <Search className="w-3 h-3" />
                     <span>IA de Extração</span>
                   </div>
-                  <span className="text-[9px] text-slate-500 block">Cruza exigências</span>
+                  <span className="text-[9px] text-slate-400 block">Cruza exigências</span>
                 </div>
               </div>
-              <p className="text-[11px] text-slate-500">
+              <p className="text-[11px] text-slate-400 leading-relaxed">
                 Descubra em segundos o que o edital exige e o que sua empresa já possui.
               </p>
             </div>
 
             {/* Passo 6 */}
-            <div className="p-4 rounded-2xl bg-blue-50 border border-blue-200 flex flex-col justify-between space-y-3">
-              <div className="space-y-2">
+            <div className="p-4 rounded-2xl bg-gradient-to-b from-blue-950/60 to-slate-950/80 border border-blue-500/30 hover:border-blue-400/60 transition-all flex flex-col justify-between space-y-3 group shadow-xl shadow-blue-950/50">
+              <div className="space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <span className="w-6 h-6 rounded-full bg-blue-600 text-white font-bold text-xs flex items-center justify-center">6</span>
-                  <h3 className="font-bold text-xs text-blue-950">Gere o dossiê</h3>
+                  <span className="w-6 h-6 rounded-full bg-blue-500 text-white font-bold text-xs flex items-center justify-center shadow-md shadow-blue-400/50">6</span>
+                  <h3 className="font-bold text-xs text-blue-200">Gere o dossiê</h3>
                 </div>
-                <div className="p-2.5 bg-white rounded-xl border border-blue-200 text-center">
-                  <FileDown className="w-5 h-5 text-blue-600 mx-auto" />
-                  <span className="text-[10px] font-bold text-blue-800 block mt-1">Dossiê Pronto</span>
+                <div className="p-2.5 bg-blue-900/30 rounded-xl border border-blue-500/30 text-center">
+                  <FileDown className="w-5 h-5 text-blue-400 mx-auto" />
+                  <span className="text-[10px] font-bold text-blue-200 block mt-1">Dossiê Pronto</span>
                 </div>
               </div>
-              <p className="text-[11px] text-blue-900">
+              <p className="text-[11px] text-blue-200/90 leading-relaxed">
                 Exporte o relatório probatório com QR Code para anexar à sua proposta.
               </p>
             </div>
