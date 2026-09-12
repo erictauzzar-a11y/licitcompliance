@@ -20,6 +20,8 @@ import {
 } from "lucide-react";
 import { HeroLiveSoftwareDemo } from "@/components/HeroLiveSoftwareDemo";
 import { LaptopInteractiveShowcase } from "@/components/LaptopInteractiveShowcase";
+import { SiteHeader } from "@/components/SiteHeader";
+import { SiteFooter } from "@/components/SiteFooter";
 
 export default function HomePage() {
   return (
@@ -44,45 +46,8 @@ export default function HomePage() {
 
         {/* CONTEÚDO REAL DO SITE POR CIMA DA IMAGEM (CAMADA 2) */}
         <div className="relative z-10 flex flex-col min-h-[92vh] justify-between">
-          {/* Topo Navegação Transparente com Glassmorphism */}
-          <header className="border-b border-white/10 bg-slate-950/60 backdrop-blur-md sticky top-0 z-50">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 h-18 flex items-center justify-between">
-              <div className="flex items-center gap-8">
-                <Link href="/" className="flex items-center gap-2.5 font-bold text-lg text-white">
-                  <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30">
-                    <ShieldCheck className="w-5 h-5" />
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="leading-tight tracking-tight font-black">LicitCompliance</span>
-                    <span className="text-[10px] text-blue-300 font-normal hidden sm:inline">Conformidade que gera oportunidades</span>
-                  </div>
-                </Link>
-
-                <nav className="hidden lg:flex items-center gap-6 text-xs font-semibold text-slate-200">
-                  <Link href="#solucoes" className="hover:text-white transition-colors">Soluções</Link>
-                  <Link href="#como-funciona" className="hover:text-white transition-colors">Como Funciona</Link>
-                  <Link href="#recursos" className="hover:text-white transition-colors">Recursos</Link>
-                  <Link href="#licitacoes" className="hover:text-white transition-colors">Lei 14.133</Link>
-                </nav>
-              </div>
-
-              <div className="flex items-center gap-3">
-                <Link
-                  href="/login"
-                  className="text-xs sm:text-sm font-semibold text-slate-100 hover:text-white px-3.5 py-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 rounded-xl hover:bg-white/10"
-                >
-                  Entrar
-                </Link>
-                <Link
-                  href="/cadastro"
-                  className="bg-blue-600 hover:bg-blue-500 text-white text-xs sm:text-sm font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all flex items-center gap-1.5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 active:scale-[0.98]"
-                >
-                  <span>Começar agora</span>
-                  <ArrowRight className="w-4 h-4" />
-                </Link>
-              </div>
-            </div>
-          </header>
+          {/* Topo Navegação Global com Dropdowns Ricos */}
+          <SiteHeader />
 
           {/* Área Principal do Hero */}
           <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 sm:pt-14 pb-16 w-full">
@@ -501,22 +466,8 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Rodapé */}
-      <footer className="mt-auto border-t border-slate-800/80 bg-slate-950 py-8 px-4 text-center text-xs text-slate-400">
-        <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2 font-bold text-white">
-            <ShieldCheck className="w-4 h-4 text-blue-500" />
-            <span>LicitCompliance</span>
-          </div>
-          <p className="text-[11px] text-slate-400">
-            Plataforma de Gestão Tecnológica de Integridade para Contratações Públicas • Lei 14.133/2021
-          </p>
-          <div className="flex items-center gap-4 text-xs">
-            <Link href="/login" className="hover:text-white transition-colors">Acesso Gestor</Link>
-            <Link href="/cadastro" className="hover:text-white transition-colors">Cadastrar Empresa</Link>
-          </div>
-        </div>
-      </footer>
+      {/* Rodapé Global */}
+      <SiteFooter />
     </div>
   );
 }
