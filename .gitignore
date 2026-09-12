@@ -43,3 +43,5 @@ next-env.d.ts
 # generated test files
 *.pdf
 scratch/
+
+.vercel
