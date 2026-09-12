@@ -38,7 +38,7 @@ export async function executeDueDiligence(cnpj: string): Promise<DueDiligenceRec
 
   try {
     const brasilApiRes = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${cleanCnpj}`, {
-      headers: { "User-Agent": "LicitCompliance-DDI/1.0" },
+      headers: { "User-Agent": "TechCompliance-DDI/1.0" },
       next: { revalidate: 3600 },
     });
 

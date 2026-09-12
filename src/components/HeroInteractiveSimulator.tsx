@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect, useRef } from "react";
 import {
@@ -112,7 +112,7 @@ export function HeroInteractiveSimulator() {
             <div className="w-2.5 h-2.5 rounded-full bg-amber-500/80" />
             <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/80" />
             <span className="ml-2 text-[10px] font-mono text-slate-400 hidden sm:inline">
-              app.licitcompliance.com.br/dashboard
+              app.techcompliance.com.br/dashboard
             </span>
           </div>
 

@@ -127,17 +127,17 @@ export default function ValidateCertificateOrDossierPage({ params }: { params: P
               <AlertTriangle className="w-12 h-12 text-red-500 mx-auto" />
               <h2 className="text-base font-bold text-red-900">Documento Não Localizado ou Inválido</h2>
               <p className="text-xs text-slate-600 max-w-sm mx-auto">
-                O código <strong>{code}</strong> não corresponde a nenhum certificado ou dossiê emitido por empresas cadastradas no LicitCompliance.
+                O código <strong>{code}</strong> não corresponde a nenhum certificado ou dossiê emitido por empresas cadastradas no TechCompliance.
               </p>
             </div>
           )}
 
-          <div className="pt-2 text-center">
+          <div className="pt-2">
             <Link
               href="/"
-              className="text-xs font-semibold text-blue-600 hover:text-blue-800"
+              className="inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-semibold text-xs transition"
             >
-              Conhecer o LicitCompliance
+              Conhecer o TechCompliance
             </Link>
           </div>
         </div>

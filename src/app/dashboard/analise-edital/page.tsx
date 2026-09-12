@@ -225,7 +225,7 @@ export default function TenderAnalysisPage() {
                   {analysisResult.organName} • {analysisResult.tenderNumber}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Análise baseada nas evidências auditadas cadastradas no LicitCompliance.
+                  Análise baseada nas evidências auditadas cadastradas no TechCompliance.
                 </p>
               </div>
 

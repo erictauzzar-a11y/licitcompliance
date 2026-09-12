@@ -528,7 +528,7 @@ export default function EmployeeTrainingFlowPage({ params }: { params: Promise<{
 
       {/* Footer Mobile */}
       <footer className="p-3 bg-white border-t border-slate-200 text-center text-[11px] text-slate-400">
-        LicitCompliance • Plataforma Segura para Colaboradores
+        TechCompliance • Plataforma Segura para Colaboradores
       </footer>
     </div>
   );

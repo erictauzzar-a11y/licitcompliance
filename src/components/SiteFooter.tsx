@@ -14,7 +14,7 @@ export function SiteFooter() {
               <div className="bg-blue-600 p-2 rounded-xl text-white shadow-lg shadow-blue-500/30">
                 <ShieldCheck className="w-5 h-5" />
               </div>
-              <span className="leading-tight tracking-tight font-black text-xl">LicitCompliance</span>
+              <span className="leading-tight tracking-tight font-black text-xl">TechCompliance</span>
             </Link>
             <p className="text-slate-400 text-xs leading-relaxed max-w-sm">
               Plataforma de Gestão Tecnológica de Integridade para Contratações Públicas. Diagnostique requisitos, organize evidências auditáveis e gere dossiês com validação pública perante a Lei nº 14.133/2021 e NR-1.
@@ -90,14 +90,14 @@ export function SiteFooter() {
         {/* AVISO LEGAL DE RESPONSABILIDADE REGULATÓRIA */}
         <div className="mt-12 pt-6 border-t border-slate-800/80 bg-slate-900/40 p-5 rounded-2xl text-[11px] text-slate-400 leading-relaxed">
           <p className="font-semibold text-slate-300 mb-1">Aviso Regulatório e Isenção Legal:</p>
-          O LicitCompliance é uma plataforma de tecnologia voltada ao apoio à gestão, estruturação documental e organização probatória de Programas de Integridade corporativos. O sistema não atua como órgão certificador oficial, não emite parecer jurídico vinculante, não substitui auditoria legal independente e não garante vitória em certames licitatórios ou aprovação compulsória por comissões de contratação do Poder Público.
+          O TechCompliance é uma plataforma de tecnologia voltada ao apoio à gestão, estruturação documental e organização probatória de Programas de Integridade corporativos. O sistema não atua como órgão certificador oficial, não emite parecer jurídico vinculante, não substitui auditoria legal independente e não garante vitória em certames licitatórios ou aprovação compulsória por comissões de contratação do Poder Público.
         </div>
       </div>
 
       {/* BARRA INFERIOR DE COPYRIGHT */}
       <div className="border-t border-slate-800/80 bg-slate-950 py-6 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
-          <p>© {new Date().getFullYear()} LicitCompliance Tecnologia Ltda. Todos os direitos reservados.</p>
+          <p>© {new Date().getFullYear()} TechCompliance Tecnologia Ltda. Todos os direitos reservados.</p>
           <div className="flex items-center gap-6">
             <Link href="/login" className="hover:text-white transition-colors">Acesso ao Painel</Link>
             <Link href="/cadastro" className="hover:text-white transition-colors">Cadastre sua Empresa</Link>

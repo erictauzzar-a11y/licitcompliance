@@ -18,7 +18,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Como Funciona | LicitCompliance",
+  title: "Como Funciona | TechCompliance",
   description:
     "Do diagnóstico ao dossiê probatório em 6 passos objetivos. Veja como preparar a integridade da sua empresa para licitações públicas com a Lei nº 14.133/2021.",
 };
@@ -168,7 +168,7 @@ export default function ComoFuncionaPage() {
           </h1>
 
           <p className="text-slate-300 text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
-            Elimine o improviso e o receio de inabilitação. Veja como o LicitCompliance transforma o rigor das exigências legais em um processo simples, seguro e auditável para sua empresa.
+            Elimine o improviso e o receio de inabilitação. Veja como o TechCompliance transforma o rigor das exigências legais em um processo simples, seguro e auditável para sua empresa.
           </p>
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">

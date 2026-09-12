@@ -124,7 +124,7 @@ export async function generateWhistleblowerPosterPDF(
   doc.setFontSize(7.5);
   doc.setTextColor(148, 163, 184);
   doc.text(
-    "Cartaz informativo obrigatório para afixação em murais, áreas de convivência e canteiros de obras. Gerado pelo LicitCompliance.",
+    "Cartaz informativo obrigatório para afixação em murais, áreas de convivência e canteiros de obras. Gerado pelo TechCompliance.",
     pageWidth / 2,
     280,
     { align: "center" }

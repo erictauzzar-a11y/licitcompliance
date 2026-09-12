@@ -205,9 +205,10 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const sol = SOLUTIONS_DATA[slug];
-  if (!sol) return { title: "Solução | LicitCompliance" };
+  if (!sol) return { title: "Solução | TechCompliance" };
+
   return {
-    title: `${sol.title} | Soluções LicitCompliance`,
+    title: `${sol.title} | Soluções TechCompliance`,
     description: sol.description,
   };
 }
@@ -324,14 +325,14 @@ export default async function SolucaoPage({ params }: { params: Promise<{ slug: 
           </div>
           <p className="text-sm font-semibold text-white">{sol.legalBasis}</p>
           <p className="text-xs text-slate-400 leading-relaxed">
-            * O LicitCompliance fornece apoio probatório, estruturação tecnológica e organização de evidências, não substituindo o julgamento da comissão de contratação nem configurando garantia judicial automática.
+            * O TechCompliance fornece apoio probatório, estruturação tecnológica e organização de evidências, não substituindo o julgamento da comissão de contratação nem configurando garantia judicial automática.
           </p>
         </div>
 
         {/* NAVEGAÇÃO ENTRE OUTRAS SOLUÇÕES */}
         <div className="pt-10 border-t border-slate-800">
           <h4 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-6">
-            Conheça outras soluções do LicitCompliance
+            Conheça outras soluções do TechCompliance
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {SOLUTIONS_ITEMS.filter((item) => item.href !== `/solucoes/${sol.slug}`)

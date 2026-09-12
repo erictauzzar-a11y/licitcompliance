@@ -1076,7 +1076,7 @@ export function evaluateCompanyCompliance(companyId?: string): ComplianceDiagnos
       evidences: [
         {
           id: "EVID-EVI-01",
-          title: "Repositório Central de Evidências Auditáveis do LicitCompliance",
+          title: "Repositório Central de Evidências Auditáveis do TechCompliance",
           type: "AUDITORIA",
           description: "Camada unificada de dados probatórios consumida pelo Motor de Conformidade.",
           date: nowStr,

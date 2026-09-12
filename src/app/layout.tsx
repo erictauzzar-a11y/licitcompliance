@@ -14,11 +14,11 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "LicitCompliance | Plataforma de Gestão de Integridade Licitatória (Lei 14.133)",
-    template: "%s | LicitCompliance",
+    default: "TechCompliance | Plataforma de Gestão de Integridade e Compliance Licitatório (Lei 14.133)",
+    template: "%s | TechCompliance",
   },
   description:
-    "Software de gestão e comprovação de Programa de Integridade e Compliance para empresas licitantes e fornecedoras do setor público. Canal de Denúncias, Treinamentos e Dossiê probatório auditável.",
+    "Software de gestão e comprovação de Programa de Integridade e Compliance para empresas fornecedoras do setor público. Canal de Denúncias, Treinamentos e Dossiê probatório auditável.",
   keywords: [
     "compliance licitatório",
     "programa de integridade",
@@ -27,18 +27,19 @@ export const metadata: Metadata = {
     "canal de denúncias",
     "dossiê de integridade",
     "licitações públicas",
+    "techcompliance",
   ],
-  authors: [{ name: "LicitCompliance Tecnologia" }],
-  creator: "LicitCompliance",
+  authors: [{ name: "TechCompliance Tecnologia" }],
+  creator: "TechCompliance",
   metadataBase: new URL("https://licitcompliance.vercel.app"),
   openGraph: {
     type: "website",
     locale: "pt_BR",
     url: "https://licitcompliance.vercel.app",
-    title: "LicitCompliance | Gestão de Integridade para Licitações Públicas",
+    title: "TechCompliance | Gestão de Integridade para Licitações Públicas",
     description:
       "Plataforma completa para estruturação, capacitação e emissão de dossiês de integridade exigidos pela Nova Lei de Licitações (Lei 14.133/2021).",
-    siteName: "LicitCompliance",
+    siteName: "TechCompliance",
   },
   robots: {
     index: true,

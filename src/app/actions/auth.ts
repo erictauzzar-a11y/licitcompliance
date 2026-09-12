@@ -69,7 +69,7 @@ export async function loginAdminAction(email: string, password: string): Promise
   // Aceita credencial segura pré-definida ou demonstração
   if (
     cleanEmail === "compliance@translog.com.br" &&
-    password === "LicitCompliance#2026"
+    (password === "TechCompliance#2026" || password === "LicitCompliance#2026")
   ) {
     const cookieStore = await cookies();
     const sessionToken = `sess_${crypto.randomBytes(32).toString("hex")}`;

@@ -15,7 +15,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Planos e Preços | LicitCompliance",
+  title: "Planos e Preços | TechCompliance",
   description:
     "Plano completo de gestão de integridade licitatória por apenas R$ 189,90/mês. Sem taxa de adesão, sem carência e com cancelamento a qualquer momento.",
 };
@@ -42,7 +42,7 @@ const FAQS = [
   {
     question: "O sistema emite uma certificação oficial válida perante a lei?",
     answer:
-      "Não. O LicitCompliance é uma plataforma tecnológica de gestão, organização e estruturação probatória. O sistema não atua como órgão certificador oficial do Estado, não emite parecer jurídico vinculante e não substitui a avaliação soberana da comissão de contratação do órgão público.",
+      "Não. O TechCompliance é uma plataforma tecnológica de gestão, organização e estruturação probatória. O sistema não atua como órgão certificador oficial do Estado, não emite parecer jurídico vinculante e não substitui a avaliação soberana da comissão de contratação do órgão público.",
   },
   {
     question: "Quantos colaboradores posso cadastrar para treinamento?",
@@ -98,7 +98,7 @@ export default function PrecosPage() {
                 PLANO COMPLETO EMPRESARIAL
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
-                Assinatura Mensal LicitCompliance
+                Assinatura Mensal TechCompliance
               </h2>
             </div>
 

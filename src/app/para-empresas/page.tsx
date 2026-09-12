@@ -18,9 +18,9 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 
 export const metadata: Metadata = {
-  title: "Para Empresas Licitantes e Fornecedores do Poder Público | LicitCompliance",
+  title: "Para Empresas Licitantes e Fornecedores do Poder Público | TechCompliance",
   description:
-    "Prepare sua empresa para fornecer ao poder público. Saiba quem deve utilizar o LicitCompliance, quais problemas resolve e como estruturar suas evidências para licitações públicas.",
+    "Prepare sua empresa para fornecer ao poder público. Saiba quem deve utilizar o TechCompliance, quais problemas resolve e como estruturar suas evidências para licitações públicas.",
 };
 
 const ENTERPRISE_FLOW = [
@@ -137,9 +137,9 @@ export default function ParaEmpresasPage() {
       <section className="py-20 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto w-full space-y-12">
         <div className="text-center max-w-2xl mx-auto space-y-2">
           <span className="text-xs font-bold uppercase tracking-wider text-blue-400">Público-Alvo</span>
-          <h2 className="text-3xl font-black text-white">Para quem é o LicitCompliance?</h2>
-          <p className="text-slate-400 text-sm">
-            Projetado para empresas de todos os portes que desejam competir em licitações com solidez ética e documental.
+          <h2 className="text-3xl font-black text-white">Para quem é o TechCompliance?</h2>
+          <p className="text-slate-400 text-sm max-w-xl mx-auto">
+            Qualquer pessoa jurídica que pretenda vender produtos, serviços ou obras para o Poder Público — direta ou indiretamente.
           </p>
         </div>
 
@@ -206,7 +206,7 @@ export default function ParaEmpresasPage() {
             Segurança Operacional
           </span>
           <h2 className="text-3xl font-black text-white">
-            Quais problemas o LicitCompliance resolve para você?
+            Quais problemas o TechCompliance resolve para você?
           </h2>
         </div>
 

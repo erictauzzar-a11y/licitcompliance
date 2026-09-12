@@ -178,7 +178,7 @@ export default function RegisterCompanyPage() {
               <ShieldCheck className="w-6 h-6" />
             </div>
             <div>
-              <span className="font-bold text-lg text-white">LicitCompliance</span>
+              <span className="font-bold text-lg text-white">TechCompliance</span>
               <p className="text-[11px] text-slate-400">Onboarding de Integridade para Fornecedores Públicos</p>
             </div>
           </div>
@@ -755,7 +755,7 @@ export default function RegisterCompanyPage() {
                 className="flex-1 w-full bg-emerald-600 hover:bg-emerald-500 text-white font-bold py-4 rounded-2xl shadow-lg transition-all text-sm flex items-center justify-center gap-2 cursor-pointer"
               >
                 <Check className="w-5 h-5" />
-                <span>Concluir Onboarding e Entrar no LicitCompliance</span>
+                <span>Concluir Onboarding e Entrar no TechCompliance</span>
               </button>
             </div>
           </form>

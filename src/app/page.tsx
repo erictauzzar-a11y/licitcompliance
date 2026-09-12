@@ -32,7 +32,7 @@ export default function HomePage() {
         <div className="absolute inset-0 z-0">
           <Image
             src="/hero-reference-bg.jpg"
-            alt="Ambiente de trabalho executivo com LicitCompliance"
+            alt="Ambiente de trabalho executivo com TechCompliance"
             fill
             priority
             quality={90}
@@ -288,7 +288,7 @@ export default function HomePage() {
               <div className="relative rounded-2xl overflow-hidden border border-slate-700/60 shadow-2xl bg-slate-900">
                 <Image
                   src="/mobile-showcase.jpg"
-                  alt="Gestão de conformidade e integridade no smartphone e computador com o LicitCompliance"
+                  alt="Gestão de conformidade e integridade no smartphone e computador com o TechCompliance"
                   width={1200}
                   height={800}
                   className="w-full h-auto object-cover transform transition duration-500 group-hover:scale-[1.01]"

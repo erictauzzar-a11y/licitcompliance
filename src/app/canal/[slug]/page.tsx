@@ -145,7 +145,7 @@ export default function PublicWhistleblowerPage({
 
   const copyCredentials = () => {
     if (!submittedData) return;
-    const text = `LICITCOMPLIANCE - DADOS DE ACOMPANHAMENTO DA DENÚNCIA\nOrganização: ${company.trade_name}\nProtocolo: ${submittedData.protocol}\nChave de Acesso: ${submittedData.access_key}\nLink de Consulta: ${window.location.origin}/canal/${resolvedParams.slug}/acompanhar`;
+    const text = `TECHCOMPLIANCE - DADOS DE ACOMPANHAMENTO DA DENÚNCIA\nOrganização: ${company.trade_name}\nProtocolo: ${submittedData.protocol}\nChave de Acesso: ${submittedData.access_key}\nLink de Consulta: ${window.location.origin}/canal/${resolvedParams.slug}/acompanhar`;
     navigator.clipboard.writeText(text);
     setCopiedSuccess(true);
     setTimeout(() => setCopiedSuccess(false), 2500);
@@ -531,7 +531,7 @@ export default function PublicWhistleblowerPage({
       {/* Footer Simples */}
       <footer className="bg-white border-t border-slate-200 py-4 text-center text-[11px] text-slate-500">
         <p>
-          Plataforma de Conformidade e Integridade • <strong>LicitCompliance</strong> • Lei Federal nº 14.133/2021 & NR-1
+          Plataforma de Conformidade e Integridade • <strong>TechCompliance</strong> • Lei Federal nº 14.133/2021 & NR-1
         </p>
       </footer>
     </div>

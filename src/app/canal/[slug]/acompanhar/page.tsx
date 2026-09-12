@@ -310,7 +310,7 @@ export default function PublicWhistleblowerTrackingPage({
       {/* Footer */}
       <footer className="bg-white border-t border-slate-200 py-4 text-center text-[11px] text-slate-500">
         <p>
-          Canal de Denúncias Seguro • <strong>LicitCompliance</strong> • Garantia de Proteção ao Relator
+          Canal de Denúncias Seguro • <strong>TechCompliance</strong> • Garantia de Proteção ao Relator
         </p>
       </footer>
     </div>

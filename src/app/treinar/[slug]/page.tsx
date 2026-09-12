@@ -421,7 +421,7 @@ export default function DirectTrainingPage({ params }: { params: Promise<{ slug:
 
       {/* Footer */}
       <footer className="p-3 bg-white border-t border-slate-200 text-center text-[11px] text-slate-400">
-        LicitCompliance • Treinamento sem senha via Link Único
+        TechCompliance • Treinamento sem senha via Link Único
       </footer>
     </div>
   );

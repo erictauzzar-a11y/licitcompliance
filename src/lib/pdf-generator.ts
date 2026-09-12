@@ -99,7 +99,7 @@ export async function generateDossierPDF(originUrl?: string): Promise<void> {
   doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
   doc.setTextColor(51, 65, 85);
-  const declarationText = `O presente relatório consolida as informações e evidências registradas na plataforma LicitCompliance, para fins de comprovação documental perante Comissões de Contratação, Pregoeiros e Fiscais de Contratos da Administração Pública.\nA pessoa jurídica qualificada mantém registros de Código de Conduta formalizado, ações periódicas de capacitação em integridade licitatória (art. 25, § 4º da Lei Federal nº 14.133/2021), canal de denúncias independente com garantia de sigilo e não retaliação (NR-1 e Lei nº 14.457/2022) e procedimento de Due Diligence prévia de terceiros.`;
+  const declarationText = `O presente relatório consolida as informações e evidências registradas na plataforma TechCompliance, para fins de comprovação documental perante Comissões de Contratação, Pregoeiros e Fiscais de Contratos da Administração Pública.\nA pessoa jurídica qualificada mantém registros de Código de Conduta formalizado, ações periódicas de capacitação em integridade licitatória (art. 25, § 4º da Lei Federal nº 14.133/2021), canal de denúncias independente com garantia de sigilo e não retaliação (NR-1 e Lei nº 14.457/2022) e procedimento de Due Diligence prévia de terceiros.`;
   const splitDeclaration = doc.splitTextToSize(declarationText, 182);
   doc.text(splitDeclaration, 14, y);
 

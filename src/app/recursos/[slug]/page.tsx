@@ -41,7 +41,7 @@ const RESOURCES_DATA: Record<string, ResourceDetail> = {
     subtitle: "Visão 360º de maturidade, pendências e acervo comprobatório",
     badge: "Módulo Central",
     description:
-      "A central de controle do LicitCompliance consolida todos os indicadores da sua empresa em um único painel executivo: percentual de preparação perante a Lei 14.133, pendências prioritárias e ações imediatas.",
+      "A central de controle do TechCompliance consolida todos os indicadores da sua empresa em um único painel executivo: percentual de preparação perante a Lei 14.133, pendências prioritárias e ações imediatas.",
     image: "/screen-visao-geral.png",
     technicalCapabilities: [
       "Status de Preparação consolidado com percentual de requisitos atendidos",
@@ -199,7 +199,7 @@ const RESOURCES_DATA: Record<string, ResourceDetail> = {
     subtitle: "Conferência online instantânea para pregoeiros e comissões",
     badge: "Transparência Total",
     description:
-      "Ao ler o QR Code do dossiê, a comissão de contratação acessa uma página oficial do LicitCompliance confirmando a autenticidade e a vigência das informações.",
+      "Ao ler o QR Code do dossiê, a comissão de contratação acessa uma página oficial do TechCompliance confirmando a autenticidade e a vigência das informações.",
     technicalCapabilities: [
       "Página pública leve e responsiva com verificação criptográfica",
       "Exibição do status dos pilares sem expor dados sigilosos da empresa",
@@ -221,9 +221,9 @@ export function generateStaticParams() {
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
   const res = RESOURCES_DATA[slug];
-  if (!res) return { title: "Recurso | LicitCompliance" };
+  if (!res) return { title: "Recurso | TechCompliance" };
   return {
-    title: `${res.title} | Recursos LicitCompliance`,
+    title: `${res.title} | Recursos TechCompliance`,
     description: res.description,
   };
 }
@@ -340,7 +340,7 @@ export default async function RecursoPage({ params }: { params: Promise<{ slug: 
         {/* NAVEGAÇÃO ENTRE OUTROS RECURSOS */}
         <div className="pt-10 border-t border-slate-800">
           <h4 className="text-xs uppercase font-bold text-slate-400 tracking-wider mb-6">
-            Outros recursos do LicitCompliance
+            Outros recursos do TechCompliance
           </h4>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {RESOURCES_ITEMS.filter((item) => item.href !== `/recursos/${res.slug}`)

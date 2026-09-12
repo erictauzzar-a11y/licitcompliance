@@ -63,7 +63,7 @@ const LEGISLATION_DATA: Record<string, LegislationDetail> = {
       "Gera Dossiê Probatório em PDF estruturado para atendimento aos editais federais, estaduais e municipais.",
     ],
     disclaimers: [
-      "O LicitCompliance é uma ferramenta de gestão tecnológica e documental.",
+      "O TechCompliance é uma ferramenta de gestão tecnológica e documental.",
       "O sistema NÃO emite certificado oficial de validação jurídica nem substitui o julgamento da Comissão de Contratação do órgão público.",
     ],
   },
@@ -190,7 +190,8 @@ const LEGISLATION_DATA: Record<string, LegislationDetail> = {
       "Gera relatórios de auditoria e dossiês de integridade prontos para anexar em propostas.",
     ],
     disclaimers: [
-      "O LicitCompliance atua como ferramenta tecnológica e repositório probatório para as empresas licitantes.",
+      "O TechCompliance atua como ferramenta tecnológica e repositório probatório para as empresas licitantes.",
+      "A plataforma NÃO audita nem valida o mérito das propostas apresentadas pelas empresas em procedimentos licitatórios.",
     ],
   },
 };
@@ -199,12 +200,17 @@ export function generateStaticParams() {
   return Object.keys(LEGISLATION_DATA).map((slug) => ({ slug }));
 }
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ slug: string }>;
+}): Promise<Metadata> {
   const { slug } = await params;
   const leg = LEGISLATION_DATA[slug];
-  if (!leg) return { title: "Legislação | LicitCompliance" };
+  if (!leg) return { title: "Legislação | TechCompliance" };
+
   return {
-    title: `${leg.title} | Legislação LicitCompliance`,
+    title: `${leg.title} | Legislação TechCompliance`,
     description: leg.summary,
   };
 }
@@ -298,14 +304,14 @@ export default async function LegislacaoPage({ params }: { params: Promise<{ slu
           </div>
         </div>
 
-        {/* COMO O LICITCOMPLIANCE AUXILIA */}
+        {/* COMO O TECHCOMPLIANCE AUXILIA */}
         <div className="p-8 sm:p-10 rounded-3xl bg-gradient-to-b from-blue-950/30 to-slate-900/80 border border-blue-500/30 space-y-6">
           <div className="space-y-2">
             <span className="text-xs font-bold uppercase tracking-wider text-blue-400">
               Aplicação Prática no Sistema
             </span>
             <h3 className="text-xl sm:text-2xl font-black text-white">
-              Como o LicitCompliance apoia o cumprimento desta norma
+              Como o TechCompliance apoia o cumprimento desta norma
             </h3>
           </div>
 
@@ -333,7 +339,7 @@ export default async function LegislacaoPage({ params }: { params: Promise<{ slu
               <p key={i}>• {d}</p>
             ))}
             <p className="text-slate-400 pt-1 text-[11px]">
-              O LicitCompliance não garante vitória em licitações públicas, não emite parecer jurídico e não substitui a soberania da autoridade julgadora nem a atuação de assessoria jurídica especializada.
+              O TechCompliance não garante vitória em licitações públicas, não emite parecer jurídico e não substitui a soberania da autoridade julgadora nem a atuação de assessoria jurídica especializada.
             </p>
           </div>
         </div>

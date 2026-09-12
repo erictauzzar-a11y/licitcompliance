@@ -32,7 +32,7 @@ export default function CompanyPublicPortal({ params }: { params: Promise<{ slug
           <div className="flex items-center gap-3">
             <div className="bg-blue-900 text-white p-2 rounded-lg font-bold flex items-center gap-1.5 shadow-sm">
               <ShieldCheck className="w-5 h-5 text-blue-400" />
-              <span>LicitCompliance</span>
+              <span>TechCompliance</span>
             </div>
             <div className="hidden sm:block h-6 w-px bg-slate-200" />
             <div className="hidden sm:flex items-center gap-2 text-sm text-slate-600 font-medium">

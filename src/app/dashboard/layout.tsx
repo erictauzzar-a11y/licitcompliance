@@ -82,7 +82,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <div className="bg-blue-600 p-1.5 rounded-lg text-white">
               <ShieldCheck className="w-5 h-5" />
             </div>
-            <span>LicitCompliance</span>
+            <span>TechCompliance</span>
           </Link>
           <span className="text-[10px] bg-blue-500/20 text-blue-300 font-bold px-2 py-0.5 rounded border border-blue-400/30">
             SaaS B2B
@@ -184,10 +184,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           
           <footer className="mt-12 pt-6 border-t border-slate-200 text-center text-[11px] text-slate-400 space-y-1">
             <p className="font-semibold text-slate-500">
-              LicitCompliance Software de Gestão Tecnológica de Integridade • CNPJ e Dados Auditáveis
+              TechCompliance Software de Gestão Tecnológica de Integridade • CNPJ e Dados Auditáveis
             </p>
-            <p className="max-w-3xl mx-auto leading-relaxed text-slate-400 text-[10px]">
-              <strong>Aviso Legal (Disclaimer):</strong> O LicitCompliance é uma plataforma tecnológica de gestão de conformidade e integridade corporativa em apoio ao cumprimento da Lei nº 14.133/2021 e NR-1 / Lei nº 14.457/2022. A disponibilização do software, dos modelos de código e das trilhas educativas não constitui assessoria ou consultoria jurídica privativa (Lei nº 8.906/1994), cabendo a cada organização validar suas rotinas junto ao seu corpo técnico e jurídico.
+            <p className="mt-1 leading-relaxed text-slate-400 max-w-4xl mx-auto">
+              <strong>Aviso Legal (Disclaimer):</strong> O TechCompliance é uma plataforma tecnológica de gestão de conformidade e integridade corporativa em apoio ao cumprimento da Lei nº 14.133/2021 e NR-1 / Lei nº 14.457/2022. A disponibilização do software, dos modelos de código e das trilhas educativas não constitui assessoria ou consultoria jurídica privativa (Lei nº 8.906/1994), cabendo a cada organização validar suas rotinas junto ao seu corpo técnico e jurídico.
             </p>
           </footer>
         </main>

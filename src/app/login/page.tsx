@@ -38,7 +38,7 @@ function LoginForm() {
 
   const fillDemoCredentials = () => {
     setEmail("compliance@translog.com.br");
-    setPassword("LicitCompliance#2026");
+    setPassword("TechCompliance#2026");
     setErrorMsg("");
   };
 
@@ -49,7 +49,7 @@ function LoginForm() {
         <div className="inline-flex items-center justify-center bg-blue-600 p-3 rounded-2xl text-white shadow-lg mb-2">
           <ShieldCheck className="w-8 h-8" />
         </div>
-        <h1 className="text-2xl font-black tracking-tight text-white">LicitCompliance</h1>
+        <h1 className="text-2xl font-black tracking-tight text-white">TechCompliance</h1>
         <p className="text-xs text-slate-400">
           Acesso exclusivo para Gestores e Oficiais de Integridade
         </p>

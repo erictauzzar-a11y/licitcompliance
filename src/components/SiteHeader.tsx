@@ -102,7 +102,7 @@ export function SiteHeader() {
               <ShieldCheck className="w-5 h-5" />
             </div>
             <div className="flex flex-col">
-              <span className="leading-tight tracking-tight font-black text-xl">LicitCompliance</span>
+              <span className="leading-tight tracking-tight font-black text-xl">TechCompliance</span>
               <span className="text-[10px] text-blue-300 font-normal hidden sm:inline">
                 Conformidade que gera oportunidades
               </span>

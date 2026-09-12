@@ -218,7 +218,7 @@ export function LaptopInteractiveShowcase() {
                   </div>
                   <div className="hidden sm:flex items-center gap-2 ml-4 px-3 py-1 rounded-md bg-slate-950 border border-slate-800 text-[11px] text-slate-300 font-mono">
                     <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                    <span>app.licitcompliance.com.br/dashboard</span>
+                    <span>app.techcompliance.com.br/dashboard</span>
                   </div>
                 </div>
 

@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useState, useEffect } from "react";
 import {
@@ -81,7 +81,7 @@ export function HeroLiveSoftwareDemo() {
             </div>
             <div className="hidden sm:flex items-center gap-1.5 ml-3 px-2.5 py-0.5 rounded-md bg-slate-950 border border-slate-800 text-[11px] text-slate-400 font-mono">
               <ShieldCheck className="w-3 h-3 text-blue-400" />
-              <span>app.licitcompliance.com.br/dashboard</span>
+              <span>app.techcompliance.com.br/dashboard</span>
             </div>
           </div>
 
@@ -100,7 +100,7 @@ export function HeroLiveSoftwareDemo() {
           </div>
         </div>
 
-        {/* Interface Interna do Software (Fiel ao design do LicitCompliance) */}
+        {/* Interface Interna do Software (Fiel ao design do TechCompliance) */}
         <div className="relative bg-white text-slate-900 rounded-b-xl sm:rounded-b-2xl overflow-hidden flex flex-col md:flex-row min-h-[360px] sm:min-h-[420px]">
           {/* Sidebar Interna */}
           <div className="w-full md:w-44 bg-slate-900 text-white p-3 sm:p-4 flex md:flex-col justify-between border-r border-slate-800 shrink-0">
@@ -109,7 +109,7 @@ export function HeroLiveSoftwareDemo() {
                 <div className="p-1 bg-blue-600 rounded-lg text-white">
                   <ShieldCheck className="w-4 h-4" />
                 </div>
-                <span>LicitCompliance</span>
+                <span>TechCompliance</span>
               </div>
 
               <nav className="hidden md:block space-y-1 pt-2 text-[11px]">
