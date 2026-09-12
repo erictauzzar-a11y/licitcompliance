@@ -97,8 +97,13 @@ export function SiteFooter() {
       {/* BARRA INFERIOR DE COPYRIGHT */}
       <div className="border-t border-slate-800/80 bg-slate-950 py-6 px-4">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-[11px]">
-          <p>© {new Date().getFullYear()} TechCompliance Tecnologia Ltda. Todos os direitos reservados.</p>
-          <div className="flex items-center gap-6">
+          <div className="flex flex-wrap items-center gap-6">
+            <a
+              href="mailto:suportegrupodigitalajuda@gmail.com?subject=Contato%20TechCompliance"
+              className="text-blue-400 hover:text-blue-300 font-semibold transition-colors flex items-center gap-1.5"
+            >
+              <span>Fale Conosco: suportegrupodigitalajuda@gmail.com</span>
+            </a>
             <Link href="/login" className="hover:text-white transition-colors">Acesso ao Painel</Link>
             <Link href="/cadastro" className="hover:text-white transition-colors">Cadastre sua Empresa</Link>
             <Link href="/precos" className="hover:text-white transition-colors">Assinatura</Link>

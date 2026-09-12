@@ -12,6 +12,8 @@ import {
   Building2,
   Lock,
   LogOut,
+  HelpCircle,
+  Mail,
 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { logoutAdminAction } from "@/app/actions/auth";
@@ -70,6 +72,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       href: "/dashboard/compartilhar",
       icon: ExternalLink,
       active: pathname.startsWith("/dashboard/compartilhar"),
+    },
+    {
+      label: "Ajuda & Suporte",
+      href: "/dashboard/ajuda",
+      icon: HelpCircle,
+      active: pathname.startsWith("/dashboard/ajuda"),
     },
   ];
 
@@ -163,6 +171,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Programa Estruturado (82%) • 24/32 Requisitos
+            </Link>
+            <Link
+              href="/dashboard/ajuda"
+              title="Ajuda e Suporte Técnico"
+              className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 hover:text-blue-600 px-3 py-1.5 rounded-lg border border-slate-200 hover:border-blue-200 transition-colors"
+            >
+              <HelpCircle className="w-3.5 h-3.5 text-blue-500" />
+              <span>Ajuda & Suporte</span>
             </Link>
             <button
               type="button"

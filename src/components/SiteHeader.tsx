@@ -302,6 +302,15 @@ export function SiteHeader() {
             >
               Preços
             </Link>
+
+            {/* 7. FALE CONOSCO */}
+            <a
+              href="mailto:suportegrupodigitalajuda@gmail.com?subject=Contato%20TechCompliance"
+              onClick={() => setActiveDropdown(null)}
+              className="px-3 py-2 rounded-lg transition-colors hover:text-white hover:bg-white/5 text-slate-200"
+            >
+              Fale Conosco
+            </a>
           </nav>
         </div>
 
@@ -466,6 +475,17 @@ export function SiteHeader() {
               >
                 Preços
               </Link>
+            </div>
+
+            {/* Link Fale Conosco */}
+            <div className="border-b border-white/5 py-2">
+              <a
+                href="mailto:suportegrupodigitalajuda@gmail.com?subject=Contato%20TechCompliance"
+                onClick={() => setMobileMenuOpen(false)}
+                className="block text-sm font-bold text-slate-200 hover:text-blue-400"
+              >
+                Fale Conosco (suportegrupodigitalajuda@gmail.com)
+              </a>
             </div>
           </div>
 
