@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { ShieldCheck, Lock, Mail, ArrowRight, AlertCircle, Sparkles } from "lucide-react";
 import { loginAdminAction } from "@/app/actions/auth";
+import { Button } from "@/components/ui/Button";
 
 function LoginForm() {
   const router = useRouter();
@@ -28,7 +29,7 @@ function LoginForm() {
       } else {
         setErrorMsg(res.error || "Credenciais inválidas.");
       }
-    } catch (err: any) {
+    } catch {
       setErrorMsg("Erro ao processar autenticação. Tente novamente.");
     } finally {
       setLoading(false);
@@ -42,7 +43,7 @@ function LoginForm() {
   };
 
   return (
-    <div className="max-w-md w-full bg-slate-950 border border-slate-800 rounded-3xl p-8 shadow-2xl space-y-6">
+    <div className="max-w-md w-full bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6">
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center bg-blue-600 p-3 rounded-2xl text-white shadow-lg mb-2">
@@ -55,7 +56,10 @@ function LoginForm() {
       </div>
 
       {errorMsg && (
-        <div className="p-3.5 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-300 flex items-center gap-2">
+        <div
+          role="alert"
+          className="p-3.5 bg-red-950/60 border border-red-800/80 rounded-xl text-xs text-red-300 flex items-center gap-2"
+        >
           <AlertCircle className="w-4 h-4 shrink-0 text-red-400" />
           <span>{errorMsg}</span>
         </div>
@@ -63,54 +67,56 @@ function LoginForm() {
 
       <form onSubmit={handleLogin} className="space-y-4">
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label htmlFor="login-email" className="block text-xs font-semibold text-slate-300 mb-1.5">
             E-mail Corporativo
           </label>
           <div className="relative">
-            <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+            <Mail className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" aria-hidden="true" />
             <input
+              id="login-email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="seu.nome@empresa.com.br"
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
 
         <div>
-          <label className="block text-xs font-semibold text-slate-300 mb-1.5">
+          <label htmlFor="login-password" className="block text-xs font-semibold text-slate-300 mb-1.5">
             Senha de Acesso
           </label>
           <div className="relative">
-            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
+            <Lock className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" aria-hidden="true" />
             <input
+              id="login-password"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="••••••••••••"
-              className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-1 focus:ring-blue-500"
+              className="w-full bg-slate-900 border border-slate-700 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500"
             />
           </div>
         </div>
 
-        <button
+        <Button
           type="submit"
-          disabled={loading}
-          className="w-full bg-blue-600 hover:bg-blue-500 disabled:opacity-50 text-white font-bold py-3 rounded-xl transition-all shadow-md flex items-center justify-center gap-2 text-sm mt-2"
+          loading={loading}
+          className="w-full mt-2"
+          icon={<ArrowRight className="w-4 h-4" />}
         >
-          {loading ? "Autenticando..." : "Entrar no Painel Seguro"}
-          <ArrowRight className="w-4 h-4" />
-        </button>
+          Entrar no Painel Seguro
+        </Button>
       </form>
 
       <div className="pt-2 border-t border-slate-800/80">
         <button
           type="button"
           onClick={fillDemoCredentials}
-          className="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-center gap-1.5 transition-colors"
+          className="w-full py-2 bg-slate-900 hover:bg-slate-800 border border-slate-700/80 rounded-xl text-xs font-semibold text-slate-300 flex items-center justify-center gap-1.5 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none"
         >
           <Sparkles className="w-3.5 h-3.5 text-amber-400" />
           Usar Credenciais de Auditoria / Demonstração
@@ -120,7 +126,7 @@ function LoginForm() {
       <div className="text-center">
         <Link
           href="/"
-          className="text-xs text-slate-400 hover:text-slate-200 transition-colors"
+          className="text-xs text-slate-400 hover:text-slate-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded px-1"
         >
           ← Voltar para a página inicial
         </Link>

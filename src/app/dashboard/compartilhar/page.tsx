@@ -22,6 +22,7 @@ import { mockStore } from "@/lib/mock-data";
 import { formatCNPJ } from "@/lib/utils";
 import QRCode from "qrcode";
 import { generateWhistleblowerPosterPDF } from "@/lib/whistleblower-poster-service";
+import { Modal, Button } from "@/components/ui";
 
 export default function CompartilharProgramaPage() {
   const company = mockStore.getCompany();
@@ -292,80 +293,69 @@ export default function CompartilharProgramaPage() {
       </div>
 
       {/* Modal QR Code */}
-      {activeQrModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-sm w-full p-6 shadow-2xl text-center space-y-4 animate-in fade-in zoom-in-95">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="font-bold text-sm text-slate-900">{activeQrModal.title}</h3>
-              <button
-                onClick={() => setActiveQrModal(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm"
-              >
-                ✕
-              </button>
-            </div>
-
+      <Modal
+        isOpen={!!activeQrModal}
+        onClose={() => setActiveQrModal(null)}
+        title={activeQrModal?.title || "QR Code de Acesso Rápido"}
+        description="Aponte a câmera do celular para testar o acesso imediato ou baixe a imagem para peças de comunicação."
+        maxWidth="md"
+      >
+        {activeQrModal && (
+          <div className="space-y-4">
             <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl flex justify-center">
-              <img src={activeQrModal.qrDataUrl} alt="QR Code" className="w-56 h-56 rounded-lg shadow-2xs" />
+              <img
+                src={activeQrModal.qrDataUrl}
+                alt={`QR Code para ${activeQrModal.title}`}
+                className="w-56 h-56 rounded-lg shadow-2xs"
+              />
             </div>
 
-            <div className="text-[11px] text-slate-500 font-mono break-all bg-slate-50 p-2 rounded-lg">
+            <div className="text-[11px] text-slate-600 font-mono break-all bg-slate-50 border border-slate-200 p-2.5 rounded-xl select-all">
               {activeQrModal.url}
             </div>
 
-            <div className="flex gap-2">
-              <button
+            <div className="flex gap-2 pt-2">
+              <Button
+                variant="primary"
                 onClick={() => handleCopy("modal_qr", activeQrModal.url)}
-                className="flex-1 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-colors"
+                className="flex-1"
+                icon={<Copy className="w-4 h-4" />}
               >
-                {copiedKey === "modal_qr" ? "Copiado!" : "Copiar Link"}
-              </button>
-              <button
+                {copiedKey === "modal_qr" ? "Copiado com Sucesso!" : "Copiar Link"}
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => setActiveQrModal(null)}
-                className="py-2 px-4 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-bold transition-colors"
               >
                 Fechar
-              </button>
+              </Button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
 
       {/* Modal Código de Conduta Completo */}
-      {showPolicyModal && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden animate-in fade-in zoom-in-95">
-            <div className="p-5 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <div className="flex items-center gap-2.5">
-                <div className="p-2 rounded-xl bg-blue-50 text-blue-700">
-                  <FileText className="w-5 h-5" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-slate-900 text-sm">{policy.title}</h3>
-                  <span className="text-[11px] text-slate-500">Versão {policy.version} • {company.legal_name}</span>
-                </div>
-              </div>
-              <button
-                onClick={() => setShowPolicyModal(false)}
-                className="text-slate-400 hover:text-slate-600 font-bold p-1 text-sm"
-              >
-                ✕
-              </button>
-            </div>
-            <div className="p-6 overflow-y-auto text-xs leading-relaxed text-slate-800 whitespace-pre-line space-y-4">
-              {policy.content}
-            </div>
-            <div className="p-4 border-t border-slate-200 bg-slate-50 flex justify-end">
-              <button
-                onClick={() => setShowPolicyModal(false)}
-                className="px-5 py-2 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-xs font-bold transition-colors"
-              >
-                Fechar
-              </button>
-            </div>
+      <Modal
+        isOpen={showPolicyModal}
+        onClose={() => setShowPolicyModal(false)}
+        title={policy.title}
+        description={`Versão ${policy.version} • Registrada em nome de ${company.legal_name}`}
+        maxWidth="2xl"
+      >
+        <div className="space-y-4">
+          <div className="p-4 bg-slate-50 border border-slate-200 rounded-2xl text-xs leading-relaxed text-slate-800 whitespace-pre-line max-h-[60vh] overflow-y-auto">
+            {policy.content}
+          </div>
+          <div className="flex justify-end pt-2">
+            <Button
+              variant="secondary"
+              onClick={() => setShowPolicyModal(false)}
+            >
+              Concluir Leitura
+            </Button>
           </div>
         </div>
-      )}
+      </Modal>
     </div>
   );
 }

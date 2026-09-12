@@ -23,6 +23,7 @@ import { mockStore } from "@/lib/mock-data";
 import { WhistleblowerReport, ReportStatus, Company } from "@/types";
 import { updateReportResolutionAction } from "@/app/actions/whistleblower";
 import { generateWhistleblowerPosterPDF } from "@/lib/whistleblower-poster-service";
+import { Badge, Modal, Button, EmptyState } from "@/components/ui";
 
 export default function WhistleblowerManagementPage() {
   const [company, setCompany] = useState<Company>(mockStore.getCompany());
@@ -83,35 +84,15 @@ export default function WhistleblowerManagementPage() {
   const getStatusBadge = (status: ReportStatus) => {
     switch (status) {
       case "RECEBIDA":
-        return (
-          <span className="px-2.5 py-0.5 bg-amber-50 text-amber-700 border border-amber-200 rounded-full font-bold text-[10px]">
-            Recebida
-          </span>
-        );
+        return <Badge variant="warning" dot>Recebida</Badge>;
       case "EM_ANALISE":
-        return (
-          <span className="px-2.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 rounded-full font-bold text-[10px]">
-            Em Análise / Apuração
-          </span>
-        );
+        return <Badge variant="info" dot>Em Análise</Badge>;
       case "PROCEDENTE":
-        return (
-          <span className="px-2.5 py-0.5 bg-emerald-50 text-emerald-700 border border-emerald-200 rounded-full font-bold text-[10px]">
-            Concluída / Procedente
-          </span>
-        );
+        return <Badge variant="success" dot>Procedente</Badge>;
       case "IMPROCEDENTE":
-        return (
-          <span className="px-2.5 py-0.5 bg-slate-100 text-slate-700 border border-slate-200 rounded-full font-bold text-[10px]">
-            Concluída / Não Procedente
-          </span>
-        );
+        return <Badge variant="neutral" dot>Não Procedente</Badge>;
       case "ARQUIVADA":
-        return (
-          <span className="px-2.5 py-0.5 bg-slate-100 text-slate-500 border border-slate-200 rounded-full font-bold text-[10px]">
-            Arquivada
-          </span>
-        );
+        return <Badge variant="neutral">Arquivada</Badge>;
     }
   };
 
@@ -292,140 +273,130 @@ export default function WhistleblowerManagementPage() {
         </div>
       </div>
 
-      {/* Modal / Drawer de Análise e Parecer */}
-      {selectedReport && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-2xl w-full shadow-2xl p-6 space-y-5 animate-in fade-in zoom-in-95 max-h-[90vh] flex flex-col">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+      {/* Modal de Detalhes e Apuração */}
+      <Modal
+        isOpen={!!selectedReport}
+        onClose={() => setSelectedReport(null)}
+        title={selectedReport ? `Ocorrência #${selectedReport.protocol}` : ""}
+        description={selectedReport ? `Protocolada em ${new Date(selectedReport.created_at).toLocaleDateString("pt-BR")}` : ""}
+        maxWidth="2xl"
+      >
+        {selectedReport && (
+          <div className="space-y-5">
+            {/* Metadados Básicos */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs">
               <div>
-                <span className="text-[10px] font-bold uppercase text-red-600 tracking-wider">
-                  Tratativa Confidencial da Comissão de Integridade
-                </span>
-                <h3 className="font-bold text-base text-slate-900">
-                  Protocolo Oficial {selectedReport.protocol}
-                </h3>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Categoria</span>
+                <strong className="text-slate-900">{getCategoryLabel(selectedReport.category)}</strong>
               </div>
-              <button
-                onClick={() => setSelectedReport(null)}
-                className="text-slate-400 hover:text-slate-600 font-bold p-1 rounded-md"
-              >
-                <X className="w-4 h-4" />
-              </button>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Manifestante</span>
+                <strong className="text-slate-900">
+                  {selectedReport.is_anonymous ? "Anônimo (Sigilo Absoluto)" : selectedReport.reporter_name}
+                </strong>
+              </div>
+              <div>
+                <span className="text-[10px] uppercase font-bold text-slate-400 block">Status Vigente</span>
+                <div className="mt-0.5">{getStatusBadge(selectedReport.status)}</div>
+              </div>
             </div>
 
-            <div className="overflow-y-auto space-y-4 pr-1">
-              <div className="grid grid-cols-2 gap-3 p-3.5 rounded-xl bg-slate-50 text-xs border border-slate-200">
-                <div>
-                  <span className="text-slate-400 block font-medium">Categoria</span>
-                  <strong className="text-slate-800">
-                    {getCategoryLabel(selectedReport.category)}
-                  </strong>
-                </div>
-                <div>
-                  <span className="text-slate-400 block font-medium">Identificação do Relator</span>
-                  <strong className="text-slate-800">
-                    {selectedReport.is_anonymous
-                      ? "100% Anônimo (Sem IP / Sem rastros)"
-                      : `${selectedReport.reporter_name} (${selectedReport.reporter_contact})`}
-                  </strong>
-                </div>
+            {/* Relato Fático */}
+            <div className="space-y-1.5">
+              <label className="text-xs font-bold uppercase text-slate-700 tracking-wider">
+                Descrição dos Fatos
+              </label>
+              <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 leading-relaxed whitespace-pre-line font-normal max-h-48 overflow-y-auto">
+                {selectedReport.description}
               </div>
+            </div>
 
-              {/* Relato dos Fatos */}
-              <div className="space-y-1">
+            {/* Anexos / Evidências se houver */}
+            {selectedReport.evidence_urls && selectedReport.evidence_urls.length > 0 && (
+              <div className="space-y-1.5">
                 <label className="text-xs font-bold uppercase text-slate-700 tracking-wider">
-                  Relato dos Fatos Registrado
+                  Anexos / Evidências Encaminhadas ({selectedReport.evidence_urls.length})
                 </label>
-                <div className="p-4 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-800 leading-relaxed whitespace-pre-line font-normal">
-                  {selectedReport.description}
+                <div className="space-y-1">
+                  {selectedReport.evidence_urls.map((url, i) => (
+                    <div
+                      key={i}
+                      className="flex items-center justify-between p-2 rounded-lg bg-slate-100 text-xs text-slate-800 font-mono"
+                    >
+                      <span className="truncate flex items-center gap-1.5">
+                        <Paperclip className="w-3.5 h-3.5 text-slate-500" aria-hidden="true" />
+                        {url.replace(`${company.slug}/`, "")}
+                      </span>
+                      <span className="text-[10px] text-blue-600 font-bold">Armazenamento Seguro</span>
+                    </div>
+                  ))}
                 </div>
               </div>
+            )}
 
-              {/* Anexos / Evidências se houver */}
-              {selectedReport.evidence_urls && selectedReport.evidence_urls.length > 0 && (
-                <div className="space-y-1.5">
-                  <label className="text-xs font-bold uppercase text-slate-700 tracking-wider">
-                    Anexos / Evidências Encaminhadas ({selectedReport.evidence_urls.length})
-                  </label>
-                  <div className="space-y-1">
-                    {selectedReport.evidence_urls.map((url, i) => (
-                      <div
-                        key={i}
-                        className="flex items-center justify-between p-2 rounded-lg bg-slate-100 text-xs text-slate-800 font-mono"
-                      >
-                        <span className="truncate flex items-center gap-1.5">
-                          <Paperclip className="w-3.5 h-3.5 text-slate-500" />
-                          {url.replace(`${company.slug}/`, "")}
-                        </span>
-                        <span className="text-[10px] text-blue-600 font-bold">Armazenamento Seguro</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
+            {/* Formulário de Parecer e Resposta Oficial */}
+            <form onSubmit={handleUpdateStatus} className="space-y-4 pt-2 border-t border-slate-100">
+              <div className="space-y-1">
+                <label htmlFor="report-new-status" className="text-xs font-bold uppercase text-slate-700 tracking-wider block">
+                  Atualizar Status da Apuração
+                </label>
+                <select
+                  id="report-new-status"
+                  value={newStatus}
+                  onChange={(e) => setNewStatus(e.target.value as ReportStatus)}
+                  className="w-full text-xs p-2.5 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:outline-none bg-white font-medium"
+                >
+                  <option value="RECEBIDA">RECEBIDA (Em Triagem Inicial)</option>
+                  <option value="EM_ANALISE">
+                    EM ANÁLISE / APURAÇÃO (Comissão Instaurada / Escuta de Partes)
+                  </option>
+                  <option value="PROCEDENTE">
+                    CONCLUÍDA / PROCEDENTE (Infração Confirmada - Medidas Adotadas)
+                  </option>
+                  <option value="IMPROCEDENTE">
+                    CONCLUÍDA / NÃO PROCEDENTE (Relato Infundado ou Sem Indícios Mínimos)
+                  </option>
+                  <option value="ARQUIVADA">ARQUIVADA</option>
+                </select>
+              </div>
 
-              {/* Formulário de Parecer e Resposta Oficial */}
-              <form onSubmit={handleUpdateStatus} className="space-y-4 pt-2 border-t border-slate-100">
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase text-slate-700 tracking-wider block">
-                    Atualizar Status da Apuração
-                  </label>
-                  <select
-                    value={newStatus}
-                    onChange={(e) => setNewStatus(e.target.value as ReportStatus)}
-                    className="w-full text-xs p-2.5 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-600 focus:outline-none bg-white font-medium"
-                  >
-                    <option value="RECEBIDA">RECEBIDA (Em Triagem Inicial)</option>
-                    <option value="EM_ANALISE">
-                      EM ANÁLISE / APURAÇÃO (Comissão Instaurada / Escuta de Partes)
-                    </option>
-                    <option value="PROCEDENTE">
-                      CONCLUÍDA / PROCEDENTE (Infração Confirmada - Medidas Disciplinares Adotadas)
-                    </option>
-                    <option value="IMPROCEDENTE">
-                      CONCLUÍDA / NÃO PROCEDENTE (Relato Infundado ou Sem Indícios Mínimos)
-                    </option>
-                    <option value="ARQUIVADA">ARQUIVADA</option>
-                  </select>
-                </div>
+              <div className="space-y-1">
+                <label htmlFor="report-notes" className="text-xs font-bold uppercase text-slate-700 tracking-wider block">
+                  Resposta Oficial da Comissão ao Denunciante (Visível no acompanhamento)
+                </label>
+                <textarea
+                  id="report-notes"
+                  rows={4}
+                  value={resolutionNotes}
+                  onChange={(e) => setResolutionNotes(e.target.value)}
+                  placeholder="Descreva com cuidado as deliberações e medidas tomadas sem expor a identidade das partes..."
+                  className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:outline-none"
+                />
+                <p className="text-[10px] text-slate-500">
+                  O manifestante poderá leer este parecer ao digitar o Protocolo e a Chave de Acesso no link público.
+                </p>
+              </div>
 
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase text-slate-700 tracking-wider block">
-                    Resposta Oficial da Comissão ao Denunciante (Visível na consulta pelo protocolo)
-                  </label>
-                  <textarea
-                    rows={4}
-                    value={resolutionNotes}
-                    onChange={(e) => setResolutionNotes(e.target.value)}
-                    placeholder="Descreva com cuidado as deliberações e medidas tomadas sem expor a identidade das testemunhas..."
-                    className="w-full text-xs p-3 border border-slate-300 rounded-xl focus:ring-2 focus:ring-blue-600 focus:outline-none"
-                  />
-                  <p className="text-[10px] text-slate-400">
-                    O manifestante poderá ler este parecer ao digitar o Protocolo e a Chave de Acesso no link público.
-                  </p>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
-                  <button
-                    type="button"
-                    onClick={() => setSelectedReport(null)}
-                    className="px-4 py-2 rounded-lg border border-slate-200 text-xs font-semibold text-slate-600 hover:bg-slate-50"
-                  >
-                    Cancelar
-                  </button>
-                  <button
-                    type="submit"
-                    disabled={updatingStatus}
-                    className="px-4 py-2 rounded-lg bg-slate-900 hover:bg-slate-800 disabled:bg-slate-500 text-white text-xs font-bold shadow-sm"
-                  >
-                    {updatingStatus ? "Salvando..." : "Salvar Deliberação & Notificar"}
-                  </button>
-                </div>
-              </form>
-            </div>
+              <div className="flex justify-end gap-2 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setSelectedReport(null)}
+                >
+                  Cancelar
+                </Button>
+                <Button
+                  type="submit"
+                  variant="secondary"
+                  loading={updatingStatus}
+                >
+                  Salvar Deliberação & Notificar
+                </Button>
+              </div>
+            </form>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }
