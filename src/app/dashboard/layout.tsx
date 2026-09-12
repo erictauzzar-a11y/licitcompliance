@@ -65,6 +65,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       icon: FileText,
       active: pathname.startsWith("/dashboard/politicas"),
     },
+    {
+      label: "Compartilhar Programa",
+      href: "/dashboard/compartilhar",
+      icon: ExternalLink,
+      active: pathname.startsWith("/dashboard/compartilhar"),
+    },
   ];
 
   return (
@@ -114,32 +120,32 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           })}
         </nav>
 
-        {/* Acesso ao Portal Público e Links Externos */}
-        <div className="p-4 border-t border-slate-800 bg-slate-950/30 space-y-1.5">
-          <div className="text-[11px] text-slate-400 font-medium">Visualização Pública:</div>
+        {/* Acesso aos Recursos Públicos do Programa */}
+        <div className="p-4 border-t border-slate-800 bg-slate-950/30 space-y-2">
+          <div className="flex items-center justify-between">
+            <span className="text-[11px] text-slate-400 font-medium">Divulgação Pública</span>
+            <Link
+              href="/dashboard/compartilhar"
+              className="text-[10px] text-blue-400 hover:underline font-semibold"
+            >
+              Gerenciar
+            </Link>
+          </div>
           <Link
-            href={`/portal/${company.slug}`}
+            href={`/canal/${company.slug}`}
             target="_blank"
             className="flex items-center justify-between p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-semibold transition-colors"
           >
-            <span className="truncate">Portal da Empresa</span>
-            <ExternalLink className="w-3.5 h-3.5 shrink-0 text-slate-400" />
+            <span className="truncate">Canal de Denúncias</span>
+            <ExternalLink className="w-3.5 h-3.5 shrink-0 text-red-400" />
           </Link>
           <Link
             href={`/treinar/${company.slug}`}
             target="_blank"
             className="flex items-center justify-between p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-emerald-300 text-xs font-semibold transition-colors"
           >
-            <span className="truncate">Link WhatsApp Equipe</span>
+            <span className="truncate">Treinamento Rápido</span>
             <ExternalLink className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
-          </Link>
-          <Link
-            href={`/canal/${company.slug}`}
-            target="_blank"
-            className="flex items-center justify-between p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-red-300 text-xs font-semibold transition-colors"
-          >
-            <span className="truncate">Canal de Denúncias</span>
-            <ExternalLink className="w-3.5 h-3.5 shrink-0 text-red-400" />
           </Link>
         </div>
       </aside>
