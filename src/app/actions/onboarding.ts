@@ -57,8 +57,8 @@ export async function submitOnboardingAction(rawInput: any) {
 
     const validData = parseResult.data;
 
-    // Atualiza empresa de forma controlada
-    mockStore.updateCompany({
+    // 1. Cria o Tenant Real e Isolado no mockStore
+    const createdCompany = mockStore.createRealCompanyTenant({
       ...validData,
       cnpj: validData.cnpj,
       legal_name: validData.legal_name.trim(),
@@ -66,17 +66,12 @@ export async function submitOnboardingAction(rawInput: any) {
       slug: validData.slug.trim(),
     });
 
-    if (mockStore.policy) {
-      mockStore.policy = {
-        ...mockStore.policy,
-        title: `Código de Ética, Integridade e Conduta - ${validData.trade_name}`,
-        company_id: mockStore.company.id,
-      };
-    }
-
-    // Cria sessão autenticada automática para o novo gestor
+    // 2. Cria sessão autenticada com token criptográfico e vincula ao ID do novo tenant
     const cookieStore = await cookies();
     const sessionToken = `sess_${crypto.randomBytes(32).toString("hex")}`;
+    
+    mockStore.bindSessionToCompany(sessionToken, createdCompany.id);
+
     cookieStore.set("licit_session", sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -85,8 +80,73 @@ export async function submitOnboardingAction(rawInput: any) {
       path: "/",
     });
 
-    return { success: true, slug: validData.slug };
+    return {
+      success: true,
+      companyId: createdCompany.id,
+      companyName: createdCompany.trade_name || createdCompany.legal_name,
+      slug: createdCompany.slug,
+    };
   } catch (err: any) {
-    return { success: false, error: "Falha ao registrar empresa no sistema." };
+    console.error("Erro no onboarding:", err);
+    return { success: false, error: "Falha ao criar ambiente da empresa no sistema." };
   }
 }
+
+/**
+ * Atualiza dados cadastrais da empresa a partir de nova consulta ao CNPJ oficial
+ * Preserva colaboradores, políticas, evidências e denúncias existentes no tenant.
+ */
+export async function refreshCompanyFromCNPJAction(companyId?: string) {
+  try {
+    const { getAuthenticatedAdmin } = await import("./auth");
+    const admin = await getAuthenticatedAdmin();
+    if (!admin) {
+      return { success: false, error: "Acesso não autorizado." };
+    }
+
+    const targetCompanyId = companyId || admin.companyId;
+    const currentCompany = mockStore.getCompany(targetCompanyId);
+
+    if (!currentCompany || !currentCompany.cnpj) {
+      return { success: false, error: "Empresa não localizada." };
+    }
+
+    const { fetchCompanyByCNPJ } = await import("@/lib/cnpj-service");
+    const freshData = await fetchCompanyByCNPJ(currentCompany.cnpj);
+
+    const updated = mockStore.updateCompany(
+      {
+        legal_name: freshData.legal_name,
+        trade_name: freshData.trade_name || freshData.legal_name,
+        status: freshData.status,
+        opening_date: freshData.opening_date,
+        legal_nature: freshData.legal_nature,
+        company_size: freshData.company_size,
+        share_capital: freshData.share_capital,
+        headquarters_or_branch: freshData.headquarters_or_branch,
+        cep: freshData.cep,
+        street: freshData.street,
+        number: freshData.number,
+        complement: freshData.complement,
+        neighborhood: freshData.neighborhood,
+        city: freshData.city,
+        state: freshData.state,
+        full_address: freshData.full_address,
+        main_cnae_code: freshData.main_cnae_code,
+        main_cnae_description: freshData.main_cnae_description,
+        secondary_cnaes: freshData.secondary_cnaes,
+        is_simples_nacional: freshData.is_simples_nacional,
+        is_mei: freshData.is_mei,
+        tax_regime: freshData.tax_regime,
+        partners: freshData.partners && freshData.partners.length > 0 ? freshData.partners : currentCompany.partners,
+      },
+      targetCompanyId
+    );
+
+    return { success: true, company: updated };
+  } catch (err: any) {
+    console.error("Erro ao atualizar dados cadastrais via CNPJ:", err);
+    return { success: false, error: err.message || "Erro ao consultar base da Receita Federal." };
+  }
+}
+

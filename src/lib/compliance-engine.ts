@@ -16,12 +16,13 @@ import { formatCNPJ } from "./utils";
  * Mapeia REQUISITO -> SITUAÇÃO -> EVIDÊNCIA -> RESPONSÁVEL -> DATA -> STATUS -> POR QUE ESTÁ ATENDIDO.
  */
 export function evaluateCompanyCompliance(companyId?: string): ComplianceDiagnostic {
-  const company = mockStore.getCompany();
-  const policy = mockStore.getPolicy();
-  const employees = mockStore.getEmployees();
+  const company = mockStore.getCompany(companyId);
+  const targetId = company.id;
+  const policy = mockStore.getPolicy(targetId);
+  const employees = mockStore.getEmployees(targetId);
   const trainings = mockStore.getTrainings();
-  const certs = mockStore.employeeTrainings;
-  const reports = mockStore.getReports(company.id);
+  const certs = mockStore.getEmployeeCertificates("", targetId);
+  const reports = mockStore.getReports(targetId);
 
   // Cálculos dinâmicos consumidos dos módulos existentes
   const totalEmployees = employees.length;

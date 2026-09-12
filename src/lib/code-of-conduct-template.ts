@@ -1,5 +1,6 @@
-export const STRUCTURED_CODE_OF_CONDUCT = `# CÓDIGO DE CONDUTA E INTEGRIDADE
-**Organização:** TransLog Brasil Transportes e Logística em Licitações Ltda  
+export function buildStructuredCodeOfConduct(companyName: string = "TransLog Brasil Transportes e Logística em Licitações Ltda"): string {
+  return `# CÓDIGO DE CONDUTA E INTEGRIDADE
+**Organização:** ${companyName}  
 **Vigência:** Versão Oficial Aprovada
 
 ---
@@ -106,3 +107,6 @@ A violação das regras estabelecidas neste Código ensejará a instauração de
 
 ### 15. ACEITE E COMPROMISSO
 Todos os colaboradores contratados devem registrar seu aceite formal expressando concordância integral com as regras e princípios aqui descritos, ficando o comprovante digital arquivado no Dossiê de Evidências da organização.`;
+}
+
+export const STRUCTURED_CODE_OF_CONDUCT = buildStructuredCodeOfConduct();

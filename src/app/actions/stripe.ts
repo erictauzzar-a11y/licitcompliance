@@ -63,10 +63,12 @@ export async function simulatePaymentSuccessAction() {
   const { mockStore } = await import("@/lib/mock-data");
 
   // Inicia o sistema limpo para o novo assinante
-  mockStore.resetForNewSubscriber();
+  const cleanTenant = mockStore.resetForNewSubscriber();
 
   const cookieStore = await cookies();
   const sessionToken = `sess_${crypto.randomBytes(32).toString("hex")}`;
+
+  mockStore.bindSessionToCompany(sessionToken, cleanTenant.id);
 
   cookieStore.set("licit_session", sessionToken, {
     httpOnly: true,

@@ -78,10 +78,10 @@ function StripeSuccessBanner() {
 
 export default function DashboardOverviewPage() {
   const company = mockStore.getCompany();
-  const metrics = mockStore.getComplianceMetrics();
-  const employees = mockStore.getEmployees();
+  const metrics = mockStore.getComplianceMetrics(company.id);
+  const employees = mockStore.getEmployees(company.id);
   const reports = mockStore.getReports(company.id);
-  const policy = mockStore.getPolicy();
+  const policy = mockStore.getPolicy(company.id);
 
   // Motor dinâmico de conformidade
   const diagnostic = evaluateCompanyCompliance(company.id);
@@ -91,7 +91,7 @@ export default function DashboardOverviewPage() {
   const handleGenerateDossier = async () => {
     setGeneratingPdf(true);
     try {
-      await generateDossierPDF();
+      await generateDossierPDF(undefined, company.id);
     } catch (err) {
       console.error(err);
     } finally {
@@ -169,7 +169,7 @@ export default function DashboardOverviewPage() {
         <div className="space-y-2.5 max-w-2xl relative z-10">
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-semibold border border-blue-400/30">
             <ShieldCheck className="w-4 h-4 text-blue-400" />
-            Central de Controle do Programa de Integridade • Lei 14.133/2021
+            Programa de Integridade • {company.trade_name || company.legal_name}
           </div>
           
           <div>

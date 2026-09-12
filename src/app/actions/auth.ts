@@ -100,6 +100,7 @@ export async function logoutAdminAction() {
 
 /**
  * Validação de sessão segura no Servidor (Zero-Trust Frontend)
+ * Identifica o usuário e o tenant real associado à sessão.
  */
 export async function getAuthenticatedAdmin() {
   const cookieStore = await cookies();
@@ -110,16 +111,35 @@ export async function getAuthenticatedAdmin() {
     return null;
   }
 
+  const { mockStore } = await import("@/lib/mock-data");
+
+  // 1. Se autenticado via Supabase Auth
   if (isSupabaseConfigured && supabase && token) {
     const { data: { user }, error } = await supabase.auth.getUser(token);
     if (!error && user) {
-      return { userId: user.id, email: user.email, role: "ADMIN" };
+      const company = mockStore.getCompany(user.id);
+      return {
+        userId: user.id,
+        email: user.email,
+        role: "ADMIN",
+        companyId: company.id,
+        company,
+      };
     }
   }
 
+  // 2. Se autenticado via sessão de tenant
   if (session) {
-    return { userId: "demo-user-01", email: "compliance@translog.com.br", role: "ADMIN" };
+    const company = mockStore.getCompanyBySession(session) || mockStore.getCompany();
+    return {
+      userId: session,
+      email: company.integrity_officer_email || "gestor@techcompliance.com.br",
+      role: "ADMIN",
+      companyId: company.id,
+      company,
+    };
   }
 
   return null;
 }
+

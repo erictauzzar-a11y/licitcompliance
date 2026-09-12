@@ -35,13 +35,16 @@ export async function createEmployeeAction(data: CreateEmployeeInput) {
     return { success: false, error: "CPF deve conter 11 dígitos numéricos." };
   }
 
-  const newEmp = mockStore.addEmployee({
-    full_name: cleanName,
-    cpf: cleanCpf,
-    role: cleanRole,
-    phone: data.phone?.trim() || "Não informado",
-    email: data.email?.trim() || undefined,
-  });
+  const newEmp = mockStore.addEmployee(
+    {
+      full_name: cleanName,
+      cpf: cleanCpf,
+      role: cleanRole,
+      phone: data.phone?.trim() || "Não informado",
+      email: data.email?.trim() || undefined,
+    },
+    admin.companyId
+  );
 
   revalidatePath("/dashboard/colaboradores");
   return { success: true, employee: newEmp };
@@ -68,7 +71,7 @@ export async function batchCreateEmployeesAction(csvContent: string) {
     };
   });
 
-  mockStore.addEmployeesBatch(parsed);
+  mockStore.addEmployeesBatch(parsed, admin.companyId);
   revalidatePath("/dashboard/colaboradores");
   return { success: true, count: parsed.length };
 }
@@ -90,7 +93,7 @@ export async function updatePolicyAction(
     return { success: false, error: "Título e conteúdo do código são obrigatórios." };
   }
 
-  const updated = mockStore.updatePolicy(content.trim(), title.trim(), publishToEmployees);
+  const updated = mockStore.updatePolicy(content.trim(), title.trim(), publishToEmployees, admin.companyId);
   revalidatePath("/dashboard/politicas");
   revalidatePath("/dashboard");
   return { success: true, policy: updated };

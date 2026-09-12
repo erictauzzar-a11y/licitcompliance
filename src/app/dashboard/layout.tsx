@@ -19,10 +19,12 @@ import { useRouter } from "next/navigation";
 import { logoutAdminAction } from "@/app/actions/auth";
 import { mockStore } from "@/lib/mock-data";
 import { formatCNPJ } from "@/lib/utils";
+import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
   const company = mockStore.getCompany();
+  const diagnostic = evaluateCompanyCompliance(company.id);
 
   const navItems = [
     {
@@ -170,7 +172,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               className="inline-flex items-center gap-1.5 text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-full transition-colors shadow-sm"
             >
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-              Programa Estruturado (82%) • 24/32 Requisitos
+              Programa Estruturado ({diagnostic.overall_score}%) • {diagnostic.met_count}/{diagnostic.total_requirements} Requisitos
             </Link>
             <Link
               href="/dashboard/ajuda"

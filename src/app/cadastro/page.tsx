@@ -27,7 +27,7 @@ import { mockStore } from "@/lib/mock-data";
 import { Company } from "@/types";
 import { submitOnboardingAction } from "@/app/actions/onboarding";
 
-type OnboardingStep = "CNPJ_INPUT" | "CONFIRM_DATA" | "COMPLIANCE_DETAILS";
+type OnboardingStep = "CNPJ_INPUT" | "CONFIRM_DATA" | "COMPLIANCE_DETAILS" | "CREATING_ENVIRONMENT" | "SUCCESS_READY";
 
 function OnboardingPaidBanner() {
   const searchParams = useSearchParams();
@@ -175,6 +175,9 @@ export default function RegisterCompanyPage() {
     }
   };
 
+  const [provisioningStatus, setProvisioningStatus] = useState("CRIANDO AMBIENTE...");
+  const [createdTenantInfo, setCreatedTenantInfo] = useState<{ companyName: string; slug: string } | null>(null);
+
   const handleFinishOnboarding = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -183,16 +186,33 @@ export default function RegisterCompanyPage() {
       return;
     }
 
-    setLoading(true);
     setErrorMsg("");
+    setStep("CREATING_ENVIRONMENT");
+    setProvisioningStatus("CRIANDO AMBIENTE...");
 
-    const res = await submitOnboardingAction(formData);
+    try {
+      // Simula a progressão transparente de inicialização
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      setProvisioningStatus("CONFIGURANDO PROGRAMA DE INTEGRIDADE...");
 
-    if (res.success) {
-      router.push("/dashboard");
-    } else {
-      setErrorMsg(res.error || "Falha ao salvar dados da empresa.");
-      setLoading(false);
+      const res = await submitOnboardingAction(formData);
+
+      if (!res.success) {
+        setErrorMsg(res.error || "Falha ao criar ambiente da empresa.");
+        setStep("COMPLIANCE_DETAILS");
+        return;
+      }
+
+      await new Promise((resolve) => setTimeout(resolve, 900));
+      setProvisioningStatus("AMBIENTE PRONTO");
+      setCreatedTenantInfo({
+        companyName: res.companyName || formData.trade_name || formData.legal_name || "Sua Empresa",
+        slug: res.slug || formData.slug || "minha-empresa",
+      });
+      setStep("SUCCESS_READY");
+    } catch (err: any) {
+      setErrorMsg("Falha ao salvar dados da empresa.");
+      setStep("COMPLIANCE_DETAILS");
     }
   };
 
@@ -792,6 +812,72 @@ export default function RegisterCompanyPage() {
               </button>
             </div>
           </form>
+        )}
+
+        {/* =================================================================== */}
+        {/* ESTADO 4: CRIANDO AMBIENTE / CONFIGURANDO PROGRAMA DE INTEGRIDADE */}
+        {/* =================================================================== */}
+        {step === "CREATING_ENVIRONMENT" && (
+          <div className="py-12 flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in">
+            <div className="relative">
+              <div className="w-20 h-20 rounded-3xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400">
+                <ShieldCheck className="w-10 h-10 animate-pulse" />
+              </div>
+              <div className="absolute -inset-1 rounded-3xl bg-blue-500/20 blur-xl -z-10 animate-pulse" />
+            </div>
+
+            <div className="space-y-2 max-w-md">
+              <span className="inline-flex items-center gap-2 text-xs font-mono font-bold text-blue-400 uppercase tracking-wider bg-blue-500/10 px-3 py-1 rounded-full border border-blue-500/20">
+                <Sparkles className="w-3.5 h-3.5 animate-spin" />
+                {provisioningStatus}
+              </span>
+              <h2 className="text-2xl font-black text-white">
+                Inicializando o ambiente seguro da sua empresa
+              </h2>
+              <p className="text-xs text-slate-400">
+                Estamos gerando o Código de Conduta exclusivo da empresa, estruturando os 32 requisitos normativos da Lei nº 14.133/2021 e ativando seu Canal de Denúncias independente.
+              </p>
+            </div>
+
+            <div className="w-64 h-2 bg-slate-800 rounded-full overflow-hidden">
+              <div className="h-full bg-blue-500 rounded-full animate-[shimmer_1.5s_infinite] w-full" />
+            </div>
+          </div>
+        )}
+
+        {/* =================================================================== */}
+        {/* ESTADO 5: AMBIENTE PRONTO & BOAS-VINDAS */}
+        {/* =================================================================== */}
+        {step === "SUCCESS_READY" && (
+          <div className="py-8 flex flex-col items-center justify-center text-center space-y-6 animate-in zoom-in-95">
+            <div className="w-20 h-20 rounded-3xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 shadow-xl shadow-emerald-500/10">
+              <CheckCircle2 className="w-10 h-10" />
+            </div>
+
+            <div className="space-y-3 max-w-lg">
+              <span className="inline-flex items-center gap-2 text-xs font-bold text-emerald-300 uppercase tracking-wider bg-emerald-500/15 px-3.5 py-1 rounded-full border border-emerald-500/30">
+                <Check className="w-4 h-4" />
+                Ambiente Configurado com Sucesso
+              </span>
+              <h2 className="text-2xl sm:text-3xl font-black text-white">
+                Bem-vindo ao TechCompliance, {createdTenantInfo?.companyName}!
+              </h2>
+              <p className="text-xs sm:text-sm text-slate-300 leading-relaxed">
+                O seu Programa de Integridade foi estruturado com os dados oficiais da sua empresa. Os 32 requisitos normativos, o Código de Conduta e o Canal de Denúncias estão ativos e prontos para uso.
+              </p>
+            </div>
+
+            <div className="w-full max-w-sm pt-4">
+              <button
+                type="button"
+                onClick={() => router.push("/dashboard")}
+                className="w-full bg-emerald-600 hover:bg-emerald-500 text-white font-extrabold py-4 px-6 rounded-2xl shadow-xl shadow-emerald-600/30 transition-all text-sm flex items-center justify-center gap-2 cursor-pointer active:scale-98"
+              >
+                <span>Entrar no meu programa de integridade</span>
+                <ArrowRight className="w-4 h-4" />
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>

@@ -3,17 +3,18 @@ import QRCode from "qrcode";
 import { formatCNPJ, formatCPF } from "./utils";
 import { mockStore } from "./mock-data";
 
-export async function generateDossierPDF(originUrl?: string): Promise<void> {
+export async function generateDossierPDF(originUrl?: string, companyId?: string): Promise<void> {
   const doc = new jsPDF({
     orientation: "portrait",
     unit: "mm",
     format: "a4",
   });
 
-  const company = mockStore.getCompany();
-  const policy = mockStore.getPolicy();
-  const employees = mockStore.getEmployees();
-  const metrics = mockStore.getComplianceMetrics();
+  const company = mockStore.getCompany(companyId);
+  const targetId = company.id;
+  const policy = mockStore.getPolicy(targetId);
+  const employees = mockStore.getEmployees(targetId);
+  const metrics = mockStore.getComplianceMetrics(targetId);
   const validationCode = `DOSSIE-${new Date().getFullYear()}-${company.cnpj.substring(0, 8)}`;
   
   const canonicalUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://techcompliance.vercel.app");

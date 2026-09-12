@@ -66,7 +66,7 @@ export const INITIAL_COMPANY: Company = {
   conducts_public_contracts: true,
 };
 
-import { STRUCTURED_CODE_OF_CONDUCT } from "./code-of-conduct-template";
+import { STRUCTURED_CODE_OF_CONDUCT, buildStructuredCodeOfConduct } from "./code-of-conduct-template";
 
 // POLÍTICA / CÓDIGO DE CONDUTA ATIVO
 export const INITIAL_POLICY: Policy = {
@@ -353,35 +353,268 @@ export const INITIAL_REPORTS: WhistleblowerReport[] = [
   },
 ];
 
-// GERENCIADOR DE ESTADO LOCAL
+export interface TenantState {
+  company: Company;
+  policy: Policy;
+  employees: Employee[];
+  employeeTrainings: EmployeeTraining[];
+  reports: WhistleblowerReport[];
+}
+
+// GERENCIADOR DE ESTADO LOCAL MULTI-TENANT (COMPLIANCE MULTI-TENANT STORE)
 class ComplianceMockStore {
-  company: Company = INITIAL_COMPANY;
-  policy: Policy = INITIAL_POLICY;
+  // Mapa de Tenants isolados por company_id
+  private tenants: Map<string, TenantState> = new Map();
+  // Mapa de Sessions para company_id
+  private sessionToCompanyId: Map<string, string> = new Map();
+  // Catálogo global e imutável de treinamentos normativos
   trainings: Training[] = INITIAL_TRAININGS;
-  employees: Employee[] = [...INITIAL_EMPLOYEES];
-  employeeTrainings: EmployeeTraining[] = [...INITIAL_EMPLOYEE_TRAININGS];
-  reports: WhistleblowerReport[] = [...INITIAL_REPORTS];
+  // ID do tenant atualmente ativo / padrão para chamadas sem ID explícito
+  private activeCompanyId: string = INITIAL_COMPANY.id;
+
+  constructor() {
+    // Inicializa a Empresa Demo (apenas para auditoria/demonstração)
+    this.tenants.set(INITIAL_COMPANY.id, {
+      company: { ...INITIAL_COMPANY },
+      policy: { ...INITIAL_POLICY },
+      employees: [...INITIAL_EMPLOYEES],
+      employeeTrainings: [...INITIAL_EMPLOYEE_TRAININGS],
+      reports: [...INITIAL_REPORTS],
+    });
+
+    // Mapeia a sessão demo
+    this.sessionToCompanyId.set("demo-session-token", INITIAL_COMPANY.id);
+  }
+
+  /**
+   * Obtém o estado de um tenant específico. Se não existir, retorna o ativo ou cria vazio se id válido.
+   */
+  getTenantState(companyId?: string): TenantState {
+    const id = companyId || this.activeCompanyId;
+    let state = this.tenants.get(id);
+    if (!state) {
+      // Se não encontrou pelo ID, tenta achar por slug
+      for (const t of this.tenants.values()) {
+        if (t.company.slug === id || t.company.id === id) {
+          return t;
+        }
+      }
+      // Se ainda não encontrou e foi passado um ID, fallback seguro para o ativo
+      state = this.tenants.get(this.activeCompanyId);
+    }
+    if (!state) {
+      // Fallback final
+      return {
+        company: INITIAL_COMPANY,
+        policy: INITIAL_POLICY,
+        employees: [],
+        employeeTrainings: [],
+        reports: [],
+      };
+    }
+    return state;
+  }
+
+  /**
+   * Define o tenant ativo para o contexto atual
+   */
+  setActiveCompany(companyId: string) {
+    if (this.tenants.has(companyId)) {
+      this.activeCompanyId = companyId;
+    }
+  }
+
+  getActiveCompanyId(): string {
+    return this.activeCompanyId;
+  }
+
+  /**
+   * Associa um token de sessão a uma empresa/tenant
+   */
+  bindSessionToCompany(sessionToken: string, companyId: string) {
+    this.sessionToCompanyId.set(sessionToken, companyId);
+    this.activeCompanyId = companyId;
+  }
+
+  /**
+   * Obtém a empresa associada a um token de sessão
+   */
+  getCompanyBySession(sessionToken: string): Company | null {
+    const companyId = this.sessionToCompanyId.get(sessionToken);
+    if (!companyId) return null;
+    return this.tenants.get(companyId)?.company || null;
+  }
+
+  /**
+   * Cria um Tenant Real totalmente Limpo e Inicializado a partir dos dados do CNPJ
+   */
+  createRealCompanyTenant(data: Partial<Company> & { cnpj: string; legal_name: string }): Company {
+    const cleanCnpjDigits = data.cnpj.replace(/\D/g, "");
+    
+    // Verifica se já existe um tenant com esse CNPJ para evitar duplicidade
+    for (const [existingId, tenant] of this.tenants.entries()) {
+      if (tenant.company.cnpj.replace(/\D/g, "") === cleanCnpjDigits) {
+        // Atualiza os dados da empresa existente e preserva o histórico de integridade
+        tenant.company = {
+          ...tenant.company,
+          ...data,
+        };
+        this.activeCompanyId = existingId;
+        return tenant.company;
+      }
+    }
+
+    const companyId = crypto.randomUUID ? crypto.randomUUID() : "comp-" + Date.now();
+    const tradeName = data.trade_name || data.legal_name;
+
+    const newCompany: Company = {
+      id: companyId,
+      trade_name: tradeName,
+      legal_name: data.legal_name,
+      cnpj: cleanCnpjDigits,
+      slug: data.slug || "empresa-" + cleanCnpjDigits.substring(0, 8),
+      created_at: new Date().toISOString(),
+      status: data.status || "ATIVA",
+      opening_date: data.opening_date,
+      legal_nature: data.legal_nature,
+      company_size: data.company_size,
+      share_capital: data.share_capital,
+      headquarters_or_branch: data.headquarters_or_branch || "MATRIZ",
+      cep: data.cep,
+      street: data.street,
+      number: data.number,
+      complement: data.complement,
+      neighborhood: data.neighborhood,
+      city: data.city,
+      state: data.state,
+      full_address: data.full_address,
+      main_cnae_code: data.main_cnae_code,
+      main_cnae_description: data.main_cnae_description,
+      secondary_cnaes: data.secondary_cnaes || [],
+      is_simples_nacional: data.is_simples_nacional ?? null,
+      is_mei: data.is_mei ?? null,
+      tax_regime: data.tax_regime,
+      partners: data.partners || [],
+      integrity_officer_name: data.integrity_officer_name,
+      integrity_officer_email: data.integrity_officer_email,
+      integrity_officer_phone: data.integrity_officer_phone,
+      compliance_officer_name: data.compliance_officer_name,
+      approximate_employees_count: data.approximate_employees_count || 10,
+      conducts_public_contracts: data.conducts_public_contracts ?? true,
+    };
+
+    // Gera Código de Conduta personalizado para a nova empresa
+    const tailoredPolicyContent = buildStructuredCodeOfConduct(newCompany.legal_name);
+
+    const initialPolicy: Policy = {
+      id: "pol-" + (crypto.randomUUID ? crypto.randomUUID() : Date.now()),
+      company_id: companyId,
+      title: `Código de Ética, Integridade e Conduta - ${tradeName}`,
+      content: tailoredPolicyContent,
+      version: "1.0",
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      approved_by: data.integrity_officer_name || "Diretoria de Integridade",
+      approved_at: new Date().toISOString(),
+      next_review_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      published_to_employees: true,
+      published_at: new Date().toISOString(),
+      history: [],
+    };
+
+    // Registra o tenant com registros zerados (sem dados fake)
+    this.tenants.set(companyId, {
+      company: newCompany,
+      policy: initialPolicy,
+      employees: [],
+      employeeTrainings: [],
+      reports: [],
+    });
+
+    this.activeCompanyId = companyId;
+    return newCompany;
+  }
+
+  // Compatibilidade com propriedades legadas via getters dinâmicos vinculados ao tenant ativo
+  get company(): Company {
+    return this.getTenantState().company;
+  }
+  set company(c: Company) {
+    const t = this.getTenantState(c.id);
+    t.company = c;
+    this.tenants.set(c.id, t);
+    this.activeCompanyId = c.id;
+  }
+
+  get policy(): Policy {
+    return this.getTenantState().policy;
+  }
+  set policy(p: Policy) {
+    const t = this.getTenantState(p.company_id);
+    t.policy = p;
+  }
+
+  get employees(): Employee[] {
+    return this.getTenantState().employees;
+  }
+  set employees(list: Employee[]) {
+    this.getTenantState().employees = list;
+  }
+
+  get employeeTrainings(): EmployeeTraining[] {
+    return this.getTenantState().employeeTrainings;
+  }
+  set employeeTrainings(list: EmployeeTraining[]) {
+    this.getTenantState().employeeTrainings = list;
+  }
+
+  get reports(): WhistleblowerReport[] {
+    return this.getTenantState().reports;
+  }
+  set reports(list: WhistleblowerReport[]) {
+    this.getTenantState().reports = list;
+  }
 
   // Métodos de Empresa & Política
-  getCompany(slug?: string) {
-    if (!slug || slug === this.company.slug) return this.company;
-    return this.company;
+  getCompany(identifierOrSlug?: string): Company {
+    if (!identifierOrSlug) {
+      return this.getTenantState().company;
+    }
+    // Procura por ID direto
+    if (this.tenants.has(identifierOrSlug)) {
+      return this.tenants.get(identifierOrSlug)!.company;
+    }
+    // Procura por slug ou CNPJ
+    const cleanId = identifierOrSlug.replace(/\D/g, "");
+    for (const tenant of this.tenants.values()) {
+      if (
+        tenant.company.slug === identifierOrSlug ||
+        tenant.company.id === identifierOrSlug ||
+        (cleanId.length === 14 && tenant.company.cnpj.replace(/\D/g, "") === cleanId)
+      ) {
+        return tenant.company;
+      }
+    }
+    return this.getTenantState().company;
   }
 
-  updateCompany(partial: Partial<Company>) {
-    this.company = {
-      ...this.company,
+  updateCompany(partial: Partial<Company>, companyId?: string): Company {
+    const state = this.getTenantState(companyId);
+    state.company = {
+      ...state.company,
       ...partial,
     };
-    return this.company;
+    return state.company;
   }
 
-  getPolicy() {
-    return this.policy;
+  getPolicy(companyId?: string): Policy {
+    return this.getTenantState(companyId).policy;
   }
 
-  updatePolicy(content: string, title?: string, publishToEmployees: boolean = true) {
-    const previous = { ...this.policy };
+  updatePolicy(content: string, title?: string, publishToEmployees: boolean = true, companyId?: string): Policy {
+    const state = this.getTenantState(companyId);
+    const previous = { ...state.policy };
     const currentVersionNum = parseFloat(previous.version) || 1.0;
     const newVersionStr = (currentVersionNum + 0.1).toFixed(1);
     const nowStr = new Date().toISOString();
@@ -401,7 +634,7 @@ class ComplianceMockStore {
       change_summary: `Revisão ordinária para versão ${newVersionStr}.`,
     });
 
-    this.policy = {
+    state.policy = {
       ...previous,
       title: title || previous.title,
       content,
@@ -413,24 +646,29 @@ class ComplianceMockStore {
       published_at: publishToEmployees ? nowStr : previous.published_at,
       history: archivedHistory,
     };
-    return this.policy;
+    return state.policy;
   }
 
   // Métodos de Colaborador
-  getEmployeeByToken(token: string) {
-    return this.employees.find((e) => e.access_token === token || e.id === token);
+  getEmployeeByToken(token: string, companyId?: string): Employee | undefined {
+    const state = this.getTenantState(companyId);
+    return state.employees.find((e) => e.access_token === token || e.id === token);
   }
 
-  getEmployees() {
-    return this.employees;
+  getEmployees(companyId?: string): Employee[] {
+    return this.getTenantState(companyId).employees;
   }
 
-  addEmployee(data: { full_name: string; cpf: string; role: string; phone: string; email?: string }) {
+  addEmployee(
+    data: { full_name: string; cpf: string; role: string; phone: string; email?: string },
+    companyId?: string
+  ): Employee {
+    const state = this.getTenantState(companyId);
     const cleanCpf = data.cpf.replace(/\D/g, "");
     const token = generateSecureToken("tok");
     const newEmp: Employee = {
       id: "emp-" + generateSecureToken("id").substring(0, 16),
-      company_id: this.company.id,
+      company_id: state.company.id,
       full_name: data.full_name,
       cpf: cleanCpf,
       role: data.role,
@@ -441,26 +679,31 @@ class ComplianceMockStore {
       policy_acceptance_ip: null,
       created_at: new Date().toISOString(),
     };
-    this.employees.unshift(newEmp);
+    state.employees.unshift(newEmp);
     return newEmp;
   }
 
-  getEmployeeById(id: string) {
-    return this.employees.find((e) => e.id === id) || null;
+  getEmployeeById(id: string, companyId?: string): Employee | null {
+    const state = this.getTenantState(companyId);
+    return state.employees.find((e) => e.id === id) || null;
   }
 
-  addEmployeesBatch(list: Array<{ full_name: string; cpf: string; role: string; phone: string; email?: string }>) {
+  addEmployeesBatch(
+    list: Array<{ full_name: string; cpf: string; role: string; phone: string; email?: string }>,
+    companyId?: string
+  ): Employee[] {
     const created: Employee[] = [];
     for (const item of list) {
       if (item.full_name && item.cpf) {
-        created.push(this.addEmployee(item));
+        created.push(this.addEmployee(item, companyId));
       }
     }
     return created;
   }
 
-  acceptPolicy(employeeId: string, ip: string = "127.0.0.1") {
-    const emp = this.employees.find((e) => e.id === employeeId);
+  acceptPolicy(employeeId: string, ip: string = "127.0.0.1", companyId?: string): Employee | undefined {
+    const state = this.getTenantState(companyId);
+    const emp = state.employees.find((e) => e.id === employeeId);
     if (emp) {
       emp.policy_accepted_at = new Date().toISOString();
       emp.policy_acceptance_ip = ip;
@@ -469,16 +712,27 @@ class ComplianceMockStore {
   }
 
   // Métodos de Treinamento
-  getTrainings() {
+  getTrainings(): Training[] {
     return this.trainings;
   }
 
-  getEmployeeCertificates(employeeId: string) {
-    return this.employeeTrainings.filter((et) => et.employee_id === employeeId);
+  getEmployeeCertificates(employeeId?: string, companyId?: string): EmployeeTraining[] {
+    const state = this.getTenantState(companyId);
+    if (employeeId) {
+      return state.employeeTrainings.filter((et) => et.employee_id === employeeId);
+    }
+    return state.employeeTrainings;
   }
 
-  completeTraining(employeeId: string, trainingId: string, score: number = 100, ip: string = "127.0.0.1") {
-    const existing = this.employeeTrainings.find(
+  completeTraining(
+    employeeId: string,
+    trainingId: string,
+    score: number = 100,
+    ip: string = "127.0.0.1",
+    companyId?: string
+  ): EmployeeTraining {
+    const state = this.getTenantState(companyId);
+    const existing = state.employeeTrainings.find(
       (et) => et.employee_id === employeeId && et.training_id === trainingId
     );
     if (existing) return existing;
@@ -497,42 +751,52 @@ class ComplianceMockStore {
       ip_address: ip,
     };
 
-    this.employeeTrainings.push(newRecord);
+    state.employeeTrainings.push(newRecord);
     return newRecord;
   }
 
-  findCertificateByCode(code: string) {
-    const cert = this.employeeTrainings.find(
-      (et) => et.certificate_code.toUpperCase() === code.toUpperCase()
-    );
-    if (!cert) return null;
+  findCertificateByCode(code: string, companyId?: string) {
+    // Procura no tenant específico ou em todos os tenants
+    const searchTenants = companyId
+      ? [this.getTenantState(companyId)]
+      : Array.from(this.tenants.values());
 
-    const employee = this.employees.find((e) => e.id === cert.employee_id);
-    const training = this.trainings.find((t) => t.id === cert.training_id);
-
-    return {
-      certificate: cert,
-      employee,
-      training,
-      company: this.company,
-    };
+    for (const state of searchTenants) {
+      const cert = state.employeeTrainings.find(
+        (et) => et.certificate_code.toUpperCase() === code.toUpperCase()
+      );
+      if (cert) {
+        const employee = state.employees.find((e) => e.id === cert.employee_id);
+        const training = this.trainings.find((t) => t.id === cert.training_id);
+        return {
+          certificate: cert,
+          employee,
+          training,
+          company: state.company,
+        };
+      }
+    }
+    return null;
   }
 
   // Métodos de Denúncias
-  createReport(data: {
-    company_id?: string;
-    category: ReportCategory;
-    description: string;
-    is_anonymous: boolean;
-    reporter_name?: string;
-    reporter_contact?: string;
-    evidence_urls?: string[];
-  }) {
+  createReport(
+    data: {
+      company_id?: string;
+      category: ReportCategory;
+      description: string;
+      is_anonymous: boolean;
+      reporter_name?: string;
+      reporter_contact?: string;
+      evidence_urls?: string[];
+    }
+  ): WhistleblowerReport {
+    const state = this.getTenantState(data.company_id);
     const protocol = generateProtocol();
     const accessKey = generateAccessKey();
     const newReport: WhistleblowerReport = {
       id: "rep-" + generateSecureToken("id").substring(0, 16),
-      company_id: data.company_id || this.company.id,
+      company_id: state.company.id,
       protocol,
       access_key: accessKey,
       is_anonymous: data.is_anonymous,
@@ -546,53 +810,61 @@ class ComplianceMockStore {
       created_at: new Date().toISOString(),
       updated_at: new Date().toISOString(),
     };
-    this.reports.unshift(newReport);
+    state.reports.unshift(newReport);
     return newReport;
   }
 
-  getReportByProtocol(protocol: string, accessKey: string, companyId?: string) {
-    return this.reports.find(
-      (r) =>
-        r.protocol.trim().toUpperCase() === protocol.trim().toUpperCase() &&
-        r.access_key.trim() === accessKey.trim() &&
-        (!companyId || r.company_id === companyId)
-    );
-  }
+  getReportByProtocol(protocol: string, accessKey: string, companyId?: string): WhistleblowerReport | undefined {
+    const searchTenants = companyId
+      ? [this.getTenantState(companyId)]
+      : Array.from(this.tenants.values());
 
-  getReports(companyId?: string) {
-    if (companyId) {
-      return this.reports.filter((r) => r.company_id === companyId);
+    for (const state of searchTenants) {
+      const report = state.reports.find(
+        (r) =>
+          r.protocol.trim().toUpperCase() === protocol.trim().toUpperCase() &&
+          r.access_key.trim() === accessKey.trim() &&
+          (!companyId || r.company_id === companyId)
+      );
+      if (report) return report;
     }
-    return this.reports;
+    return undefined;
   }
 
-  updateReportStatus(reportId: string, status: ReportStatus, notes?: string) {
-    const report = this.reports.find((r) => r.id === reportId);
+  getReports(companyId?: string): WhistleblowerReport[] {
+    return this.getTenantState(companyId).reports;
+  }
+
+  updateReportStatus(reportId: string, status: ReportStatus, notes?: string, companyId?: string): WhistleblowerReport | null {
+    const state = this.getTenantState(companyId);
+    const report = state.reports.find((r) => r.id === reportId);
     if (report) {
       report.status = status;
       if (notes !== undefined) {
         report.resolution_notes = notes;
       }
       report.updated_at = new Date().toISOString();
+      return report;
     }
-    return report;
+    return null;
   }
 
-  // Métricas de Conformidade
-  getComplianceMetrics() {
-    const totalEmployees = this.employees.length;
-    const acceptedPolicies = this.employees.filter((e) => !!e.policy_accepted_at).length;
+  // Métricas de Conformidade isoladas por tenant
+  getComplianceMetrics(companyId?: string) {
+    const state = this.getTenantState(companyId);
+    const totalEmployees = state.employees.length;
+    const acceptedPolicies = state.employees.filter((e) => !!e.policy_accepted_at).length;
     const policyRate = totalEmployees > 0 ? Math.round((acceptedPolicies / totalEmployees) * 100) : 0;
 
     const totalExpectedTrainings = totalEmployees * this.trainings.length;
-    const completedTrainings = this.employeeTrainings.length;
+    const completedTrainings = state.employeeTrainings.length;
     const trainingRate =
       totalExpectedTrainings > 0
         ? Math.min(100, Math.round((completedTrainings / totalExpectedTrainings) * 100))
         : 0;
 
-    const totalReports = this.reports.length;
-    const resolvedReports = this.reports.filter(
+    const totalReports = state.reports.length;
+    const resolvedReports = state.reports.filter(
       (r) => r.status === "PROCEDENTE" || r.status === "IMPROCEDENTE" || r.status === "ARQUIVADA"
     ).length;
 
@@ -609,11 +881,16 @@ class ComplianceMockStore {
   }
 
   // Reseta o sistema para um novo cliente pagante (início zerado)
-  resetForNewSubscriber(companyData?: Partial<Company>) {
-    this.company = {
-      id: crypto.randomUUID ? crypto.randomUUID() : "comp-" + Date.now(),
-      trade_name: companyData?.trade_name || "Sua Empresa",
-      legal_name: companyData?.legal_name || "Sua Empresa Ltda",
+  resetForNewSubscriber(companyData?: Partial<Company>): Company {
+    const companyId = crypto.randomUUID ? crypto.randomUUID() : "comp-" + Date.now();
+    const tradeName = companyData?.trade_name || "Sua Empresa";
+    const legalName = companyData?.legal_name || "Sua Empresa Ltda";
+    const tailoredContent = buildStructuredCodeOfConduct(legalName);
+
+    const newCompany: Company = {
+      id: companyId,
+      trade_name: tradeName,
+      legal_name: legalName,
       cnpj: companyData?.cnpj || "",
       slug: companyData?.slug || "sua-empresa",
       created_at: new Date().toISOString(),
@@ -622,11 +899,11 @@ class ComplianceMockStore {
       ...companyData,
     };
 
-    this.policy = {
+    const newPolicy: Policy = {
       id: "pol-" + Date.now(),
-      company_id: this.company.id,
-      title: `Código de Ética, Integridade e Conduta - ${this.company.trade_name}`,
-      content: INITIAL_POLICY.content,
+      company_id: companyId,
+      title: `Código de Ética, Integridade e Conduta - ${tradeName}`,
+      content: tailoredContent,
       version: "1.0",
       is_active: true,
       created_at: new Date().toISOString(),
@@ -639,14 +916,20 @@ class ComplianceMockStore {
       history: [],
     };
 
-    // Zera colaboradores, certificações e denúncias para começar limpo
-    this.employees = [];
-    this.employeeTrainings = [];
-    this.reports = [];
+    // Registra tenant ZERADO (sem colaboradores, certificações ou denúncias de demo)
+    this.tenants.set(companyId, {
+      company: newCompany,
+      policy: newPolicy,
+      employees: [],
+      employeeTrainings: [],
+      reports: [],
+    });
 
-    return this.company;
+    this.activeCompanyId = companyId;
+    return newCompany;
   }
 }
 
 // Export singleton instance
 export const mockStore = new ComplianceMockStore();
+
