@@ -18,6 +18,7 @@ import {
 import { mockStore } from "@/lib/mock-data";
 import { Employee } from "@/types";
 import { formatCPF, maskCPF } from "@/lib/utils";
+import { createEmployeeAction, batchCreateEmployeesAction } from "@/app/actions/management";
 
 export default function EmployeesManagementPage() {
   const company = mockStore.getCompany();
@@ -40,11 +41,11 @@ export default function EmployeesManagementPage() {
     "Ana Paula Souza;45678901234;Assistente Financeiro;11955554444;ana.souza@empresa.com.br\nLucas de Oliveira;56789012345;Operador de Empilhadeira;11944443333;lucas@empresa.com.br"
   );
 
-  const handleAddIndividual = (e: React.FormEvent) => {
+  const handleAddIndividual = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!fullName.trim() || !cpf.trim()) return;
 
-    const newEmp = mockStore.addEmployee({
+    const res = await createEmployeeAction({
       full_name: fullName.trim(),
       cpf: cpf.trim(),
       role: role.trim() || "Colaborador",
@@ -52,32 +53,24 @@ export default function EmployeesManagementPage() {
       email: email.trim() || undefined,
     });
 
-    setEmployees([...mockStore.getEmployees()]);
-    setShowAddModal(false);
-    setFullName("");
-    setCpf("");
-    setRole("");
-    setPhone("");
-    setEmail("");
+    if (res.success) {
+      setEmployees([...mockStore.getEmployees()]);
+      setShowAddModal(false);
+      setFullName("");
+      setCpf("");
+      setRole("");
+      setPhone("");
+      setEmail("");
+    }
   };
 
-  const handleAddBatch = (e: React.FormEvent) => {
+  const handleAddBatch = async (e: React.FormEvent) => {
     e.preventDefault();
-    const lines = batchText.split("\n").filter((l) => l.trim().length > 0);
-    const parsed = lines.map((line) => {
-      const [name, c, r, p, m] = line.split(";").map((item) => (item ? item.trim() : ""));
-      return {
-        full_name: name || "Novo Colaborador",
-        cpf: c || "00000000000",
-        role: r || "Colaborador",
-        phone: p || "11999999999",
-        email: m || undefined,
-      };
-    });
-
-    mockStore.addEmployeesBatch(parsed);
-    setEmployees([...mockStore.getEmployees()]);
-    setShowBatchModal(false);
+    const res = await batchCreateEmployeesAction(batchText);
+    if (res.success) {
+      setEmployees([...mockStore.getEmployees()]);
+      setShowBatchModal(false);
+    }
   };
 
   const copyEmployeeLink = (token: string, empId: string) => {

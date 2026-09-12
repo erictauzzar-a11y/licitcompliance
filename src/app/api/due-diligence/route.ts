@@ -1,38 +1,56 @@
 import { NextRequest, NextResponse } from "next/server";
 import { executeDueDiligence } from "@/lib/due-diligence-service";
 import { mockStore } from "@/lib/mock-data";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
+import { isValidCNPJFormat, cleanCNPJ } from "@/lib/utils";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const cnpj = body.cnpj;
+    const ip = getClientIp(request.headers);
 
-    if (!cnpj) {
+    // 1. Rate Limiting anti-abuso/DoS (10 requisições / minuto por IP)
+    const rateCheck = checkRateLimit(`ddi_${ip}`, {
+      windowMs: 60000,
+      maxRequests: 10,
+      blockDurationMs: 300000,
+    });
+
+    if (!rateCheck.success) {
+      return NextResponse.json(
+        { error: "Limite de consultas excedido. Aguarde alguns instantes." },
+        { status: 429 }
+      );
+    }
+
+    const body = await request.json();
+    const rawCnpj = body?.cnpj;
+
+    if (!rawCnpj) {
       return NextResponse.json(
         { error: "CNPJ do fornecedor é obrigatório." },
         { status: 400 }
       );
     }
 
-    const cleanCnpj = cnpj.replace(/\D/g, "");
-    if (cleanCnpj.length !== 14) {
+    const cleaned = cleanCNPJ(String(rawCnpj));
+    if (!isValidCNPJFormat(cleaned)) {
       return NextResponse.json(
-        { error: "CNPJ deve possuir 14 dígitos." },
+        { error: "CNPJ deve possuir exatamente 14 dígitos." },
         { status: 400 }
       );
     }
 
-    const result = await executeDueDiligence(cleanCnpj);
+    const result = await executeDueDiligence(cleaned);
     
-    // Vincula à empresa gestora demo
-    result.company_id = mockStore.getCompany().id;
+    // Vincula à empresa do contexto atual
+    const company = mockStore.getCompany();
+    result.company_id = company.id;
     if (result.supplier) {
-      result.supplier.company_id = mockStore.getCompany().id;
+      result.supplier.company_id = company.id;
     }
 
     return NextResponse.json(result);
   } catch (error) {
-    console.error("Erro na Due Diligence:", error);
     return NextResponse.json(
       { error: "Falha ao processar análise de Due Diligence." },
       { status: 500 }

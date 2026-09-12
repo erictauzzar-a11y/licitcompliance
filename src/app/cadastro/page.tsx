@@ -25,6 +25,7 @@ import {
 import { formatCNPJ, maskCNPJInput, cleanCNPJ, isValidCNPJFormat } from "@/lib/utils";
 import { mockStore } from "@/lib/mock-data";
 import { Company } from "@/types";
+import { submitOnboardingAction } from "@/app/actions/onboarding";
 
 type OnboardingStep = "CNPJ_INPUT" | "CONFIRM_DATA" | "COMPLIANCE_DETAILS";
 
@@ -146,7 +147,7 @@ export default function RegisterCompanyPage() {
     }
   };
 
-  const handleFinishOnboarding = (e: React.FormEvent) => {
+  const handleFinishOnboarding = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (!formData.cnpj || !formData.legal_name) {
@@ -154,52 +155,17 @@ export default function RegisterCompanyPage() {
       return;
     }
 
-    const finalTradeName = formData.trade_name?.trim() || formData.legal_name?.trim() || "Empresa Licitante";
-    const finalSlug = formData.slug?.trim() || "empresa-licitante";
+    setLoading(true);
+    setErrorMsg("");
 
-    mockStore.updateCompany({
-      cnpj: cleanCNPJ(formData.cnpj),
-      legal_name: formData.legal_name.trim(),
-      trade_name: finalTradeName,
-      slug: finalSlug,
-      status: formData.status,
-      opening_date: formData.opening_date,
-      legal_nature: formData.legal_nature,
-      company_size: formData.company_size,
-      share_capital: formData.share_capital,
-      headquarters_or_branch: formData.headquarters_or_branch,
-      cep: formData.cep,
-      street: formData.street,
-      number: formData.number,
-      complement: formData.complement,
-      neighborhood: formData.neighborhood,
-      city: formData.city,
-      state: formData.state,
-      full_address: formData.full_address,
-      main_cnae_code: formData.main_cnae_code,
-      main_cnae_description: formData.main_cnae_description,
-      secondary_cnaes: formData.secondary_cnaes,
-      is_simples_nacional: formData.is_simples_nacional,
-      is_mei: formData.is_mei,
-      tax_regime: formData.tax_regime,
-      partners: formData.partners,
-      integrity_officer_name: formData.integrity_officer_name,
-      integrity_officer_email: formData.integrity_officer_email,
-      integrity_officer_phone: formData.integrity_officer_phone,
-      compliance_officer_name: formData.compliance_officer_name,
-      approximate_employees_count: Number(formData.approximate_employees_count) || 10,
-      conducts_public_contracts: formData.conducts_public_contracts,
-    });
+    const res = await submitOnboardingAction(formData);
 
-    if (mockStore.policy) {
-      mockStore.policy = {
-        ...mockStore.policy,
-        title: `Código de Ética, Integridade e Conduta - ${finalTradeName}`,
-        company_id: mockStore.company.id,
-      };
+    if (res.success) {
+      router.push("/dashboard");
+    } else {
+      setErrorMsg(res.error || "Falha ao salvar dados da empresa.");
+      setLoading(false);
     }
-
-    router.push("/dashboard");
   };
 
   return (

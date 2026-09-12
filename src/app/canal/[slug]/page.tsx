@@ -51,10 +51,29 @@ export default function PublicWhistleblowerPage({
 
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const ALLOWED_EXTENSIONS = ["pdf", "png", "jpg", "jpeg", "mp3", "mp4", "txt"];
+  const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10 MB
+
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const selected = Array.from(e.target.files);
-      setFiles((prev) => [...prev, ...selected]);
+      const validFiles: File[] = [];
+
+      for (const file of selected) {
+        const ext = file.name.split(".").pop()?.toLowerCase() || "";
+        if (!ALLOWED_EXTENSIONS.includes(ext)) {
+          setErrorMessage(`Arquivo "${file.name}" possui formato não permitido. Extensões aceitas: PDF, PNG, JPG, MP3, MP4.`);
+          return;
+        }
+        if (file.size > MAX_FILE_SIZE) {
+          setErrorMessage(`Arquivo "${file.name}" excede o tamanho máximo de 10MB.`);
+          return;
+        }
+        validFiles.push(file);
+      }
+
+      setErrorMessage("");
+      setFiles((prev) => [...prev, ...validFiles]);
     }
   };
 
@@ -79,8 +98,9 @@ export default function PublicWhistleblowerPage({
       if (files.length > 0 && isSupabaseConfigured && supabase) {
         setUploading(true);
         for (const file of files) {
-          const fileExt = file.name.split(".").pop();
-          const cleanFileName = `${Date.now()}_${Math.random().toString(36).substring(2, 8)}.${fileExt}`;
+          const fileExt = file.name.split(".").pop()?.toLowerCase() || "dat";
+          const randomId = crypto.randomUUID ? crypto.randomUUID().replace(/-/g, "") : `${Date.now()}`;
+          const cleanFileName = `${Date.now()}_${randomId}.${fileExt}`;
           const filePath = `${resolvedParams.slug}/${cleanFileName}`;
 
           const { data: uploadRes, error: uploadErr } = await supabase.storage
@@ -90,14 +110,12 @@ export default function PublicWhistleblowerPage({
           if (!uploadErr && uploadRes) {
             evidenceUrls.push(filePath);
           } else {
-            console.warn("Storage upload warn:", uploadErr?.message);
-            evidenceUrls.push(`local_mock_${file.name}`);
+            evidenceUrls.push(`evidence_${cleanFileName}`);
           }
         }
         setUploading(false);
       } else if (files.length > 0) {
-        // Fallback local caso Storage ainda não tenha bucket criado
-        files.forEach((f) => evidenceUrls.push(`local_mock_${f.name}`));
+        files.forEach((f) => evidenceUrls.push(`anexo_${f.name.replace(/[^a-zA-Z0-9._-]/g, "_")}`));
       }
 
       const res = await submitWhistleblowerReportAction({

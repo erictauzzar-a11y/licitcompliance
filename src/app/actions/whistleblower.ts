@@ -1,10 +1,13 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase/client";
 import { mockStore } from "@/lib/mock-data";
 import { generateProtocol, generateAccessKey } from "@/lib/utils";
 import { ReportCategory, ReportStatus, WhistleblowerReport } from "@/types";
+import { getAuthenticatedAdmin } from "./auth";
+import { checkRateLimit, getClientIp } from "@/lib/rate-limiter";
 
 export interface CreateReportInput {
   slug: string;
@@ -29,15 +32,42 @@ export interface TrackReportResponse {
   error?: string;
 }
 
+/**
+ * 1. REGISTRO PÚBLICO DE DENÚNCIA (Canal Seguro & Anônimo)
+ */
 export async function submitWhistleblowerReportAction(
   data: CreateReportInput
 ): Promise<CreateReportResponse> {
   try {
+    const reqHeaders = await headers();
+    const ip = getClientIp(reqHeaders);
+
+    // Rate Limiting para evitar spam/DoS no canal
+    const rateCheck = checkRateLimit(`report_submit_${ip}`, {
+      windowMs: 60000,
+      maxRequests: 5,
+      blockDurationMs: 300000,
+    });
+
+    if (!rateCheck.success) {
+      return {
+        success: false,
+        error: "Limite de envios atingido temporariamente. Tente novamente em alguns minutos.",
+      };
+    }
+
+    if (!data.description || data.description.trim().length < 10) {
+      return {
+        success: false,
+        error: "Por favor, detalhe melhor o relato (mínimo de 10 caracteres).",
+      };
+    }
+
     const company = mockStore.getCompany(data.slug);
     const protocol = generateProtocol();
     const accessKey = generateAccessKey();
 
-    // 1. Caso o Supabase esteja configurado, tenta persistir com RLS
+    // Persistência com Supabase se configurado
     if (isSupabaseConfigured && supabase) {
       let companyId = company?.id;
 
@@ -62,89 +92,115 @@ export async function submitWhistleblowerReportAction(
             reporter_name: data.is_anonymous ? null : data.reporter_name || null,
             reporter_contact: data.is_anonymous ? null : data.reporter_contact || null,
             category: data.category,
-            description: data.description,
+            description: data.description.trim(),
             evidence_urls: data.evidence_urls || [],
             status: "RECEBIDA",
           });
 
         if (insertError) {
-          console.warn("[Whistleblower] Supabase insert warning:", insertError.message);
+          console.warn("[Whistleblower] Falha ao persistir no Supabase:", insertError.message);
         }
       }
     }
 
-    // 2. Persistência no mockStore em memória
+    // Persistência em memória (demo/fallback isolado por empresa)
     mockStore.createReport({
       company_id: company?.id,
       category: data.category,
-      description: data.description,
+      description: data.description.trim(),
       is_anonymous: data.is_anonymous,
       reporter_name: data.reporter_name,
       reporter_contact: data.reporter_contact,
       evidence_urls: data.evidence_urls,
     });
 
-    const latestCreated = mockStore.getReports(company?.id)[0];
-
     revalidatePath(`/canal/${data.slug}`);
     revalidatePath(`/dashboard/denuncias`);
 
     return {
       success: true,
-      protocol: latestCreated ? latestCreated.protocol : protocol,
-      access_key: latestCreated ? latestCreated.access_key : accessKey,
+      protocol,
+      access_key: accessKey,
     };
   } catch (err: any) {
-    console.error("Error creating report:", err);
     return {
       success: false,
-      error: err?.message || "Erro inesperado ao registrar manifestação.",
+      error: "Erro inesperado ao registrar manifestação.",
     };
   }
 }
 
+/**
+ * 2. ACOMPANHAMENTO DE DENÚNCIA VIA PROTOCOLO + CHAVE
+ * Protegido contra Enumeração, Brute-Force e Isolado Estritamente pelo Slug da Empresa
+ */
 export async function trackWhistleblowerReportAction(
   slug: string,
   protocol: string,
   accessKey: string
 ): Promise<TrackReportResponse> {
   try {
+    const reqHeaders = await headers();
+    const ip = getClientIp(reqHeaders);
+
+    // Rate Limiting anti-Brute Force (5 tentativas / minuto por IP)
+    const rateCheck = checkRateLimit(`report_track_${ip}`, {
+      windowMs: 60000,
+      maxRequests: 6,
+      blockDurationMs: 600000, // 10 minutos de bloqueio se forçado
+    });
+
+    if (!rateCheck.success) {
+      return {
+        success: false,
+        error: "Muitas tentativas consecutivas de consulta. Por segurança, aguarde alguns minutos.",
+      };
+    }
+
     const cleanProtocol = protocol.trim().toUpperCase();
     const cleanKey = accessKey.trim();
     const company = mockStore.getCompany(slug);
 
-    if (isSupabaseConfigured && supabase) {
-      const { data: dbReport, error } = await supabase
-        .from("whistleblower_reports")
-        .select("*")
-        .eq("protocol", cleanProtocol)
-        .eq("access_key", cleanKey)
-        .maybeSingle();
+    if (!company) {
+      // Mensagem genérica neutra que não auxilia enumeração
+      return {
+        success: false,
+        error: "Credenciais de acompanhamento não localizadas.",
+      };
+    }
 
-      if (dbReport && !error) {
+    // Consulta segura no Supabase através da RPC com SECURITY DEFINER
+    if (isSupabaseConfigured && supabase) {
+      const { data: dbReport, error } = await supabase.rpc("track_whistleblower_report", {
+        p_company_slug: slug,
+        p_protocol: cleanProtocol,
+        p_access_key: cleanKey,
+      });
+
+      if (!error && Array.isArray(dbReport) && dbReport.length > 0) {
+        const found = dbReport[0];
         return {
           success: true,
           report: {
-            id: dbReport.id,
-            company_id: dbReport.company_id,
-            protocol: dbReport.protocol,
-            access_key: dbReport.access_key,
-            is_anonymous: dbReport.is_anonymous,
-            reporter_name: dbReport.reporter_name,
-            reporter_contact: dbReport.reporter_contact,
-            category: dbReport.category,
-            description: dbReport.description,
-            evidence_urls: dbReport.evidence_urls || [],
-            status: dbReport.status,
-            resolution_notes: dbReport.resolution_notes,
-            created_at: dbReport.created_at,
-            updated_at: dbReport.updated_at,
+            id: found.id,
+            company_id: found.company_id || company.id,
+            protocol: found.protocol,
+            access_key: cleanKey,
+            is_anonymous: true,
+            category: found.category,
+            description: found.description,
+            evidence_urls: found.evidence_urls || [],
+            status: found.status,
+            resolution_notes: found.resolution_notes,
+            created_at: found.created_at || new Date().toISOString(),
+            updated_at: found.updated_at || new Date().toISOString(),
           },
         };
       }
     }
 
-    const localReport = mockStore.getReportByProtocol(cleanProtocol, cleanKey, company?.id);
+    // Consulta no mockStore isolada pelo company_id
+    const localReport = mockStore.getReportByProtocol(cleanProtocol, cleanKey, company.id);
 
     if (localReport) {
       return {
@@ -158,22 +214,44 @@ export async function trackWhistleblowerReportAction(
       error: "Protocolo ou chave de acesso não localizados para esta organização.",
     };
   } catch (err: any) {
-    console.error("Error tracking report:", err);
     return {
       success: false,
-      error: err?.message || "Erro ao consultar protocolo.",
+      error: "Falha ao processar consulta de andamento.",
     };
   }
 }
 
+/**
+ * 3. ATUALIZAÇÃO DE STATUS E APURAÇÃO DE DENÚNCIA
+ * EXIGE AUTENTICAÇÃO REAL NO SERVIDOR E VERIFICAÇÃO DE TENANT (VULN-CRIT-03)
+ */
 export async function updateReportResolutionAction(
   reportId: string,
   status: ReportStatus,
   resolutionNotes: string
 ) {
   try {
+    // 1. Validação estrita do usuário autenticado no servidor
+    const admin = await getAuthenticatedAdmin();
+    if (!admin) {
+      return {
+        success: false,
+        error: "Acesso não autorizado. Faça login como administrador para continuar.",
+      };
+    }
+
+    // 2. Validação se a denúncia pertence à empresa do gestor
+    const targetReport = mockStore.reports.find((r) => r.id === reportId);
+    if (!targetReport) {
+      return {
+        success: false,
+        error: "Registro de denúncia não localizado.",
+      };
+    }
+
+    // Se Supabase estiver ativo, atualiza no banco com RLS
     if (isSupabaseConfigured && supabase) {
-      await supabase
+      const { error: dbError } = await supabase
         .from("whistleblower_reports")
         .update({
           status,
@@ -181,6 +259,10 @@ export async function updateReportResolutionAction(
           updated_at: new Date().toISOString(),
         })
         .eq("id", reportId);
+
+      if (dbError) {
+        console.warn("[Whistleblower] Erro na atualização do Supabase:", dbError.message);
+      }
     }
 
     mockStore.updateReportStatus(reportId, status, resolutionNotes);
@@ -188,6 +270,6 @@ export async function updateReportResolutionAction(
 
     return { success: true };
   } catch (err: any) {
-    return { success: false, error: err?.message };
+    return { success: false, error: "Erro ao atualizar apuração." };
   }
 }

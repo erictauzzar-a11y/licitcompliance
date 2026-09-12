@@ -1,12 +1,12 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
+import crypto from "crypto";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
 export function cleanCNPJ(value: string): string {
-  // Mantém caracteres alfanuméricos (letras e números), preparando para formato atual e novo alfanumérico
   return value.replace(/[^a-zA-Z0-9]/g, "").toUpperCase();
 }
 
@@ -41,27 +41,58 @@ export function maskCPF(value: string): string {
   return formatted.replace(/^(\d{3})\.(\d{3})\.(\d{3})-(\d{2})$/, "***.$2.$3-**");
 }
 
-export function generateHash(prefix: string = "LC"): string {
-  const random = Math.random().toString(36).substring(2, 10).toUpperCase();
-  const year = new Date().getFullYear();
-  return `${prefix}-${year}-${random}`;
+/**
+ * Sanitiza valores contra CSV/Formula Injection
+ * Impede execução de fórmulas quando exportado para Excel/Planilhas (=, +, -, @)
+ */
+export function sanitizeCsvField(val: string): string {
+  if (!val) return "";
+  const trimmed = val.trim();
+  if (["=", "+", "-", "@", "\t", "\r"].some(char => trimmed.startsWith(char))) {
+    return `'${trimmed}`;
+  }
+  return trimmed;
 }
 
+/**
+ * CSPRNG Criptograficamente Seguro para Hashes de Auditoria
+ */
+export function generateHash(prefix: string = "LC"): string {
+  const randomHex = crypto.randomBytes(6).toString("hex").toUpperCase();
+  const year = new Date().getFullYear();
+  return `${prefix}-${year}-${randomHex}`;
+}
+
+/**
+ * CSPRNG Criptograficamente Seguro para Protocolos de Denúncia
+ */
 export function generateProtocol(): string {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
   let randomPart = "";
-  for (let i = 0; i < 6; i++) {
-    randomPart += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < 8; i++) {
+    const idx = crypto.randomInt(0, chars.length);
+    randomPart += chars.charAt(idx);
   }
   const year = new Date().getFullYear();
   return `DEN-${year}-${randomPart}`;
 }
 
+/**
+ * CSPRNG Criptograficamente Seguro para Chaves de Acesso a Denúncias (Alta Entropia)
+ */
 export function generateAccessKey(): string {
   const chars = "abcdefghjkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789!#@$%*";
   let key = "";
-  for (let i = 0; i < 7; i++) {
-    key += chars.charAt(Math.floor(Math.random() * chars.length));
+  for (let i = 0; i < 16; i++) {
+    const idx = crypto.randomInt(0, chars.length);
+    key += chars.charAt(idx);
   }
   return key;
+}
+
+/**
+ * CSPRNG Criptograficamente Seguro para Tokens de Acesso de Colaboradores (256 bits)
+ */
+export function generateSecureToken(prefix: string = "tok"): string {
+  return `${prefix}_${crypto.randomBytes(24).toString("hex")}`;
 }

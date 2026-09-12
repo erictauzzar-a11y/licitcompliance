@@ -16,8 +16,8 @@ export async function generateDossierPDF(originUrl?: string): Promise<void> {
   const metrics = mockStore.getComplianceMetrics();
   const validationCode = `DOSSIE-${new Date().getFullYear()}-${company.cnpj.substring(0, 8)}`;
   
-  const siteUrl = originUrl || (typeof window !== "undefined" ? window.location.origin : "https://licitcompliance.com.br");
-  const validationUrl = `${siteUrl}/validar/${validationCode}`;
+  const canonicalUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://licitcompliance.vercel.app");
+  const validationUrl = `${canonicalUrl}/validar/${validationCode}`;
 
   // Gerar QRCode DataURL
   let qrCodeDataUrl = "";
@@ -261,8 +261,8 @@ export async function generateCertificatePDF(
   });
 
   const company = mockStore.getCompany();
-  const siteUrl = originUrl || (typeof window !== "undefined" ? window.location.origin : "https://licitcompliance.com.br");
-  const validationUrl = `${siteUrl}/validar/${certificateCode}`;
+  const canonicalUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://licitcompliance.vercel.app");
+  const validationUrl = `${canonicalUrl}/validar/${certificateCode}`;
 
   let qrCodeDataUrl = "";
   try {

@@ -21,6 +21,7 @@ import { mockStore } from "@/lib/mock-data";
 import { Employee, Training, EmployeeTraining } from "@/types";
 import { formatCPF, maskCPF } from "@/lib/utils";
 import { generateCertificatePDF } from "@/lib/pdf-generator";
+import { submitQuizAndCertifyAction } from "@/app/actions/training";
 
 export default function EmployeeTrainingFlowPage({ params }: { params: Promise<{ accessToken: string }> }) {
   const resolvedParams = use(params);
@@ -71,25 +72,33 @@ export default function EmployeeTrainingFlowPage({ params }: { params: Promise<{
     setShowFeedback(true);
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = async () => {
     setShowFeedback(false);
     if (selectedTraining.questions && quizQuestionIndex < selectedTraining.questions.length - 1) {
       setQuizQuestionIndex((prev) => prev + 1);
     } else {
-      // Quiz concluído com sucesso
+      // Quiz concluído - Validação e certificação segura no servidor
       setQuizFinished(true);
       if (employee) {
-        const cert = mockStore.completeTraining(employee.id, selectedTraining.id, 100, "189.40.112.5");
-        const allCerts = mockStore.getEmployeeCertificates(employee.id);
-        setCertificates([...allCerts]);
-        try {
-          confetti({
-            particleCount: 80,
-            spread: 70,
-            origin: { y: 0.6 },
-          });
-        } catch {
-          // ignore
+        const result = await submitQuizAndCertifyAction({
+          slug: company.slug,
+          trainingId: selectedTraining.id,
+          employeeId: employee.id,
+          answers: selectedAnswers,
+        });
+
+        if (result.success) {
+          const allCerts = mockStore.getEmployeeCertificates(employee.id);
+          setCertificates([...allCerts]);
+          try {
+            confetti({
+              particleCount: 80,
+              spread: 70,
+              origin: { y: 0.6 },
+            });
+          } catch {
+            // ignore
+          }
         }
       }
     }

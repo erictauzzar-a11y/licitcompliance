@@ -1,6 +1,6 @@
 import jsPDF from "jspdf";
 import QRCode from "qrcode";
-import { formatCNPJ, formatCPF, generateHash } from "./utils";
+import { formatCNPJ, formatCPF, maskCPF, generateHash, generateSecureToken } from "./utils";
 import {
   SupplierPartner,
   DueDiligenceRecord,
@@ -81,39 +81,54 @@ export async function executeDueDiligence(cnpj: string): Promise<DueDiligenceRec
 
   if (cguApiKey) {
     try {
-      // CEIS
+      // CEIS com timeout de 5 segundos
       const ceisRes = await fetch(
         `https://api.portaldatransparencia.gov.br/api-de-dados/ceis?codigoSancionado=${cleanCnpj}&pagina=1`,
-        { headers: { "chave-api-dados": cguApiKey } }
+        {
+          headers: { "chave-api-dados": cguApiKey },
+          signal: AbortSignal.timeout(5000),
+        }
       );
       if (ceisRes.ok) ceisRecords = await ceisRes.json();
 
-      // CNEP
+      // CNEP com timeout de 5 segundos
       const cnepRes = await fetch(
         `https://api.portaldatransparencia.gov.br/api-de-dados/cnep?codigoSancionado=${cleanCnpj}&pagina=1`,
-        { headers: { "chave-api-dados": cguApiKey } }
+        {
+          headers: { "chave-api-dados": cguApiKey },
+          signal: AbortSignal.timeout(5000),
+        }
       );
       if (cnepRes.ok) cnepRecords = await cnepRes.json();
 
-      // PEP para cada sócio
-      for (const socio of qsaList) {
-        const pepRes = await fetch(
-          `https://api.portaldatransparencia.gov.br/api-de-dados/pep?nome=${encodeURIComponent(socio.nome)}&pagina=1`,
-          { headers: { "chave-api-dados": cguApiKey } }
-        );
-        if (pepRes.ok) {
-          const pData = await pepRes.json();
-          if (Array.isArray(pData) && pData.length > 0) {
-            socio.is_pep = true;
-            socio.pep_details = pData[0];
-            pepRecords.push(pData[0]);
+      // PEP para administradores principais (máximo 5) em paralelo com timeout
+      const sociosParaConsultar = qsaList.slice(0, 5);
+      const pepPromises = sociosParaConsultar.map(async (socio) => {
+        try {
+          const pepRes = await fetch(
+            `https://api.portaldatransparencia.gov.br/api-de-dados/pep?nome=${encodeURIComponent(socio.nome)}&pagina=1`,
+            {
+              headers: { "chave-api-dados": cguApiKey },
+              signal: AbortSignal.timeout(4000),
+            }
+          );
+          if (pepRes.ok) {
+            const pData = await pepRes.json();
+            if (Array.isArray(pData) && pData.length > 0) {
+              socio.is_pep = true;
+              socio.pep_details = pData[0];
+              pepRecords.push(pData[0]);
+            }
           }
+        } catch {
+          // Fallback gracioso para falha individual
         }
-      }
+      });
 
+      await Promise.allSettled(pepPromises);
       cguConnected = true;
     } catch (err) {
-      console.error("Erro na consulta CGU Transparência:", err);
+      console.warn("Aviso: Consulta CGU indisponível ou limite atingido.");
     }
   }
 
@@ -123,7 +138,6 @@ export async function executeDueDiligence(cnpj: string): Promise<DueDiligenceRec
   );
 
   // 4. MOCK REALISTA / DEMO SE NÃO HOUVER CHAVE CGU CONFIGURADA
-  // Demonstração com comportamento inteligente: se for CNPJ de teste com '999', simula sanção para auditoria visual
   if (!cguConnected && cleanCnpj.endsWith("999")) {
     ceisRecords.push({
       tipoSancao: "Suspensão Temporária de Participação em Licitação",
@@ -147,11 +161,17 @@ export async function executeDueDiligence(cnpj: string): Promise<DueDiligenceRec
     riskStatus = "BLOQUEADO";
   } else if (hasPep) {
     riskLevel = "MEDIO";
-    riskStatus = "ALERTA"; // Exige medidas de mitigação e diligência reforçada
+    riskStatus = "ALERTA";
   }
 
+  // Mascaramento de CPFs de sócios para privacidade e conformidade LGPD
+  const maskedQsaList = qsaList.map((s) => ({
+    ...s,
+    cpf_cnpj_socio: (s.cpf_cnpj_socio && s.cpf_cnpj_socio.length === 11) ? maskCPF(s.cpf_cnpj_socio) : (s.cpf_cnpj_socio || ""),
+  }));
+
   const supplier: SupplierPartner = {
-    id: "sup-" + Math.random().toString(36).substring(2, 9),
+    id: "sup-" + generateSecureToken("id").substring(0, 16),
     company_id: "company-default",
     cnpj: cleanCnpj,
     legal_name: legalName,
@@ -161,7 +181,7 @@ export async function executeDueDiligence(cnpj: string): Promise<DueDiligenceRec
   };
 
   const details: DueDiligenceDetails = {
-    qsa: qsaList,
+    qsa: maskedQsaList,
     ceis_records: ceisRecords,
     cnep_records: cnepRecords,
     slave_labor_records: slaveLaborMatches,
@@ -171,7 +191,7 @@ export async function executeDueDiligence(cnpj: string): Promise<DueDiligenceRec
   };
 
   const record: DueDiligenceRecord = {
-    id: "ddi-" + Math.random().toString(36).substring(2, 9),
+    id: "ddi-" + generateSecureToken("id").substring(0, 16),
     company_id: "company-default",
     supplier_id: supplier.id,
     supplier,
@@ -202,8 +222,8 @@ export async function generateDueDiligenceReportPDF(
   });
 
   const supplier = record.supplier;
-  const siteUrl = originUrl || (typeof window !== "undefined" ? window.location.origin : "https://licitcompliance.com.br");
-  const validationUrl = `${siteUrl}/validar/${record.report_hash}`;
+  const canonicalUrl = process.env.NEXT_PUBLIC_APP_URL || (typeof window !== "undefined" ? window.location.origin : "https://licitcompliance.vercel.app");
+  const validationUrl = `${canonicalUrl}/validar/${record.report_hash}`;
 
   let qrCodeDataUrl = "";
   try {

@@ -1,11 +1,12 @@
 -- =========================================================================
--- LICITCOMPLIANCE - SUPABASE DDL SCHEMA (POSTGRESQL)
--- Arquitetura SaaS B2B Multi-tenant com RLS e Treinamento Via Link Único
+-- LICITCOMPLIANCE - SUPABASE DDL SCHEMA (POSTGRESQL SEGURO & HARDENED)
+-- Arquitetura SaaS B2B Multi-tenant com RLS Estrita, RPCs Seguras e Isolamento
 -- Leis de Referência: Lei Federal nº 14.133/2021 e NR-1 / Lei nº 14.457/2022
 -- =========================================================================
 
--- Habilita extensão de UUID
+-- Habilita extensão de UUID e Criptografia
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- 1. Empresas (Tenants)
 CREATE TABLE IF NOT EXISTS companies (
@@ -16,6 +17,9 @@ CREATE TABLE IF NOT EXISTS companies (
   trade_name VARCHAR(255),
   slug VARCHAR(100) NOT NULL UNIQUE,
   logo_url TEXT,
+  integrity_officer_name VARCHAR(255),
+  integrity_officer_email VARCHAR(255),
+  integrity_officer_phone VARCHAR(50),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -27,6 +31,9 @@ CREATE TABLE IF NOT EXISTS policies (
   content TEXT NOT NULL,
   version VARCHAR(20) DEFAULT '1.0',
   is_active BOOLEAN DEFAULT true,
+  published_to_employees BOOLEAN DEFAULT true,
+  approved_by VARCHAR(255),
+  approved_at TIMESTAMP WITH TIME ZONE,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
@@ -40,7 +47,7 @@ CREATE TABLE IF NOT EXISTS trainings (
   questions JSONB NOT NULL -- Array de objetos: [{ id, question, options: [], correct_index }]
 );
 
--- 4. Registros de Aceite e Capacitação dos Colaboradores (Preenchido via Link Único)
+-- 4. Registros de Aceite e Capacitação dos Colaboradores
 CREATE TABLE IF NOT EXISTS employee_completions (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id UUID REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
@@ -59,65 +66,18 @@ CREATE TABLE IF NOT EXISTS whistleblower_reports (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id UUID REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   protocol VARCHAR(50) UNIQUE NOT NULL,
-  access_key VARCHAR(50) NOT NULL,
+  access_key VARCHAR(100) NOT NULL, -- Chave de acesso protegida
   is_anonymous BOOLEAN DEFAULT true,
   reporter_name VARCHAR(255),
   reporter_contact VARCHAR(255),
-  category VARCHAR(50) NOT NULL, -- 'ASSEDIO', 'CORRUPCAO', 'SEGURANCA', 'FRAUDE', 'OUTROS'
+  category VARCHAR(50) NOT NULL,
   description TEXT NOT NULL,
   evidence_urls JSONB DEFAULT '[]'::jsonb,
-  status VARCHAR(30) DEFAULT 'RECEBIDA', -- 'RECEBIDA', 'EM_APURACAO', 'CONCLUIDA', 'ARQUIVADA'
+  status VARCHAR(30) DEFAULT 'RECEBIDA',
   resolution_notes TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
-
--- Índices de Performance
-CREATE INDEX IF NOT EXISTS idx_companies_slug ON companies(slug);
-CREATE INDEX IF NOT EXISTS idx_employee_completions_company ON employee_completions(company_id);
-CREATE INDEX IF NOT EXISTS idx_employee_completions_cert ON employee_completions(certificate_code);
-CREATE INDEX IF NOT EXISTS idx_whistleblower_reports_company ON whistleblower_reports(company_id);
-CREATE INDEX IF NOT EXISTS idx_whistleblower_reports_protocol ON whistleblower_reports(protocol);
-
--- Habilitar RLS em todas as tabelas
-ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE policies ENABLE ROW LEVEL SECURITY;
-ALTER TABLE employee_completions ENABLE ROW LEVEL SECURITY;
-ALTER TABLE whistleblower_reports ENABLE ROW LEVEL SECURITY;
-ALTER TABLE trainings ENABLE ROW LEVEL SECURITY;
-
--- Políticas de RLS:
--- Treinamentos são públicos para leitura
-CREATE POLICY "Treinamentos visíveis publicamente" ON trainings FOR SELECT USING (true);
-
--- Empresas e Políticas públicas para leitura pelo slug
-CREATE POLICY "Empresas visíveis publicamente por slug" ON companies FOR SELECT USING (true);
-CREATE POLICY "Políticas visíveis publicamente" ON policies FOR SELECT USING (true);
-
--- Gestor autenticado tem controle total sobre os dados de sua empresa
-CREATE POLICY "Gestor gerencia sua empresa" ON companies FOR ALL USING (auth.uid() = user_id);
-CREATE POLICY "Gestor gerencia politicas de sua empresa" ON policies FOR ALL USING (
-  company_id IN (SELECT id FROM companies WHERE user_id = auth.uid())
-);
-CREATE POLICY "Gestor visualiza colaboradores capacitados" ON employee_completions FOR SELECT USING (
-  company_id IN (SELECT id FROM companies WHERE user_id = auth.uid())
-);
-CREATE POLICY "Gestor gerencia denuncias de sua empresa" ON whistleblower_reports FOR ALL USING (
-  company_id IN (SELECT id FROM companies WHERE user_id = auth.uid())
-);
-
--- Denúncias: Inserção pública permitida (Modo Anônimo ou Identificado)
-CREATE POLICY "Publico insere denuncias vinculadas a empresa" ON whistleblower_reports FOR INSERT WITH CHECK (
-  company_id IS NOT NULL
-);
-
--- Denúncias: Consulta pública de status apenas com Protocolo e Chave de Acesso exatos
-CREATE POLICY "Denunciante consulta por protocolo e chave" ON whistleblower_reports FOR SELECT USING (
-  auth.role() = 'anon' OR auth.role() = 'authenticated'
-);
-
--- Storage Bucket para Evidências do Canal de Denúncias
--- INSERT INTO storage.buckets (id, name, public) VALUES ('whistleblower-evidence', 'whistleblower-evidence', false) ON CONFLICT DO NOTHING;
 
 -- 6. Fornecedores analisados pela empresa (Due Diligence de Terceiros)
 CREATE TABLE IF NOT EXISTS suppliers (
@@ -135,13 +95,13 @@ CREATE TABLE IF NOT EXISTS due_diligence_records (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
   company_id UUID REFERENCES companies(id) ON DELETE CASCADE NOT NULL,
   supplier_id UUID REFERENCES suppliers(id) ON DELETE CASCADE NOT NULL,
-  risk_level VARCHAR(20) NOT NULL, -- 'BAIXO', 'MEDIO', 'ALTO'
-  risk_status VARCHAR(20) NOT NULL, -- 'APROVADO', 'ALERTA', 'BLOQUEADO'
+  risk_level VARCHAR(20) NOT NULL,
+  risk_status VARCHAR(20) NOT NULL,
   has_ceis BOOLEAN DEFAULT false,
   has_cnep BOOLEAN DEFAULT false,
   has_slave_labor BOOLEAN DEFAULT false,
   has_pep BOOLEAN DEFAULT false,
-  details JSONB NOT NULL, -- Resposta completa das APIs (sanções, nomes de sócios PEP, etc.)
+  details JSONB NOT NULL,
   report_hash VARCHAR(64) UNIQUE NOT NULL,
   queried_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
@@ -156,17 +116,62 @@ CREATE TABLE IF NOT EXISTS mte_slave_labor_list (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
 );
 
--- Índices adicionais para Due Diligence
-CREATE INDEX IF NOT EXISTS idx_suppliers_company ON suppliers(company_id);
-CREATE INDEX IF NOT EXISTS idx_suppliers_cnpj ON suppliers(cnpj);
-CREATE INDEX IF NOT EXISTS idx_ddi_supplier ON due_diligence_records(supplier_id);
-CREATE INDEX IF NOT EXISTS idx_mte_cnpj_cpf ON mte_slave_labor_list(cnpj_cpf);
+-- Índices de Performance e Segurança
+CREATE INDEX IF NOT EXISTS idx_companies_slug ON companies(slug);
+CREATE INDEX IF NOT EXISTS idx_employee_completions_company ON employee_completions(company_id);
+CREATE INDEX IF NOT EXISTS idx_employee_completions_cert ON employee_completions(certificate_code);
+CREATE INDEX IF NOT EXISTS idx_whistleblower_reports_company ON whistleblower_reports(company_id);
+CREATE INDEX IF NOT EXISTS idx_whistleblower_reports_lookup ON whistleblower_reports(protocol, access_key);
 
--- Habilitar RLS
+-- Habilitar RLS em TODAS as tabelas
+ALTER TABLE companies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE policies ENABLE ROW LEVEL SECURITY;
+ALTER TABLE employee_completions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE whistleblower_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE trainings ENABLE ROW LEVEL SECURITY;
 ALTER TABLE suppliers ENABLE ROW LEVEL SECURITY;
 ALTER TABLE due_diligence_records ENABLE ROW LEVEL SECURITY;
 ALTER TABLE mte_slave_labor_list ENABLE ROW LEVEL SECURITY;
 
+-- =========================================================================
+-- POLÍTICAS RLS SEGURAS (ZERO LEAKAGE)
+-- =========================================================================
+
+-- Treinamentos são públicos para leitura das opções educativas
+CREATE POLICY "Treinamentos visíveis publicamente" ON trainings FOR SELECT USING (true);
+
+-- Empresas: Leitura pública APENAS dos campos não-sensíveis através de VIEW oficial
+-- O gestor autenticado tem controle total sobre os dados da sua empresa
+CREATE POLICY "Gestor gerencia sua empresa" ON companies FOR ALL USING (auth.uid() = user_id);
+
+-- Políticas: Gestor gerencia as de sua empresa; público lê apenas se ativas e publicadas
+CREATE POLICY "Gestor gerencia politicas de sua empresa" ON policies FOR ALL USING (
+  company_id IN (SELECT id FROM companies WHERE user_id = auth.uid())
+);
+CREATE POLICY "Publico visualiza politicas ativas e publicadas" ON policies FOR SELECT USING (
+  is_active = true AND published_to_employees = true
+);
+
+-- Colaboradores: Apenas o gestor autenticado visualiza colaboradores
+CREATE POLICY "Gestor visualiza colaboradores capacitados" ON employee_completions FOR SELECT USING (
+  company_id IN (SELECT id FROM companies WHERE user_id = auth.uid())
+);
+
+-- Denúncias:
+-- 1. Inserção pública permitida (Canal Anônimo ou Identificado)
+CREATE POLICY "Publico insere denuncias vinculadas a empresa" ON whistleblower_reports FOR INSERT WITH CHECK (
+  company_id IS NOT NULL
+);
+
+-- 2. Gestor autenticado gerencia denúncias de sua própria empresa
+CREATE POLICY "Gestor gerencia denuncias de sua empresa" ON whistleblower_reports FOR ALL USING (
+  company_id IN (SELECT id FROM companies WHERE user_id = auth.uid())
+);
+
+-- 3. REMOVIDA A POLÍTICA PERMISSIVA ANTIGA ("auth.role() = 'anon' OR auth.role() = 'authenticated'")
+-- O denunciante consulta o status EXCLUSIVAMENTE pela RPC segura abaixo (SECURITY DEFINER)
+
+-- Due Diligence e Fornecedores
 CREATE POLICY "Gestor gerencia seus fornecedores" ON suppliers FOR ALL USING (
   company_id IN (SELECT id FROM companies WHERE user_id = auth.uid())
 );
@@ -175,4 +180,48 @@ CREATE POLICY "Gestor gerencia analises de seus fornecedores" ON due_diligence_r
 );
 CREATE POLICY "Todos podem ler lista de trabalho escravo" ON mte_slave_labor_list FOR SELECT USING (true);
 
-
+-- =========================================================================
+-- FUNÇÃO RPC SEGURA PARA ACOMPANHAMENTO DE DENÚNCIA (ANTI-ENUMERAÇÃO E ANTI-IDOR)
+-- =========================================================================
+CREATE OR REPLACE FUNCTION track_whistleblower_report(
+  p_company_slug VARCHAR(100),
+  p_protocol VARCHAR(50),
+  p_access_key VARCHAR(100)
+)
+RETURNS TABLE (
+  id UUID,
+  company_id UUID,
+  protocol VARCHAR(50),
+  category VARCHAR(50),
+  description TEXT,
+  evidence_urls JSONB,
+  status VARCHAR(30),
+  resolution_notes TEXT,
+  created_at TIMESTAMP WITH TIME ZONE,
+  updated_at TIMESTAMP WITH TIME ZONE
+)
+SECURITY DEFINER
+SET search_path = public
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  RETURN QUERY
+  SELECT 
+    r.id,
+    r.company_id,
+    r.protocol,
+    r.category,
+    r.description,
+    r.evidence_urls,
+    r.status,
+    r.resolution_notes,
+    r.created_at,
+    r.updated_at
+  FROM whistleblower_reports r
+  INNER JOIN companies c ON c.id = r.company_id
+  WHERE c.slug = p_company_slug
+    AND r.protocol = UPPER(TRIM(p_protocol))
+    AND r.access_key = TRIM(p_access_key)
+  LIMIT 1;
+END;
+$$;

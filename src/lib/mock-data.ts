@@ -8,7 +8,7 @@ import {
   ReportCategory,
   ReportStatus,
 } from "@/types";
-import { generateProtocol, generateAccessKey, generateHash } from "./utils";
+import { generateProtocol, generateAccessKey, generateHash, generateSecureToken } from "./utils";
 
 // EMPRESA DEMO PADRÃO
 export const INITIAL_COMPANY: Company = {
@@ -427,9 +427,9 @@ class ComplianceMockStore {
 
   addEmployee(data: { full_name: string; cpf: string; role: string; phone: string; email?: string }) {
     const cleanCpf = data.cpf.replace(/\D/g, "");
-    const token = "tok-" + Math.random().toString(36).substring(2, 10);
+    const token = generateSecureToken("tok");
     const newEmp: Employee = {
-      id: "emp-" + Math.random().toString(36).substring(2, 9),
+      id: "emp-" + generateSecureToken("id").substring(0, 16),
       company_id: this.company.id,
       full_name: data.full_name,
       cpf: cleanCpf,
@@ -443,6 +443,10 @@ class ComplianceMockStore {
     };
     this.employees.unshift(newEmp);
     return newEmp;
+  }
+
+  getEmployeeById(id: string) {
+    return this.employees.find((e) => e.id === id) || null;
   }
 
   addEmployeesBatch(list: Array<{ full_name: string; cpf: string; role: string; phone: string; email?: string }>) {
@@ -527,7 +531,7 @@ class ComplianceMockStore {
     const protocol = generateProtocol();
     const accessKey = generateAccessKey();
     const newReport: WhistleblowerReport = {
-      id: "rep-" + Math.random().toString(36).substring(2, 9),
+      id: "rep-" + generateSecureToken("id").substring(0, 16),
       company_id: data.company_id || this.company.id,
       protocol,
       access_key: accessKey,

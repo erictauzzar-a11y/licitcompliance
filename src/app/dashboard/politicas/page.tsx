@@ -24,6 +24,7 @@ import {
 import { mockStore } from "@/lib/mock-data";
 import { Policy, PolicyVersion } from "@/types";
 import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
+import { updatePolicyAction } from "@/app/actions/management";
 
 export default function PoliciesManagementPage() {
   const [policy, setPolicy] = useState<Policy>(() => mockStore.getPolicy());
@@ -41,12 +42,14 @@ export default function PoliciesManagementPage() {
   const totalEmployees = employees.length;
   const acceptedPolicies = employees.filter((e) => !!e.policy_accepted_at).length;
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    const updated = mockStore.updatePolicy(content, title, publishToEmployees);
-    setPolicy({ ...updated });
-    setSavedSuccess(true);
-    setTimeout(() => setSavedSuccess(false), 3000);
+    const res = await updatePolicyAction(content, title, publishToEmployees);
+    if (res.success && res.policy) {
+      setPolicy({ ...res.policy });
+      setSavedSuccess(true);
+      setTimeout(() => setSavedSuccess(false), 3000);
+    }
   };
 
   return (

@@ -11,7 +11,10 @@ import {
   ExternalLink,
   Building2,
   Lock,
+  LogOut,
 } from "lucide-react";
+import { useRouter } from "next/navigation";
+import { logoutAdminAction } from "@/app/actions/auth";
 import { mockStore } from "@/lib/mock-data";
 import { formatCNPJ } from "@/lib/utils";
 
@@ -155,6 +158,18 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
               Programa Estruturado (82%) • 24/32 Requisitos
             </Link>
+            <button
+              type="button"
+              onClick={async () => {
+                await logoutAdminAction();
+                window.location.href = "/login";
+              }}
+              title="Sair do Sistema"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-red-600 px-2.5 py-1.5 rounded-lg border border-slate-200 hover:border-red-200 transition-colors"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Sair</span>
+            </button>
           </div>
         </header>
 

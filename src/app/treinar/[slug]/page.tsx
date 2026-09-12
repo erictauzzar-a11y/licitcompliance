@@ -22,6 +22,7 @@ import {
 import { mockStore } from "@/lib/mock-data";
 import { formatCPF, maskCPF } from "@/lib/utils";
 import { generateCertificatePDF } from "@/lib/pdf-generator";
+import { submitQuizAndCertifyAction } from "@/app/actions/training";
 
 export default function DirectTrainingPage({ params }: { params: Promise<{ slug: string }> }) {
   const resolvedParams = use(params);
@@ -76,38 +77,38 @@ export default function DirectTrainingPage({ params }: { params: Promise<{ slug:
     setShowFeedback(true);
   };
 
-  const handleNextQuiz = () => {
+  const handleNextQuiz = async () => {
     setShowFeedback(false);
     const questions = activeTraining.questions || [];
     if (quizIndex < questions.length - 1) {
       setQuizIndex((prev) => prev + 1);
     } else {
-      // Concluir e registrar aceite + auditoria
-      const newEmployee = mockStore.addEmployee({
-        full_name: fullName.trim(),
+      // Conclusão e avaliação segura validada no servidor
+      const result = await submitQuizAndCertifyAction({
+        slug: resolvedParams.slug,
+        trainingId: activeTraining.id,
+        fullName: fullName.trim(),
         cpf: cpf.trim(),
         role: role.trim(),
-        phone: "Mobile",
+        answers: selectedAnswers,
       });
 
-      mockStore.acceptPolicy(newEmployee.id, clientIp);
-      const completion = mockStore.completeTraining(newEmployee.id, activeTraining.id, 100, clientIp);
-
-      setCertificateData({
-        code: completion.certificate_code,
-        completedAt: completion.completed_at,
-      });
-
-      setStep("CERTIFICADO");
-
-      try {
-        confetti({
-          particleCount: 90,
-          spread: 70,
-          origin: { y: 0.6 },
+      if (result.success && result.certificateCode) {
+        setCertificateData({
+          code: result.certificateCode,
+          completedAt: result.completedAt || new Date().toISOString(),
         });
-      } catch {
-        // ignore
+        setStep("CERTIFICADO");
+
+        try {
+          confetti({
+            particleCount: 90,
+            spread: 70,
+            origin: { y: 0.6 },
+          });
+        } catch {
+          // ignore
+        }
       }
     }
   };

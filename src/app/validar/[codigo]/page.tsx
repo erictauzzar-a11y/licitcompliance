@@ -10,9 +10,10 @@ export default function ValidateCertificateOrDossierPage({ params }: { params: P
   const resolvedParams = use(params);
   const code = decodeURIComponent(resolvedParams.codigo).trim();
 
-  const isDossier = code.toUpperCase().startsWith("DOSSIE");
-  const certResult = !isDossier ? mockStore.findCertificateByCode(code) : null;
   const company = mockStore.getCompany();
+  const currentDossierCode = `DOSSIE-${new Date().getFullYear()}-${company.cnpj.substring(0, 8)}`.toUpperCase();
+  const isDossier = code.toUpperCase() === currentDossierCode;
+  const certResult = !isDossier ? mockStore.findCertificateByCode(code) : null;
   const metrics = mockStore.getComplianceMetrics();
 
   const isValid = isDossier || !!certResult;
