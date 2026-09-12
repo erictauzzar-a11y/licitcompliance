@@ -1,7 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { CheckoutButton } from "@/components/CheckoutButton";
 import {
   FileDown,
   ShieldCheck,
@@ -33,6 +35,46 @@ import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
 import { generateDossierPDF } from "@/lib/pdf-generator";
 import { formatCNPJ } from "@/lib/utils";
 import { CompliancePendingItem } from "@/types/compliance";
+
+// Helper de badge para severidade de pendência
+function getSeverityBadge(severity: CompliancePendingItem["severity"]) {
+  switch (severity) {
+    case "CRITICA":
+      return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-red-100 text-red-700 border border-red-200 uppercase">🔴 Crítico</span>;
+    case "ALERTA":
+      return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 uppercase">🟠 Alta Prioridade</span>;
+    default:
+      return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200 uppercase">🟡 Atenção</span>;
+  }
+}
+
+function StripeSuccessBanner() {
+  const searchParams = useSearchParams();
+  const checkoutSuccess = searchParams.get("checkout") === "success";
+
+  if (!checkoutSuccess) return null;
+
+  return (
+    <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-4 shadow-lg animate-in slide-in-from-top-3">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400">
+          <CheckCircle2 className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-white">
+            Assinatura TechCompliance confirmada com sucesso!
+          </h3>
+          <p className="text-xs text-emerald-200/90">
+            Seu pagamento foi processado pela Stripe. Todos os módulos e emissão de dossiês estão 100% liberados.
+          </p>
+        </div>
+      </div>
+      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-slate-950">
+        Plano Ativo
+      </span>
+    </div>
+  );
+}
 
 export default function DashboardOverviewPage() {
   const company = mockStore.getCompany();
@@ -73,28 +115,26 @@ export default function DashboardOverviewPage() {
       href: "/dashboard/colaboradores",
       score: metrics.trainingRate || 87,
       statusBadge: metrics.trainingRate >= 80 ? "Alto Nível" : "Em Andamento",
-      badgeColor: metrics.trainingRate >= 80 ? "text-emerald-700 bg-emerald-50 border-emerald-200" : "text-amber-700 bg-amber-50 border-amber-200",
-      mainEvidence: `${mockStore.employeeTrainings.length} certificados emitidos com hash de autenticidade`,
-      mainPending: employees.filter(e => mockStore.getEmployeeCertificates(e.id).length === 0).length > 0 
-        ? `${employees.filter(e => mockStore.getEmployeeCertificates(e.id).length === 0).length} colaboradores pendentes de conclusão`
-        : null,
+      badgeColor: "text-blue-700 bg-blue-50 border-blue-200",
+      mainEvidence: `${metrics.completedTrainings} de ${employees.length} colaboradores capacitados com certificado emitido`,
+      mainPending: employees.length > metrics.completedTrainings ? `${employees.length - metrics.completedTrainings} colaboradores pendentes de conclusão` : null,
     },
     {
       title: "Canal de Denúncias",
       href: "/dashboard/denuncias",
       score: 100,
-      statusBadge: "Ativo 24/7",
+      statusBadge: "Operacional 24/7",
       badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
-      mainEvidence: `Canal externo /canal/${company.slug} com garantia de sigilo e não retaliação`,
+      mainEvidence: "Canal anônimo ativo com protocolo criptográfico e política de não-retaliação",
       mainPending: null,
     },
     {
-      title: "Gestão de Terceiros",
+      title: "Due Diligence",
       href: "/dashboard/due-diligence",
       score: 85,
-      statusBadge: "CEIS / CNEP",
-      badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
-      mainEvidence: "Consultas de parceiros e subcontratados em bases oficiais (CEIS, CNEP, PEP e MTE)",
+      statusBadge: "Em Monitoramento",
+      badgeColor: "text-blue-700 bg-blue-50 border-blue-200",
+      mainEvidence: "Verificação prévia automática de CNPJs e Sócios contra sanções e impedimentos",
       mainPending: "4 fornecedores cadastrados aguardando renovação de certidões",
     },
     {
@@ -117,20 +157,12 @@ export default function DashboardOverviewPage() {
     },
   ];
 
-  // Helper de badge para severidade de pendência
-  const getSeverityBadge = (severity: CompliancePendingItem["severity"]) => {
-    switch (severity) {
-      case "CRITICA":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-red-100 text-red-700 border border-red-200 uppercase">🔴 Crítico</span>;
-      case "ALERTA":
-        return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-amber-100 text-amber-800 border border-amber-200 uppercase">🟠 Alta Prioridade</span>;
-      default:
-        return <span className="px-2 py-0.5 rounded text-[10px] font-extrabold bg-blue-100 text-blue-800 border border-blue-200 uppercase">🟡 Atenção</span>;
-    }
-  };
-
   return (
     <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in pb-12">
+      {/* Banner de Sucesso Stripe isolado em Suspense */}
+      <Suspense fallback={null}>
+        <StripeSuccessBanner />
+      </Suspense>
       
       {/* 1. HERO PRINCIPAL: Central de Controle do Programa */}
       <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 rounded-3xl shadow-xl border border-slate-800 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 relative overflow-hidden">

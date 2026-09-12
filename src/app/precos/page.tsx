@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CheckoutButton } from "@/components/CheckoutButton";
 
 export const metadata: Metadata = {
   title: "Planos e Preços | TechCompliance",
@@ -139,13 +140,10 @@ export default function PrecosPage() {
                 </p>
               </div>
 
-              <Link
-                href="/cadastro"
-                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 transition-all text-sm flex items-center justify-center gap-2 group active:scale-95"
-              >
-                <span>Assinar por R$ 189,90/mês</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-              </Link>
+              <CheckoutButton
+                label="Assinar por R$ 189,90/mês"
+                className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 text-sm"
+              />
 
               <div className="pt-2 border-t border-slate-800 space-y-2 text-[11px] text-slate-400">
                 <div className="flex items-center justify-center gap-1.5 text-blue-300">

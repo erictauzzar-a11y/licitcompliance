@@ -22,6 +22,7 @@ import { HeroLiveSoftwareDemo } from "@/components/HeroLiveSoftwareDemo";
 import { LaptopInteractiveShowcase } from "@/components/LaptopInteractiveShowcase";
 import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
+import { CheckoutButton } from "@/components/CheckoutButton";
 
 export default function HomePage() {
   return (
@@ -443,13 +444,10 @@ export default function HomePage() {
                 </div>
 
                 <div className="space-y-3">
-                  <Link
-                    href="/cadastro"
-                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 transition-all text-sm flex items-center justify-center gap-2 group active:scale-[0.98]"
-                  >
-                    <span>Começar agora por R$ 189,90</span>
-                    <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
-                  </Link>
+                  <CheckoutButton
+                    label="Começar agora por R$ 189,90"
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 text-sm"
+                  />
 
                   <div className="flex items-center justify-center gap-3 text-[11px] text-slate-400">
                     <div className="flex items-center gap-1">
