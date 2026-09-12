@@ -40,7 +40,7 @@ export async function createCheckoutSessionAction(params?: {
       },
       billing_address_collection: "required",
       locale: "pt-BR",
-      success_url: `${origin}/dashboard?session_id={CHECKOUT_SESSION_ID}&checkout=success`,
+      success_url: `${origin}/cadastro?session_id={CHECKOUT_SESSION_ID}&checkout=success`,
       cancel_url: `${origin}/precos?checkout=cancel`,
     });
 
@@ -60,6 +60,10 @@ export async function createCheckoutSessionAction(params?: {
 export async function simulatePaymentSuccessAction() {
   const { cookies } = await import("next/headers");
   const crypto = await import("crypto");
+  const { mockStore } = await import("@/lib/mock-data");
+
+  // Inicia o sistema limpo para o novo assinante
+  mockStore.resetForNewSubscriber();
 
   const cookieStore = await cookies();
   const sessionToken = `sess_${crypto.randomBytes(32).toString("hex")}`;
@@ -72,6 +76,6 @@ export async function simulatePaymentSuccessAction() {
     path: "/",
   });
 
-  redirect("/dashboard?checkout=success&simulated=true");
+  redirect("/cadastro?checkout=success&simulated=true");
 }
 

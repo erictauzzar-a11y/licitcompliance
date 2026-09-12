@@ -607,6 +607,45 @@ class ComplianceMockStore {
       resolvedReports,
     };
   }
+
+  // Reseta o sistema para um novo cliente pagante (início zerado)
+  resetForNewSubscriber(companyData?: Partial<Company>) {
+    this.company = {
+      id: crypto.randomUUID ? crypto.randomUUID() : "comp-" + Date.now(),
+      trade_name: companyData?.trade_name || "Sua Empresa",
+      legal_name: companyData?.legal_name || "Sua Empresa Ltda",
+      cnpj: companyData?.cnpj || "",
+      slug: companyData?.slug || "sua-empresa",
+      created_at: new Date().toISOString(),
+      status: "ATIVA",
+      partners: companyData?.partners || [],
+      ...companyData,
+    };
+
+    this.policy = {
+      id: "pol-" + Date.now(),
+      company_id: this.company.id,
+      title: `Código de Ética, Integridade e Conduta - ${this.company.trade_name}`,
+      content: INITIAL_POLICY.content,
+      version: "1.0",
+      is_active: true,
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      approved_by: "Diretoria de Integridade",
+      approved_at: new Date().toISOString(),
+      next_review_date: new Date(Date.now() + 365 * 24 * 60 * 60 * 1000).toISOString(),
+      published_to_employees: true,
+      published_at: new Date().toISOString(),
+      history: [],
+    };
+
+    // Zera colaboradores, certificações e denúncias para começar limpo
+    this.employees = [];
+    this.employeeTrainings = [];
+    this.reports = [];
+
+    return this.company;
+  }
 }
 
 // Export singleton instance

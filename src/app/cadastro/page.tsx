@@ -1,8 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, Suspense } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   ShieldCheck,
   Building2,
@@ -28,6 +28,34 @@ import { Company } from "@/types";
 import { submitOnboardingAction } from "@/app/actions/onboarding";
 
 type OnboardingStep = "CNPJ_INPUT" | "CONFIRM_DATA" | "COMPLIANCE_DETAILS";
+
+function OnboardingPaidBanner() {
+  const searchParams = useSearchParams();
+  const checkoutSuccess = searchParams.get("checkout") === "success";
+
+  if (!checkoutSuccess) return null;
+
+  return (
+    <div className="p-4 rounded-2xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-300 flex items-center justify-between gap-4 shadow-lg animate-in slide-in-from-top-2">
+      <div className="flex items-center gap-3">
+        <div className="w-9 h-9 rounded-xl bg-emerald-500/20 flex items-center justify-center text-emerald-400 shrink-0">
+          <CheckCircle2 className="w-5 h-5" />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-white">
+            Pagamento Confirmado com Sucesso! 💳
+          </h3>
+          <p className="text-xs text-emerald-200/90">
+            Sua assinatura está ativa. Digite o CNPJ da sua empresa abaixo para que o TechCompliance consulte a Receita Federal e configure todo o seu ambiente automaticamente.
+          </p>
+        </div>
+      </div>
+      <span className="px-3 py-1 rounded-full text-xs font-bold bg-emerald-500 text-slate-950 shrink-0 hidden sm:inline-block">
+        Assinatura Ativa
+      </span>
+    </div>
+  );
+}
 
 export default function RegisterCompanyPage() {
   const router = useRouter();
@@ -216,6 +244,11 @@ export default function RegisterCompanyPage() {
             </span>
           </div>
         </div>
+
+        {/* Banner de Boas-Vindas Pós-Pagamento */}
+        <Suspense fallback={null}>
+          <OnboardingPaidBanner />
+        </Suspense>
 
         {/* =================================================================== */}
         {/* PASSO 1: INFORMAR CNPJ */}
