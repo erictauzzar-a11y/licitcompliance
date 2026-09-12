@@ -56,3 +56,22 @@ export async function createCheckoutSessionAction(params?: {
 
   return { success: false, error: "URL de checkout indisponível." };
 }
+
+export async function simulatePaymentSuccessAction() {
+  const { cookies } = await import("next/headers");
+  const crypto = await import("crypto");
+
+  const cookieStore = await cookies();
+  const sessionToken = `sess_${crypto.randomBytes(32).toString("hex")}`;
+
+  cookieStore.set("licit_session", sessionToken, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    maxAge: 60 * 60 * 24,
+    path: "/",
+  });
+
+  redirect("/dashboard?checkout=success&simulated=true");
+}
+

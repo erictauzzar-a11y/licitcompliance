@@ -151,6 +151,14 @@ export default function PrecosPage() {
                   <span>Pagamento Seguro SSL 256-bit</span>
                 </div>
                 <div>Garantia incondicional de satisfação</div>
+                <div className="pt-1">
+                  <Link
+                    href="/simular-pagamento"
+                    className="inline-flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 font-semibold underline"
+                  >
+                    <span>🧪 Deseja testar o fluxo simulado sem cartão?</span>
+                  </Link>
+                </div>
               </div>
             </div>
           </div>
