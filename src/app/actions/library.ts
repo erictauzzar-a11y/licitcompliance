@@ -13,6 +13,8 @@ import {
   NormativeNature,
 } from "@/types";
 
+import { renderTemplateWithCompany } from "@/lib/template-renderer";
+
 /**
  * 1. Retorna os 20 modelos globais oficiais do TechCompliance
  */
@@ -93,26 +95,16 @@ export async function createDocumentFromTemplateAction(
   }
 
   const company = admin.company;
-  const now = new Date();
-  const dateFormatted = now.toLocaleDateString("pt-BR");
   const initialVersion = "1.0";
+  const now = new Date();
 
-  // Substituição de variáveis dinâmicas com os dados reais da empresa autenticada
-  let renderedContent = template.default_content
-    .replace(/\[RAZÃO SOCIAL\]/g, company.legal_name || company.trade_name || "Sua Organização")
-    .replace(/\[NOME FANTASIA\]/g, company.trade_name || company.legal_name || "Sua Organização")
-    .replace(/\[NOME DA EMPRESA\]/g, company.trade_name || company.legal_name || "Sua Organização")
-    .replace(/\[CNPJ\]/g, company.cnpj ? formatCNPJ(company.cnpj) : "00.000.000/0001-00")
-    .replace(/\[RESPONSÁVEL\]/g, company.integrity_officer_name || "Diretoria de Integridade")
-    .replace(/\[CARGO\]/g, "Responsável pela Integridade Corporativa")
-    .replace(/\[DATA\]/g, dateFormatted)
-    .replace(/\[VERSÃO\]/g, initialVersion);
-
-  // Substituição dos campos manuais de governança informados ou valores padrão
-  template.governance_fields.forEach((gf) => {
-    const val = governanceValues[gf.field] || gf.default_value || gf.field;
-    renderedContent = renderedContent.split(gf.field).join(val);
-  });
+  // Substituição de variáveis dinâmicas e governança com os dados reais da empresa autenticada
+  const renderedContent = renderTemplateWithCompany(
+    template.default_content,
+    company,
+    governanceValues,
+    template
+  );
 
   const docId = `doc-${crypto.randomUUID ? crypto.randomUUID() : Date.now()}`;
   const newDocument: CompanyDocument = {

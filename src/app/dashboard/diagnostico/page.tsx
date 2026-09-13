@@ -51,6 +51,7 @@ import {
   saveDiagnosticStepAction,
   completeDiagnosticAction,
   getActionPlanAction,
+  getComplianceDiagnosticAction,
 } from "@/app/actions/diagnostic";
 
 type DiagnosticTab = "QUESTIONARIO" | "MATRIZ_REQUISITOS" | "PLANO_ACAO";
@@ -97,8 +98,14 @@ export default function ProgramDiagnosticPage() {
           setActiveTab("MATRIZ_REQUISITOS");
         }
       }
-      // Atualiza compliance engine e plano de ação
-      setDiagnostic(evaluateCompanyCompliance(company.id));
+
+      // Atualiza compliance engine e plano de ação diretamente do servidor
+      const diagRes = await getComplianceDiagnosticAction();
+      if (diagRes.success && diagRes.diagnostic) {
+        setDiagnostic(diagRes.diagnostic);
+      } else {
+        setDiagnostic(evaluateCompanyCompliance(company.id));
+      }
       const planRes = await getActionPlanAction();
       if (planRes.success) {
         setPlanItems(planRes.items);

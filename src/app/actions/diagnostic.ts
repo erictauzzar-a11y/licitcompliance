@@ -9,6 +9,7 @@ import {
   DiagnosticAnswerValue,
   DiagnosticStatus,
   ActionPlanItem,
+  ComplianceDiagnostic,
 } from "@/types/compliance";
 import { DIAGNOSTIC_QUESTIONS } from "@/lib/diagnostic-questions";
 import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
@@ -280,4 +281,25 @@ export async function getMaturityHistoryAction(): Promise<{
 
   const logs = mockStore.getMaturityHistory(admin.companyId);
   return { success: true, history: logs };
+}
+
+/**
+ * 6. Obtém a avaliação completa do Diagnóstico e Indicadores de Conformidade diretamente do servidor
+ */
+export async function getComplianceDiagnosticAction(): Promise<{
+  success: boolean;
+  diagnostic: ComplianceDiagnostic | null;
+  error?: string;
+}> {
+  const admin = await getAuthenticatedAdmin();
+  if (!admin?.companyId) {
+    return { success: false, diagnostic: null, error: "Sessão não autenticada." };
+  }
+
+  try {
+    const diagnostic = evaluateCompanyCompliance(admin.companyId);
+    return { success: true, diagnostic };
+  } catch (err: any) {
+    return { success: false, diagnostic: null, error: err?.message || "Erro ao avaliar conformidade." };
+  }
 }

@@ -34,8 +34,9 @@ import { mockStore } from "@/lib/mock-data";
 import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
 import { generateDossierPDF } from "@/lib/pdf-generator";
 import { formatCNPJ } from "@/lib/utils";
-import { CompliancePendingItem } from "@/types/compliance";
+import { CompliancePendingItem, ComplianceDiagnostic } from "@/types/compliance";
 import { Company } from "@/types";
+import { getComplianceDiagnosticAction } from "@/app/actions/diagnostic";
 
 // Helper de badge para severidade de pendência
 function getSeverityBadge(severity: CompliancePendingItem["severity"]) {
@@ -88,18 +89,23 @@ export default function DashboardOverviewPage() {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [reports, setReports] = useState<WhistleblowerReport[]>([]);
   const [policy, setPolicy] = useState<Policy | null>(null);
+  const [serverDiagnostic, setServerDiagnostic] = useState<ComplianceDiagnostic | null>(null);
 
-  // Busca dados reais do Supabase quando a empresa estiver carregada
+  // Busca dados reais do Supabase e compliance diagnostic atualizado quando a empresa estiver carregada
   useEffect(() => {
     if (!company) return;
     getEmployeesAction().then((res) => { if (res.success) setEmployees(res.employees); });
     getReportsAction().then((res) => { if (res.success) setReports(res.reports); });
     getPolicyAction().then((res) => { if (res.success && res.policy) setPolicy(res.policy); });
+    getComplianceDiagnosticAction().then((res) => {
+      if (res.success && res.diagnostic) {
+        setServerDiagnostic(res.diagnostic);
+      }
+    });
   }, [company]);
 
-  // Motor dinâmico de conformidade — só executa com empresa real
-  // Após o guard isLoading||!company, company é sempre definido aqui
-  const _rawDiagnostic = company ? evaluateCompanyCompliance(company.id) : null;
+  // Motor dinâmico de conformidade — prioriza o diagnóstico calculado pelo servidor
+  const _rawDiagnostic = serverDiagnostic ?? (company ? evaluateCompanyCompliance(company.id) : null);
   const diagnostic = _rawDiagnostic ?? {
     company_id: company?.id || "",
     company_name: company?.trade_name || "",

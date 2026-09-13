@@ -48,6 +48,7 @@ import {
 import { useCompany } from "@/contexts/CompanyContext";
 import { Badge, Modal, Button, EmptyState } from "@/components/ui";
 import { formatCNPJ } from "@/lib/utils";
+import { renderTemplateWithCompany } from "@/lib/template-renderer";
 
 export default function BibliotecaIntegridadePage() {
   const { company, isLoading: companyLoading } = useCompany();
@@ -635,9 +636,17 @@ export default function BibliotecaIntegridadePage() {
 
             {/* PREVISÃO DO TEXTO DO MODELO */}
             <div className="space-y-2">
-              <label className="text-xs font-bold text-slate-700">Texto Integral do Modelo:</label>
+              <div className="flex items-center justify-between">
+                <label className="text-xs font-bold text-slate-700">Texto Integral do Modelo:</label>
+                {company && (
+                  <span className="text-[11px] text-emerald-600 font-medium bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" />
+                    Pré-preenchido para: {company.trade_name || company.legal_name}
+                  </span>
+                )}
+              </div>
               <div className="p-4 bg-slate-900 text-slate-100 rounded-xl font-mono text-xs max-h-96 overflow-y-auto whitespace-pre-wrap leading-relaxed border border-slate-800">
-                {viewingTemplate.default_content}
+                {renderTemplateWithCompany(viewingTemplate.default_content, company, {}, viewingTemplate)}
               </div>
             </div>
 
