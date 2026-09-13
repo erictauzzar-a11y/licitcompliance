@@ -361,12 +361,15 @@ export interface TenantState {
   employeeTrainings: EmployeeTraining[];
   reports: WhistleblowerReport[];
   documents: CompanyDocument[];
+  diagnosticProfile?: import("@/types/compliance").CompanyComplianceProfile;
+  maturityHistory?: Array<{ id: string; event: string; date: string; score: number }>;
 }
 
 const CLIENT_TENANT_STORAGE_KEY = "techcompliance_active_tenant";
 
 // GERENCIADOR DE ESTADO LOCAL MULTI-TENANT (COMPLIANCE MULTI-TENANT STORE)
 class ComplianceMockStore {
+
   // Mapa de Tenants isolados por company_id
   private tenants: Map<string, TenantState> = new Map();
   // Mapa de Sessions para company_id
@@ -1120,8 +1123,52 @@ class ComplianceMockStore {
     tenant.documents = tenant.documents.filter((d) => d.id !== docId);
     return tenant.documents.length < initialLen;
   }
+
+  // Métodos de Diagnóstico e Perfil de Conformidade
+  getDiagnosticProfile(companyId?: string): import("@/types/compliance").CompanyComplianceProfile | null {
+    const targetId = companyId || this.activeCompanyId;
+    const tenant = this.tenants.get(targetId);
+    return tenant?.diagnosticProfile || null;
+  }
+
+  saveDiagnosticProfile(
+    profile: import("@/types/compliance").CompanyComplianceProfile,
+    companyId?: string
+  ): import("@/types/compliance").CompanyComplianceProfile {
+    const targetId = companyId || profile.company_id || this.activeCompanyId;
+    let tenant = this.tenants.get(targetId);
+    if (!tenant) {
+      this.getCompany(targetId);
+      tenant = this.tenants.get(targetId);
+    }
+    if (tenant) {
+      tenant.diagnosticProfile = { ...profile, company_id: targetId, updated_at: new Date().toISOString() };
+    }
+    return profile;
+  }
+
+  getMaturityHistory(companyId?: string): Array<{ id: string; event: string; date: string; score: number }> {
+    const targetId = companyId || this.activeCompanyId;
+    const tenant = this.tenants.get(targetId);
+    return tenant?.maturityHistory || [];
+  }
+
+  addMaturityLog(event: string, score: number, companyId?: string) {
+    const targetId = companyId || this.activeCompanyId;
+    const tenant = this.tenants.get(targetId);
+    if (tenant) {
+      if (!tenant.maturityHistory) tenant.maturityHistory = [];
+      tenant.maturityHistory.unshift({
+        id: "mat-" + Date.now(),
+        event,
+        date: new Date().toISOString(),
+        score,
+      });
+    }
+  }
 }
 
 // Export singleton instance
+
 export const mockStore = new ComplianceMockStore();
 

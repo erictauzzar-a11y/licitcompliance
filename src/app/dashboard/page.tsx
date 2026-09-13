@@ -101,12 +101,16 @@ export default function DashboardOverviewPage() {
   // Após o guard isLoading||!company, company é sempre definido aqui
   const _rawDiagnostic = company ? evaluateCompanyCompliance(company.id) : null;
   const diagnostic = _rawDiagnostic ?? {
+    company_id: company?.id || "",
+    company_name: company?.trade_name || "",
     overall_score: 0,
     met_count: 0,
     partial_count: 0,
     pending_count: 0,
     total_requirements: 0,
     total_evidences: 0,
+    pillars: {} as any,
+    requirements: [] as import("@/types/compliance").ComplianceRequirement[],
     pending_items: [] as import("@/types/compliance").CompliancePendingItem[],
     evaluated_at: new Date().toISOString(),
   };
@@ -151,63 +155,87 @@ export default function DashboardOverviewPage() {
     );
   }
 
-  // 6 Áreas estruturadas do Programa com evidências e pendências mapeadas
+  // 6 Áreas estruturadas do Programa com evidências e pendências mapeadas dinamicamente
   const programAreas = [
     {
       title: "Código & Conduta",
       href: "/dashboard/politicas",
-      score: 100,
-      statusBadge: policy ? "Vigente v" + (policy.version ?? "1.0") : "Ativo",
-      badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
-      mainEvidence: policy
+      score: diagnostic?.pillars?.CODIGO_CONDUTA?.score ?? 0,
+      statusBadge: policy ? "Vigente v" + (policy.version ?? "1.0") : "Pendente",
+      badgeColor: (diagnostic?.pillars?.CODIGO_CONDUTA?.score ?? 0) >= 50
+        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+        : "text-amber-700 bg-amber-50 border-amber-200",
+      mainEvidence: policy?.is_active
         ? `Código aprovado e vigente (${new Date(policy.updated_at).toLocaleDateString("pt-BR")})`
         : "Código de Conduta disponível para revisão",
-      mainPending: null,
+      mainPending: !policy?.is_active ? "Homologar Código de Conduta" : null,
     },
     {
       title: "Treinamentos",
       href: "/dashboard/colaboradores",
-      score: metrics.trainingRate || 0,
-      statusBadge: metrics.trainingRate >= 80 ? "Alto Nível" : "Em Andamento",
-      badgeColor: "text-blue-700 bg-blue-50 border-blue-200",
-      mainEvidence: `${metrics.completedTrainings} de ${employees.length} colaboradores capacitados com certificado emitido`,
-      mainPending: employees.length > metrics.completedTrainings ? `${employees.length - metrics.completedTrainings} colaboradores pendentes de conclusão` : null,
+      score: metrics.trainingRate || (diagnostic?.pillars?.TREINAMENTOS?.score ?? 0),
+      statusBadge: (metrics.trainingRate >= 80) ? "Alto Nível" : (metrics.trainingRate > 0) ? "Em Andamento" : "Pendente",
+      badgeColor: (metrics.trainingRate >= 80)
+        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+        : "text-blue-700 bg-blue-50 border-blue-200",
+      mainEvidence: `${metrics.completedTrainings} de ${employees.length} colaboradores capacitados`,
+      mainPending: employees.length > metrics.completedTrainings
+        ? `${employees.length - metrics.completedTrainings} colaboradores pendentes de conclusão`
+        : employees.length === 0
+        ? "Cadastrar colaboradores no sistema"
+        : null,
     },
     {
       title: "Canal de Denúncias",
       href: "/dashboard/denuncias",
-      score: 100,
-      statusBadge: "Operacional 24/7",
+      score: diagnostic?.pillars?.CANAL_DENUNCIAS?.score ?? 0,
+      statusBadge: company?.slug ? "Operacional 24/7" : "Pendente",
       badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
-      mainEvidence: "Canal anônimo ativo com protocolo criptográfico e política de não-retaliação",
+      mainEvidence: company?.slug
+        ? `Canal anônimo ativo (/canal/${company.slug})`
+        : "Pendente de ativação do canal",
       mainPending: null,
     },
     {
       title: "Due Diligence",
       href: "/dashboard/due-diligence",
-      score: 85,
-      statusBadge: "Em Monitoramento",
-      badgeColor: "text-blue-700 bg-blue-50 border-blue-200",
-      mainEvidence: "Verificação prévia automática de CNPJs e Sócios contra sanções e impedimentos",
-      mainPending: null,
+      score: diagnostic?.pillars?.GESTAO_TERCEIROS?.score ?? 0,
+      statusBadge: (diagnostic?.pillars?.GESTAO_TERCEIROS?.score ?? 0) >= 50 ? "Em Monitoramento" : "Pendente",
+      badgeColor: (diagnostic?.pillars?.GESTAO_TERCEIROS?.score ?? 0) >= 50
+        ? "text-blue-700 bg-blue-50 border-blue-200"
+        : "text-amber-700 bg-amber-50 border-amber-200",
+      mainEvidence: "Verificação prévia de fornecedores contra sanções (CEIS/CNEP)",
+      mainPending: (diagnostic?.pillars?.GESTAO_TERCEIROS?.score ?? 0) === 0 ? "Realizar checagem de fornecedores parceiros" : null,
     },
     {
       title: "Controles Internos",
       href: "/dashboard/diagnostico",
-      score: 75,
-      statusBadge: "Em Maturação",
-      badgeColor: "text-amber-700 bg-amber-50 border-amber-200",
-      mainEvidence: "Matriz de riscos e segregação de funções definida na Diretoria",
-      mainPending: "Formalizar manuais de conferência fiscal específica para licitações",
+      score: diagnostic?.pillars?.CONTROLES_INTERNOS?.score ?? 0,
+      statusBadge: (diagnostic?.pillars?.CONTROLES_INTERNOS?.score ?? 0) >= 50 ? "Estruturado" : "Em Maturação",
+      badgeColor: (diagnostic?.pillars?.CONTROLES_INTERNOS?.score ?? 0) >= 50
+        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+        : "text-amber-700 bg-amber-50 border-amber-200",
+      mainEvidence: (diagnostic?.pillars?.CONTROLES_INTERNOS?.score ?? 0) >= 50
+        ? "Segregação de funções e rotina de conferência fiscal registradas"
+        : "Diretrizes preliminares de segregação de funções",
+      mainPending: (diagnostic?.pillars?.CONTROLES_INTERNOS?.score ?? 0) < 50
+        ? "Adotar modelo de POP Fiscal e Segregação de Funções na Biblioteca"
+        : null,
     },
     {
       title: "Monitoramento",
       href: "/dashboard/diagnostico",
-      score: 80,
-      statusBadge: "Dossiê Ativo",
-      badgeColor: "text-emerald-700 bg-emerald-50 border-emerald-200",
-      mainEvidence: diagnostic ? `${diagnostic.total_evidences} evidências auditáveis consolidadas no repositório` : "Repositório de evidências ativo",
-      mainPending: "Revisão periódica programada para o próximo semestre",
+      score: diagnostic?.pillars?.MONITORAMENTO?.score ?? 0,
+      statusBadge: (diagnostic?.pillars?.MONITORAMENTO?.score ?? 0) >= 50 ? "Ativo" : "Inicial",
+      badgeColor: (diagnostic?.pillars?.MONITORAMENTO?.score ?? 0) >= 50
+        ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+        : "text-slate-700 bg-slate-100 border-slate-200",
+      mainEvidence: diagnostic
+        ? `${diagnostic.total_evidences} evidências auditáveis consolidadas no repositório`
+        : "Repositório de evidências em estruturação",
+      mainPending: (diagnostic?.pillars?.MONITORAMENTO?.score ?? 0) < 50
+        ? "Concluir o diagnóstico inicial de 9 etapas"
+        : null,
     },
   ];
 
@@ -231,12 +259,20 @@ export default function DashboardOverviewPage() {
               Status de Preparação: <span className="text-emerald-400 font-mono">{diagnostic?.overall_score ?? 0}%</span> estruturado
             </h1>
             <p className="text-sm font-semibold text-slate-300 mt-1">
-              <span className="text-emerald-300 font-bold">{diagnostic?.met_count ?? 0} de {diagnostic?.total_requirements ?? 0} requisitos atendidos</span> no padrão exigido em contratações públicas.
+              {(diagnostic?.overall_score ?? 0) === 0 ? (
+                <span className="text-amber-300 font-bold">
+                  Inicie o diagnóstico em 9 etapas para descobrir a maturidade da sua empresa.
+                </span>
+              ) : (
+                <span className="text-emerald-300 font-bold">
+                  {diagnostic?.met_count ?? 0} de {diagnostic?.total_requirements ?? 0} requisitos atendidos no padrão exigido em contratações públicas.
+                </span>
+              )}
             </p>
           </div>
 
           <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
-            * Indicador de maturidade documental e evidencial do Programa de Integridade da empresa, avaliado perante a Lei nº 14.133/2021 e Decreto nº 11.129/2022. Não constitui certificação oficial nem garantia jurídica automática.
+            * Indicador de maturidade documental e evidencial do Programa de Integridade da empresa, avaliado perante a Lei nº 14.133/2021 e Decreto nº 12.304/2024. Não constitui certificação oficial nem garantia jurídica automática.
           </p>
 
           <div className="pt-1">
@@ -244,20 +280,31 @@ export default function DashboardOverviewPage() {
               href="/dashboard/diagnostico"
               className="text-xs font-bold text-blue-300 hover:text-blue-200 underline flex items-center gap-1.5 transition-colors"
             >
-              <span>Entender este resultado no Diagnóstico de Requisitos</span>
+              <span>{(diagnostic?.overall_score ?? 0) === 0 ? "Responder Diagnóstico Inicial (9 Etapas)" : "Entender este resultado no Diagnóstico de Requisitos"}</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
           </div>
         </div>
 
         <div className="flex flex-col sm:flex-row items-center gap-3 shrink-0 relative z-10 w-full sm:w-auto">
-          <Link
-            href="/dashboard/analise-edital"
-            className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-xs"
-          >
-            <span>Analisar Edital</span>
-            <ArrowRight className="w-4 h-4" />
-          </Link>
+          {(diagnostic?.overall_score ?? 0) === 0 ? (
+            <Link
+              href="/dashboard/diagnostico"
+              className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 text-white font-bold px-6 py-3.5 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-xs cursor-pointer active:scale-98 animate-pulse"
+            >
+              <Sparkles className="w-4 h-4" />
+              <span>Iniciar Diagnóstico (9 Etapas)</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          ) : (
+            <Link
+              href="/dashboard/analise-edital"
+              className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-500 text-white font-bold px-5 py-3 rounded-xl shadow-lg transition-all flex items-center justify-center gap-2 text-xs cursor-pointer"
+            >
+              <span>Analisar Edital</span>
+              <ArrowRight className="w-4 h-4" />
+            </Link>
+          )}
 
           <button
             onClick={handleGenerateDossier}

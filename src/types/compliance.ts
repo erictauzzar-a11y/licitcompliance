@@ -138,3 +138,58 @@ export interface TenderAnalysisResult {
   requirements: TenderRequirementAnalysis[];
   summary: string;
 }
+
+// TIPOS PARA DIAGNÓSTICO ADAPTATIVO E SISTEMA DE MATURIDADE (DECRETO 12.304/2024)
+export type DiagnosticAnswerValue =
+  | "SIM"
+  | "NAO"
+  | "PARCIALMENTE"
+  | "NAO_SEI"
+  | "NAO_APLICAVEL";
+
+export interface DiagnosticAnswer {
+  question_id: string;
+  step: number;
+  answer: DiagnosticAnswerValue;
+  notes?: string;
+  answered_at: string;
+}
+
+export type DiagnosticStatus = "NAO_INICIADO" | "EM_ANDAMENTO" | "CONCLUIDO";
+
+export type CompanyMaturityLevel =
+  | "INICIAL"          // 0% a 25%
+  | "EM_ESTRUTURACAO" // 26% a 50%
+  | "OPERACIONAL"     // 51% a 75%
+  | "AVANCADO";       // 76% a 100%
+
+export interface CompanyComplianceProfile {
+  company_id: string;
+  status: DiagnosticStatus;
+  current_step: number;
+  total_steps: number;
+  answers: Record<string, DiagnosticAnswer>;
+  started_at?: string;
+  completed_at?: string;
+  updated_at: string;
+  // Parâmetros de contexto e proporcionalidade (Decreto 12.304/2024)
+  company_size_classification?: "ME_EPP" | "MEDIA" | "GRANDE";
+  has_high_value_contracts?: boolean; // Contratos > R$ 200 milhões (Art. 25, § 4º Lei 14.133)
+  annual_public_bidding_frequency?: "BAIXA" | "MEDIA" | "ALTA";
+  third_party_volume?: "BAIXO" | "MEDIO" | "ALTO";
+}
+
+export interface ActionPlanItem {
+  id: string;
+  requirement_id: string;
+  pillar: PillarCategory;
+  title: string;
+  description: string;
+  priority: "ALTA" | "MEDIA" | "BAIXA";
+  status: "PENDENTE" | "EM_ANDAMENTO" | "CONCLUIDO";
+  legal_reference: string;
+  action_label: string;
+  action_href: string;
+  why_is_needed: string;
+}
+
