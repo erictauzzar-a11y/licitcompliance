@@ -186,6 +186,34 @@ export async function submitOnboardingAction(rawInput: any) {
           published_to_employees: true,
           updated_at: new Date().toISOString(),
         }, { onConflict: "company_id" });
+
+        // 1.5 Vincula Diagnóstico Gratuito pré-existente (se houver) ao novo ambiente
+        try {
+          const { findFreeDiagnosticByCnpjAction } = await import("@/app/actions/free-diagnostic");
+          const { diagnostic: freeDiag } = await findFreeDiagnosticByCnpjAction(validData.cnpj);
+          if (freeDiag) {
+            // Registra perfil de maturidade completo herdado do diagnóstico
+            await admin.from("company_diagnostic_profiles").upsert({
+              company_id: createdCompanyId,
+              status: "COMPLETED",
+              current_step: 9,
+              total_steps: 9,
+              answers: freeDiag.answers || {},
+              started_at: freeDiag.created_at,
+              completed_at: new Date().toISOString(),
+              updated_at: new Date().toISOString(),
+              company_size_classification: freeDiag.company_size || validData.company_size,
+              has_high_value_contracts: validData.conducts_public_contracts,
+            }, { onConflict: "company_id" });
+
+            // Marca o diagnóstico gratuito como vinculado a este tenant
+            await admin.from("free_diagnostics").update({
+              claimed_by_company_id: createdCompanyId,
+            }).eq("id", freeDiag.id);
+          }
+        } catch (diagLinkErr) {
+          console.warn("[Onboarding] Aviso ao vincular diagnóstico gratuito:", diagLinkErr);
+        }
       }
     }
 

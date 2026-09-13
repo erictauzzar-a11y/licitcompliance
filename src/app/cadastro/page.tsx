@@ -27,6 +27,8 @@ import { formatCNPJ, maskCNPJInput, cleanCNPJ, isValidCNPJFormat } from "@/lib/u
 import { mockStore } from "@/lib/mock-data";
 import { Company } from "@/types";
 import { submitOnboardingAction } from "@/app/actions/onboarding";
+import { verifyOnboardingAccessAction } from "@/app/actions/stripe";
+import { getFreeDiagnosticAction, findFreeDiagnosticByCnpjAction } from "@/app/actions/free-diagnostic";
 
 type OnboardingStep = "CNPJ_INPUT" | "CONFIRM_DATA" | "COMPLIANCE_DETAILS" | "CREATING_ENVIRONMENT" | "SUCCESS_READY";
 
@@ -104,15 +106,82 @@ function RegisterCompanyForm() {
     password: "",
   });
 
-  // Pré-preenche o e-mail do responsável com o e-mail vindo do redirecionamento do login
+  const [accessStatus, setAccessStatus] = useState<"CHECKING" | "AUTHORIZED" | "UNAUTHORIZED">("CHECKING");
+  const [linkedDiagnostic, setLinkedDiagnostic] = useState<{
+    id: string;
+    score: number;
+    tradeName: string;
+  } | null>(null);
+
+  // Validação segura de acesso ao onboarding empresarial
   useEffect(() => {
-    const emailParam = searchParams.get("email");
-    if (emailParam) {
-      setFormData((prev) => ({
-        ...prev,
-        integrity_officer_email: prev.integrity_officer_email || emailParam,
-      }));
+    async function checkAccess() {
+      const sessionId = searchParams.get("session_id");
+      const simulated = searchParams.get("simulated");
+      const checkout = searchParams.get("checkout");
+      const diagId = searchParams.get("diag_id");
+      const cnpjUrl = searchParams.get("cnpj");
+      const emailParam = searchParams.get("email");
+
+      // Pré-preenche o e-mail se presente na URL
+      if (emailParam) {
+        setFormData((prev) => ({
+          ...prev,
+          integrity_officer_email: prev.integrity_officer_email || emailParam,
+        }));
+      }
+
+      // Valida autorização no servidor (sessão stripe, admin ativo ou simulação)
+      const access = await verifyOnboardingAccessAction({
+        sessionId,
+        simulated: simulated || (checkout === "success" && !sessionId ? "true" : null),
+      });
+
+      if (access.allowed) {
+        setAccessStatus("AUTHORIZED");
+
+        if (access.customerEmail) {
+          setFormData((prev) => ({
+            ...prev,
+            integrity_officer_email: prev.integrity_officer_email || access.customerEmail,
+          }));
+        }
+
+        const targetCnpj = access.cnpj || cnpjUrl;
+        if (targetCnpj) {
+          setCnpjInput(maskCNPJInput(targetCnpj));
+        }
+
+        // Busca se existe diagnóstico gratuito para vinculação
+        const targetDiagId = access.diagnosticId || diagId;
+        if (targetDiagId) {
+          const { diagnostic } = await getFreeDiagnosticAction(targetDiagId);
+          if (diagnostic) {
+            setLinkedDiagnostic({
+              id: diagnostic.id,
+              score: diagnostic.score,
+              tradeName: diagnostic.trade_name || diagnostic.legal_name,
+            });
+            if (diagnostic.cnpj && !targetCnpj) {
+              setCnpjInput(maskCNPJInput(diagnostic.cnpj));
+            }
+          }
+        } else if (targetCnpj) {
+          const { diagnostic } = await findFreeDiagnosticByCnpjAction(targetCnpj);
+          if (diagnostic) {
+            setLinkedDiagnostic({
+              id: diagnostic.id,
+              score: diagnostic.score,
+              tradeName: diagnostic.trade_name || diagnostic.legal_name,
+            });
+          }
+        }
+      } else {
+        setAccessStatus("UNAUTHORIZED");
+      }
     }
+
+    checkAccess();
   }, [searchParams]);
 
   const handleCnpjInputChange = (val: string) => {
@@ -246,6 +315,70 @@ function RegisterCompanyForm() {
     }
   };
 
+  // 1. ESTADO DE CHECAGEM
+  if (accessStatus === "CHECKING") {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col justify-center items-center p-4">
+        <div className="p-8 rounded-3xl bg-slate-950 border border-slate-800 text-center space-y-4 max-w-md shadow-2xl">
+          <div className="w-12 h-12 rounded-2xl bg-blue-600/20 border border-blue-500/30 flex items-center justify-center text-blue-400 mx-auto animate-pulse">
+            <ShieldCheck className="w-6 h-6" />
+          </div>
+          <div className="space-y-1">
+            <h2 className="text-base font-bold text-white">Validando autorização de acesso...</h2>
+            <p className="text-xs text-slate-400">Verificando status de assinatura no sistema seguro.</p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 2. ESTADO NÃO AUTORIZADO (Tentativa de acesso sem pagamento confirmado)
+  if (accessStatus === "UNAUTHORIZED") {
+    return (
+      <div className="min-h-screen bg-slate-900 text-white flex flex-col justify-center items-center p-4 sm:p-6 font-sans">
+        <div className="max-w-md w-full bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-8 shadow-2xl space-y-6 text-center animate-in fade-in">
+          <div className="w-16 h-16 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400 mx-auto">
+            <Lock className="w-8 h-8" />
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-xl font-bold text-white">
+              Onboarding Exclusivo para Assinantes
+            </h1>
+            <p className="text-xs text-slate-400 leading-relaxed">
+              O cadastro e a criação do ambiente corporativo no TechCompliance são liberados após a confirmação da assinatura do plano.
+            </p>
+          </div>
+
+          <div className="space-y-2.5 pt-2">
+            <Link
+              href="/diagnostico"
+              className="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-600/30 text-xs flex items-center justify-center gap-2 transition-all"
+            >
+              <span>Fazer Diagnóstico Gratuito primeiro</span>
+              <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+
+            <Link
+              href="/precos"
+              className="w-full bg-slate-900 hover:bg-slate-800 border border-slate-700 text-white font-bold py-3.5 px-4 rounded-xl text-xs flex items-center justify-center gap-2 transition-all"
+            >
+              <span>Conhecer Planos e Assinar</span>
+            </Link>
+
+            <Link
+              href="/login"
+              className="w-full text-slate-400 hover:text-white text-xs font-semibold py-2 block transition-colors"
+            >
+              Já sou cliente • Entrar com minha conta
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 3. ESTADO AUTORIZADO (PAGAMENTO CONFIRMADO)
   return (
     <div className="min-h-screen bg-slate-900 text-white flex flex-col justify-center items-center p-4 sm:p-6 font-sans">
       <div className="max-w-3xl w-full bg-slate-950 border border-slate-800 rounded-3xl p-6 sm:p-10 shadow-2xl space-y-8 animate-in fade-in">
@@ -299,6 +432,28 @@ function RegisterCompanyForm() {
         <Suspense fallback={null}>
           <OnboardingPaidBanner />
         </Suspense>
+
+        {/* Banner de Diagnóstico Prévio Localizado e Vinculado */}
+        {linkedDiagnostic && (
+          <div className="p-4 rounded-2xl bg-blue-500/15 border border-blue-500/30 text-blue-200 flex items-center justify-between gap-4 shadow-lg animate-in slide-in-from-top-2">
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-blue-500/20 flex items-center justify-center text-blue-400 shrink-0">
+                <FileCheck2 className="w-5 h-5" />
+              </div>
+              <div>
+                <h3 className="text-sm font-bold text-white">
+                  Diagnóstico Prévio Localizado! ({linkedDiagnostic.score}% estruturado)
+                </h3>
+                <p className="text-xs text-blue-200/90">
+                  Os requisitos avaliados da empresa {linkedDiagnostic.tradeName} serão vinculados automaticamente ao seu novo ambiente.
+                </p>
+              </div>
+            </div>
+            <span className="px-3 py-1 rounded-full text-xs font-bold bg-blue-500 text-white shrink-0 hidden sm:inline-block">
+              Vinculação Ativa
+            </span>
+          </div>
+        )}
 
         {/* =================================================================== */}
         {/* PASSO 1: INFORMAR CNPJ */}

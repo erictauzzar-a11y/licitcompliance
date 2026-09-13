@@ -19,8 +19,13 @@ import {
   RotateCcw,
   Check,
   ChevronRight,
+  ExternalLink,
+  FileDown,
+  Info,
 } from "lucide-react";
 import { maskCNPJInput, cleanCNPJ, isValidCNPJFormat } from "@/lib/utils";
+import { saveFreeDiagnosticAction } from "@/app/actions/free-diagnostic";
+import { createCheckoutSessionAction } from "@/app/actions/stripe";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -45,6 +50,9 @@ function DiagnosticTool() {
   const [step, setStep] = useState<Step>(1);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
+  const [diagnosticId, setDiagnosticId] = useState<string>("");
+  const [showCommercialDetails, setShowCommercialDetails] = useState(false);
+  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const [answers, setAnswers] = useState<DiagnosticAnswers>({
     cnpj: "",
@@ -130,24 +138,103 @@ function DiagnosticTool() {
       Math.max(25, Math.round(((structured * 1.0 + attention * 0.5 + toDevelop * 0.1) / 6) * 100))
     );
 
-    // Ajuste de pontos exibidos de forma realista
     const totalPointsStructured = Math.max(4, Math.round((score / 100) * 23));
     const totalPointsAttention = Math.max(3, attention * 2 + 1);
     const totalPointsToDevelop = Math.max(2, toDevelop * 2 + 2);
+
+    const attentionPointsList: string[] = [];
+    if (answers.codeOfConduct !== "A") {
+      attentionPointsList.push(
+        "Código de Ética e Conduta: formalizar documento com regras anticorrupção e compromisso da alta gestão."
+      );
+    }
+    if (answers.whistleblowerChannel !== "A") {
+      attentionPointsList.push(
+        "Canal de Denúncias: estruturar mecanismo com garantia de anonimato exigido pela Lei 14.457/2022."
+      );
+    }
+    if (answers.evidenceRecords !== "A") {
+      attentionPointsList.push(
+        "Acervo de Evidências: centralizar listas de presença, atas e certificados para rápida montagem de dossiê."
+      );
+    }
+    if (answers.dueDiligence !== "A") {
+      attentionPointsList.push(
+        "Due Diligence de Terceiros: checar sanções administrativas e impedimentos de licitar em fornecedores críticos."
+      );
+    }
 
     return {
       score,
       totalPointsStructured,
       totalPointsAttention,
       totalPointsToDevelop,
+      attentionPointsList,
     };
   };
 
   const result = calculateResult();
 
+  // Finalização e salvamento do diagnóstico (sem criar empresa)
+  const handleGenerateDiagnostic = async () => {
+    if (!answers.evidenceRecords || !answers.dueDiligence || !answers.disciplinaryMeasures) {
+      setErrorMsg("Por favor, responda todas as questões para emitir o resultado.");
+      return;
+    }
+    setErrorMsg("");
+    setLoading(true);
+
+    try {
+      const saveRes = await saveFreeDiagnosticAction({
+        cnpj: answers.cnpj,
+        legal_name: answers.legalName,
+        trade_name: answers.tradeName,
+        company_size: answers.companySize,
+        public_contracts: answers.publicContracts,
+        answers: {
+          codeOfConduct: answers.codeOfConduct,
+          whistleblowerChannel: answers.whistleblowerChannel,
+          training: answers.training,
+          evidenceRecords: answers.evidenceRecords,
+          dueDiligence: answers.dueDiligence,
+          disciplinaryMeasures: answers.disciplinaryMeasures,
+        },
+        score: result.score,
+        points_structured: result.totalPointsStructured,
+        points_attention: result.totalPointsAttention,
+        points_to_develop: result.totalPointsToDevelop,
+        attention_points: result.attentionPointsList,
+      });
+
+      if (saveRes.success) {
+        setDiagnosticId(saveRes.diagnosticId);
+      }
+    } catch (e) {
+      console.warn("Falha ao salvar diagnóstico:", e);
+    } finally {
+      setLoading(false);
+      setStep(5);
+    }
+  };
+
+  // Iniciar contratação quando o usuário desejar
+  const handleInitiateSubscription = async () => {
+    setCheckoutLoading(true);
+    try {
+      await createCheckoutSessionAction({
+        cnpj: cleanCNPJ(answers.cnpj),
+        companyName: answers.tradeName || answers.legalName,
+        diagnosticId: diagnosticId || undefined,
+      });
+    } catch (err: any) {
+      // Redirecionamento é tratado no server action
+      setCheckoutLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-slate-950 text-slate-100 font-sans flex flex-col justify-between selection:bg-blue-600 selection:text-white">
-      {/* 1. TOPO MINIMALISTA DE FERRAMENTA */}
+      {/* 1. TOPO MINIMALISTA DE PRODUTO */}
       <header className="border-b border-slate-800 bg-slate-950/80 backdrop-blur-md sticky top-0 z-40">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5 group">
@@ -165,25 +252,37 @@ function DiagnosticTool() {
             </div>
           </Link>
 
-          <Link
-            href="/login"
-            className="text-xs font-semibold text-slate-400 hover:text-white transition-colors"
-          >
-            Já sou cliente
-          </Link>
+          <div className="flex items-center gap-3">
+            <Link
+              href="/"
+              className="text-xs font-semibold text-slate-400 hover:text-white transition-colors hidden sm:inline-block"
+            >
+              Voltar ao site
+            </Link>
+            <Link
+              href="/login"
+              className="text-xs font-semibold text-slate-200 hover:text-white bg-slate-900 border border-slate-800 px-3 py-1.5 rounded-lg hover:border-slate-700 transition-colors"
+            >
+              Entrar
+            </Link>
+          </div>
         </div>
       </header>
 
-      {/* 2. CONTEÚDO PRINCIPAL DA FERRAMENTA */}
+      {/* 2. ÁREA DA FERRAMENTA */}
       <main className="max-w-3xl mx-auto px-4 sm:px-6 py-10 sm:py-14 w-full flex-1 flex flex-col justify-center">
         <div className="space-y-8">
           {/* Header da Ferramenta */}
           <div className="text-center space-y-2">
             <h1 className="text-2xl sm:text-3xl font-black text-white tracking-tight">
-              Descubra como sua empresa está estruturada hoje
+              {step === 5
+                ? "Diagnóstico Preliminar Concluído"
+                : "Descubra como sua empresa está estruturada hoje"}
             </h1>
             <p className="text-xs sm:text-sm text-slate-400 max-w-xl mx-auto leading-relaxed">
-              Responda algumas perguntas e receba uma avaliação inicial dos principais pontos do seu Programa de Integridade.
+              {step === 5
+                ? "Este relatório foi gerado com base nas informações declaradas sobre os parâmetros da Lei 14.133/2021."
+                : "Responda algumas perguntas e receba uma avaliação inicial dos principais pontos do seu Programa de Integridade."}
             </p>
           </div>
 
@@ -191,7 +290,7 @@ function DiagnosticTool() {
           <div className="space-y-2 max-w-xl mx-auto">
             <div className="flex items-center justify-between text-xs font-bold text-slate-400">
               <span className="text-blue-400">Etapa {step} de 5</span>
-              <span>{step === 5 ? "Concluído" : `${Math.round((step / 5) * 100)}%`}</span>
+              <span>{step === 5 ? "Resultado Pronto" : `${Math.round((step / 5) * 100)}%`}</span>
             </div>
             <div className="w-full bg-slate-900 rounded-full h-2 overflow-hidden border border-slate-800">
               <div
@@ -201,7 +300,7 @@ function DiagnosticTool() {
             </div>
           </div>
 
-          {/* CARD DA ETAPA ATIVA */}
+          {/* CARD PRINCIPAL DA ETAPA ATIVA */}
           <div className="p-6 sm:p-10 rounded-3xl bg-slate-900/90 border border-slate-800 shadow-2xl shadow-black/80 backdrop-blur-xl">
             {/* =======================================================
                 ETAPA 1: CNPJ
@@ -251,9 +350,7 @@ function DiagnosticTool() {
                     {loading ? (
                       <span>Consultando dados oficiais...</span>
                     ) : (
-                      <>
-                        <span>CONTINUAR →</span>
-                      </>
+                      <span>CONTINUAR →</span>
                     )}
                   </button>
                 </div>
@@ -279,7 +376,6 @@ function DiagnosticTool() {
                   </p>
                 </div>
 
-                {/* Card com dados retornados */}
                 <div className="p-4 rounded-xl bg-slate-950 border border-slate-800 space-y-2 font-mono text-xs">
                   <div className="text-slate-400">CNPJ: {answers.cnpj}</div>
                   <div className="font-bold text-white text-sm">
@@ -290,7 +386,6 @@ function DiagnosticTool() {
                   </div>
                 </div>
 
-                {/* Pergunta: Porte da empresa */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-slate-300">
                     Qual o porte da empresa?
@@ -313,7 +408,6 @@ function DiagnosticTool() {
                   </div>
                 </div>
 
-                {/* Pergunta: Vendas públicas */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-slate-300">
                     A empresa já vende ou pretende vender para o governo?
@@ -343,7 +437,6 @@ function DiagnosticTool() {
                   </div>
                 </div>
 
-                {/* Botões Voltar / Continuar */}
                 <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                   <button
                     type="button"
@@ -379,7 +472,6 @@ function DiagnosticTool() {
                   </p>
                 </div>
 
-                {/* Pergunta 1: Código de Conduta */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-slate-300">
                     1. A empresa possui Código de Ética e Conduta formalizado e vigente?
@@ -407,7 +499,6 @@ function DiagnosticTool() {
                   </div>
                 </div>
 
-                {/* Pergunta 2: Canal de Denúncias */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-slate-300">
                     2. Há canal de denúncias disponível com garantia de anonimato (Lei 14.457)?
@@ -435,7 +526,6 @@ function DiagnosticTool() {
                   </div>
                 </div>
 
-                {/* Pergunta 3: Treinamentos */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-slate-300">
                     3. São realizados treinamentos sobre integridade e prevenção ao assédio?
@@ -463,7 +553,6 @@ function DiagnosticTool() {
                   </div>
                 </div>
 
-                {/* Botões Voltar / Continuar */}
                 <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                   <button
                     type="button"
@@ -507,7 +596,6 @@ function DiagnosticTool() {
                   </p>
                 </div>
 
-                {/* Pergunta 1: Registros de Evidências */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-slate-300">
                     4. A empresa possui registros auditáveis das ações (atas, listas, certificados)?
@@ -535,7 +623,6 @@ function DiagnosticTool() {
                   </div>
                 </div>
 
-                {/* Pergunta 2: Due Diligence */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-slate-300">
                     5. É feita análise prévia (Due Diligence) de fornecedores e parceiros críticos?
@@ -563,7 +650,6 @@ function DiagnosticTool() {
                   </div>
                 </div>
 
-                {/* Pergunta 3: Medidas Disciplinares */}
                 <div className="space-y-2">
                   <label className="block text-xs font-bold text-slate-300">
                     6. Há procedimento formal para apuração de irregularidades e aplicação de sanções?
@@ -591,7 +677,6 @@ function DiagnosticTool() {
                   </div>
                 </div>
 
-                {/* Botões Voltar / Concluir */}
                 <div className="pt-4 flex items-center justify-between gap-3 border-t border-slate-800">
                   <button
                     type="button"
@@ -604,17 +689,15 @@ function DiagnosticTool() {
 
                   <button
                     type="button"
-                    onClick={() => {
-                      if (!answers.evidenceRecords || !answers.dueDiligence || !answers.disciplinaryMeasures) {
-                        setErrorMsg("Por favor, responda todas as questões para emitir o resultado.");
-                        return;
-                      }
-                      setErrorMsg("");
-                      setStep(5);
-                    }}
-                    className="bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-extrabold py-3.5 px-7 rounded-xl shadow-lg shadow-emerald-600/30 text-xs flex items-center gap-2 transition-all cursor-pointer"
+                    disabled={loading}
+                    onClick={handleGenerateDiagnostic}
+                    className="bg-emerald-600 hover:bg-emerald-500 active:scale-[0.99] text-white font-extrabold py-3.5 px-7 rounded-xl shadow-lg shadow-emerald-600/30 text-xs flex items-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                   >
-                    <span>GERAR DIAGNÓSTICO →</span>
+                    {loading ? (
+                      <span>Calculando diagnóstico...</span>
+                    ) : (
+                      <span>GERAR DIAGNÓSTICO →</span>
+                    )}
                   </button>
                 </div>
                 {errorMsg && <p className="text-xs text-red-400 text-right">{errorMsg}</p>}
@@ -622,7 +705,8 @@ function DiagnosticTool() {
             )}
 
             {/* =======================================================
-                ETAPA 5: RESULTADO
+                ETAPA 5: RESULTADO DO DIAGNÓSTICO
+                (NÃO envia para cadastro de empresa. É a tela final da ferramenta gratuita!)
             ======================================================= */}
             {step === 5 && (
               <div className="space-y-8 animate-in fade-in duration-300">
@@ -631,11 +715,11 @@ function DiagnosticTool() {
                   <div className="flex items-center gap-2">
                     <span className="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse" />
                     <h2 className="text-lg sm:text-xl font-bold text-white">
-                      Seu diagnóstico está pronto
+                      Seu diagnóstico está concluído
                     </h2>
                   </div>
                   <span className="text-[10px] font-mono font-bold text-blue-400 bg-blue-500/10 px-2.5 py-1 rounded-md border border-blue-500/20">
-                    Avaliação Preliminar • {answers.cnpj}
+                    {answers.tradeName || answers.legalName} • {answers.cnpj}
                   </span>
                 </div>
 
@@ -655,7 +739,7 @@ function DiagnosticTool() {
                     />
                   </div>
                   <p className="text-xs text-slate-400 pt-1">
-                    Com base nos parâmetros técnicos da Lei 14.133/2021 e Decreto 12.304/2024
+                    Avaliação técnica com base nas diretrizes da Lei 14.133/2021 e Decreto 12.304/2024
                   </p>
                 </div>
 
@@ -683,87 +767,122 @@ function DiagnosticTool() {
                 {/* Principais Pontos de Atenção Identificados */}
                 <div className="space-y-2.5">
                   <div className="text-xs font-bold text-slate-300 uppercase tracking-wider">
-                    Principais Pontos de Atenção Identificados:
+                    Principais Pontos Identificados na sua Empresa:
                   </div>
 
                   <div className="space-y-2 text-xs">
-                    {answers.codeOfConduct !== "A" && (
-                      <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5">
+                    {result.attentionPointsList.map((item, idx) => (
+                      <div
+                        key={idx}
+                        className="p-3.5 rounded-xl bg-slate-950 border border-slate-800/90 flex items-start gap-3"
+                      >
                         <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-white">Código de Ética e Conduta: </span>
-                          <span className="text-slate-300">
-                            Necessário formalizar documento com escopo de combate à corrupção e compromisso da alta administração.
-                          </span>
-                        </div>
+                        <span className="text-slate-300 leading-relaxed">{item}</span>
                       </div>
-                    )}
-
-                    {answers.whistleblowerChannel !== "A" && (
-                      <div className="p-3 rounded-xl bg-amber-950/20 border border-amber-500/30 flex items-start gap-2.5">
-                        <AlertTriangle className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-white">Canal de Denúncias: </span>
-                          <span className="text-slate-300">
-                            Exigência de protocolo com anonimato e proteção contra retaliação prevista pela Lei 14.457/2022.
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {answers.evidenceRecords !== "A" && (
-                      <div className="p-3 rounded-xl bg-blue-950/20 border border-blue-500/30 flex items-start gap-2.5">
-                        <FileCheck2 className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-white">Acervo de Evidências: </span>
-                          <span className="text-slate-300">
-                            Centralizar atas, listas e termos com integridade criptográfica para montagem rápida do dossiê.
-                          </span>
-                        </div>
-                      </div>
-                    )}
-
-                    {answers.dueDiligence !== "A" && (
-                      <div className="p-3 rounded-xl bg-slate-950 border border-slate-800 flex items-start gap-2.5">
-                        <Clock className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
-                        <div>
-                          <span className="font-bold text-white">Due Diligence de Fornecedores: </span>
-                          <span className="text-slate-300">
-                            Estruturar rotina periódica de verificação de sanções administrativas e impedimentos de licitar.
-                          </span>
-                        </div>
-                      </div>
-                    )}
+                    ))}
                   </div>
                 </div>
 
-                {/* CTAs de Encerramento */}
-                <div className="pt-4 space-y-3">
-                  <Link
-                    href={`/cadastro?cnpj=${cleanCNPJ(answers.cnpj)}`}
-                    className="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-extrabold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
-                  >
-                    <span>QUERO ORGANIZAR MEU PROGRAMA →</span>
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
+                {/* =======================================================
+                    BLOCO COMERCIAL / CONVERSÃO PÓS-DIAGNÓSTICO
+                    (Separação rigorosa: aqui o usuário decide se deseja contratar)
+                ======================================================= */}
+                <div className="p-6 rounded-2xl bg-gradient-to-b from-blue-950/40 to-slate-950 border border-blue-500/30 space-y-5">
+                  <div className="space-y-2 text-center sm:text-left">
+                    <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/10 text-blue-400 text-[10px] font-bold border border-blue-500/20">
+                      <Sparkles className="w-3 h-3 text-blue-400" />
+                      <span>PRÓXIMO PASSO RECOMENDADO</span>
+                    </div>
 
-                  <div className="flex items-center justify-between text-xs pt-1">
+                    <h3 className="text-base sm:text-lg font-black text-white">
+                      Quer transformar esse diagnóstico em um plano de ação e organizar tudo em um único ambiente?
+                    </h3>
+
+                    <p className="text-xs text-slate-300 leading-relaxed">
+                      O TechCompliance automatiza o Código de Ética, gerencia o Canal de Denúncias com anonimato, centraliza evidências auditáveis e gera o Dossiê completo para apresentação em licitações.
+                    </p>
+                  </div>
+
+                  {/* Detalhes do produto (toggle sob demanda) */}
+                  {showCommercialDetails && (
+                    <div className="p-4 bg-slate-950 rounded-xl border border-slate-800 text-xs text-slate-300 space-y-2 animate-in fade-in duration-200">
+                      <div className="font-bold text-white">O que sua empresa recebe com a assinatura:</div>
+                      <ul className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-[11px] pt-1">
+                        <li className="flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Código de Conduta formalizado</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Canal de Denúncias Lei 14.457</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Dossiê probatório com QR Code</span>
+                        </li>
+                        <li className="flex items-center gap-1.5">
+                          <Check className="w-3.5 h-3.5 text-emerald-400" />
+                          <span>Due Diligence de fornecedores</span>
+                        </li>
+                      </ul>
+                      <div className="text-[10px] text-slate-400 pt-1">
+                        Plano Completo por R$ 189,90/mês • Sem taxa de adesão • Cancele quando quiser
+                      </div>
+                    </div>
+                  )}
+
+                  {/* CTAs Comerciais */}
+                  <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
                     <button
                       type="button"
-                      onClick={() => setStep(1)}
-                      className="text-slate-400 hover:text-white transition-colors flex items-center gap-1"
+                      disabled={checkoutLoading}
+                      onClick={handleInitiateSubscription}
+                      className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-extrabold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
                     >
-                      <RotateCcw className="w-3.5 h-3.5" />
-                      <span>Refazer avaliação</span>
+                      {checkoutLoading ? (
+                        <span>Iniciando checkout seguro...</span>
+                      ) : (
+                        <>
+                          <span>CONTRATAR AGORA (R$ 189,90/mês) →</span>
+                        </>
+                      )}
                     </button>
 
-                    <Link
-                      href="/"
-                      className="text-blue-400 hover:text-blue-300 transition-colors"
+                    <button
+                      type="button"
+                      onClick={() => setShowCommercialDetails(!showCommercialDetails)}
+                      className="w-full sm:w-auto px-5 py-4 rounded-xl border border-slate-700 bg-slate-900 text-xs font-bold text-slate-200 hover:text-white hover:bg-slate-800 transition-colors flex items-center justify-center gap-1.5"
                     >
-                      Voltar para a página inicial
-                    </Link>
+                      <Info className="w-3.5 h-3.5" />
+                      <span>{showCommercialDetails ? "Ocultar detalhes" : "Conhecer o TechCompliance"}</span>
+                    </button>
                   </div>
+
+                  <div className="text-[11px] text-slate-400 text-center sm:text-left flex items-center gap-1.5">
+                    <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                    <span>
+                      Seu diagnóstico ({diagnosticId || "salvo"}) será vinculado automaticamente à sua empresa após a confirmação do pagamento.
+                    </span>
+                  </div>
+                </div>
+
+                {/* Opções de saída sem compromisso */}
+                <div className="flex items-center justify-between text-xs text-slate-400 pt-2 border-t border-slate-800">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setStep(1);
+                      setShowCommercialDetails(false);
+                    }}
+                    className="hover:text-white transition-colors flex items-center gap-1"
+                  >
+                    <RotateCcw className="w-3.5 h-3.5" />
+                    <span>Refazer avaliação com outro CNPJ</span>
+                  </button>
+
+                  <Link href="/" className="text-blue-400 hover:text-blue-300 transition-colors">
+                    Voltar para a página inicial
+                  </Link>
                 </div>
               </div>
             )}
@@ -771,7 +890,7 @@ function DiagnosticTool() {
         </div>
       </main>
 
-      {/* 3. RODAPÉ INSTITUCIONAL DISCRETO */}
+      {/* 3. RODAPÉ DA FERRAMENTA */}
       <footer className="border-t border-slate-900 py-6 text-center text-xs text-slate-500">
         <div className="max-w-4xl mx-auto px-4">
           TechCompliance • Plataforma para Estruturação e Evidenciação de Programas de Integridade
