@@ -25,7 +25,7 @@ function LoginForm() {
     try {
       const res = await loginAdminAction(email, password);
       if (res.success) {
-        router.push(redirectUrl);
+        router.push(res.redirectTo || redirectUrl);
       } else {
         setErrorMsg(res.error || "Credenciais inválidas.");
       }

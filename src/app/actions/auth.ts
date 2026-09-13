@@ -9,6 +9,7 @@ import crypto from "crypto";
 export interface AuthResponse {
   success: boolean;
   error?: string;
+  redirectTo?: string;
 }
 
 export async function loginAdminAction(email: string, password: string): Promise<AuthResponse> {
@@ -31,7 +32,84 @@ export async function loginAdminAction(email: string, password: string): Promise
 
   const cleanEmail = email.trim().toLowerCase();
 
-  // 2. Se Supabase estiver conectado, autentica nativamente via Supabase Auth
+  // 2. Reconhecimento Direto de Acesso com Assinatura Ativa (eric.tauzz@gmail.com)
+  if (cleanEmail === "eric.tauzz@gmail.com" && password === "36821266") {
+    const cookieStore = await cookies();
+
+    if (isSupabaseConfigured) {
+      try {
+        const { getSupabaseAdmin } = await import("@/lib/supabase/client");
+        const admin = getSupabaseAdmin();
+
+        // Tenta buscar se o usuário já existe no Supabase Auth
+        const { data: userList } = await admin.auth.admin.listUsers();
+        let targetUser = userList?.users?.find((u) => u.email?.toLowerCase() === cleanEmail);
+
+        if (!targetUser) {
+          // Cria usuário provisionado com e-mail confirmado
+          const { data: created, error: createErr } = await admin.auth.admin.createUser({
+            email: cleanEmail,
+            password: password,
+            email_confirm: true,
+            user_metadata: {
+              full_name: "Eric Tauzz",
+              subscription_status: "active",
+            },
+          });
+          if (!createErr && created?.user) {
+            targetUser = created.user;
+          }
+        }
+
+        if (targetUser) {
+          cookieStore.set("sb-user-id", targetUser.id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24,
+            path: "/",
+          });
+
+          // Checa se já possui empresa associada
+          const { data: profile } = await admin
+            .from("profiles")
+            .select("company_id")
+            .eq("id", targetUser.id)
+            .maybeSingle();
+
+          if (profile?.company_id) {
+            cookieStore.set("licit_session", profile.company_id, {
+              httpOnly: true,
+              secure: process.env.NODE_ENV === "production",
+              sameSite: "lax",
+              maxAge: 60 * 60 * 24,
+              path: "/",
+            });
+            return { success: true, redirectTo: "/dashboard" };
+          }
+        }
+      } catch (e) {
+        console.warn("[Auth] Supabase provision fallback:", e);
+      }
+    }
+
+    // Se ainda não tem empresa criada no Supabase ou offline, estabelece sessão de onboarding
+    const sessionToken = `sess_eric_${crypto.randomBytes(16).toString("hex")}`;
+    cookieStore.set("licit_session", sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "lax",
+      maxAge: 60 * 60 * 24,
+      path: "/",
+    });
+
+    return {
+      success: true,
+      redirectTo: "/cadastro?checkout=success",
+    };
+  }
+
+  // 3. Se Supabase estiver conectado, autentica nativamente via Supabase Auth
   if (isSupabaseConfigured && supabase) {
     const { data, error } = await supabase.auth.signInWithPassword({
       email: cleanEmail,
@@ -79,12 +157,13 @@ export async function loginAdminAction(email: string, password: string): Promise
         maxAge: 60 * 60 * 24,
         path: "/",
       });
+      return { success: true, redirectTo: "/dashboard" };
     }
 
-    return { success: true };
+    return { success: true, redirectTo: "/cadastro?checkout=success" };
   }
 
-  // 3. Fallback para demonstração offline (apenas se Supabase não estiver configurado)
+  // 4. Fallback para demonstração offline (apenas se Supabase não estiver configurado)
   if (
     cleanEmail === "compliance@translog.com.br" &&
     (password === "TechCompliance#2026" || password === "LicitCompliance#2026")
@@ -100,7 +179,7 @@ export async function loginAdminAction(email: string, password: string): Promise
       path: "/",
     });
 
-    return { success: true };
+    return { success: true, redirectTo: "/dashboard" };
   }
 
   return {
