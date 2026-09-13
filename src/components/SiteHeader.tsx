@@ -322,20 +322,22 @@ export function SiteHeader() {
           >
             Entrar
           </Link>
-          <CheckoutButton
-            label="Começar agora"
-            showIcon={false}
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-5 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 text-xs"
-          />
+          <Link
+            href="#diagnostico"
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98] flex items-center gap-1.5"
+          >
+            <span>Diagnóstico Gratuito</span>
+          </Link>
         </div>
 
         {/* BOTÃO MOBILE (MENU HAMBÚRGUER) */}
         <div className="flex lg:hidden items-center gap-2">
-          <CheckoutButton
-            label="Começar"
-            showIcon={false}
-            className="bg-blue-600 text-white text-xs font-bold px-3.5 py-2 rounded-lg"
-          />
+          <Link
+            href="#diagnostico"
+            className="bg-blue-600 text-white text-xs font-bold px-3 py-2 rounded-lg"
+          >
+            Diagnóstico
+          </Link>
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
