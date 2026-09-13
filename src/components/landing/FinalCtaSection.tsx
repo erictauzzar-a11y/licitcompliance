@@ -25,7 +25,7 @@ export function FinalCtaSection() {
 
         <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
           <Link
-            href="/cadastro"
+            href="/diagnostico"
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-extrabold px-9 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <span>FAZER DIAGNÓSTICO GRATUITO</span>

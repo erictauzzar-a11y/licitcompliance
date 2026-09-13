@@ -107,7 +107,7 @@ export function WhyItMattersSection() {
         {/* CTA da Seção */}
         <div className="text-center pt-2">
           <Link
-            href="#diagnostico"
+            href="/diagnostico"
             className="inline-flex items-center gap-2 text-sm font-bold text-blue-400 hover:text-blue-300 transition-colors group"
           >
             <span>Descobrir meu nível de preparação</span>

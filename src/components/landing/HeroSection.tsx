@@ -36,7 +36,7 @@ export function HeroSection() {
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2">
               <Link
-                href="#diagnostico"
+                href="/diagnostico"
                 className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold px-7 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm flex items-center justify-center gap-2 transition-all"
               >
                 <span>FAZER DIAGNÓSTICO GRATUITO</span>

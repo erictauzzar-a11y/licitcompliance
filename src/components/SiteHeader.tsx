@@ -323,7 +323,7 @@ export function SiteHeader() {
             Entrar
           </Link>
           <Link
-            href="#diagnostico"
+            href="/diagnostico"
             className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98] flex items-center gap-1.5"
           >
             <span>Diagnóstico Gratuito</span>
@@ -333,7 +333,7 @@ export function SiteHeader() {
         {/* BOTÃO MOBILE (MENU HAMBÚRGUER) */}
         <div className="flex lg:hidden items-center gap-2">
           <Link
-            href="#diagnostico"
+            href="/diagnostico"
             className="bg-blue-600 text-white text-xs font-bold px-3 py-2 rounded-lg"
           >
             Diagnóstico

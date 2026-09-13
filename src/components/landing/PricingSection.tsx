@@ -107,7 +107,7 @@ export function PricingSection() {
               <div className="pt-4 border-t border-slate-800 text-xs space-y-1">
                 <div className="text-slate-400">Ainda não conhece seu nível de preparação?</div>
                 <Link
-                  href="#diagnostico"
+                  href="/diagnostico"
                   className="font-bold text-blue-400 hover:text-blue-300 inline-flex items-center gap-1 transition-colors"
                 >
                   <span>Faça o diagnóstico gratuito primeiro →</span>
