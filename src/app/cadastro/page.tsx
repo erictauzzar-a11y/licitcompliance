@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import {
@@ -58,8 +58,9 @@ function OnboardingPaidBanner() {
   );
 }
 
-export default function RegisterCompanyPage() {
+function RegisterCompanyForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const [step, setStep] = useState<OnboardingStep>("CNPJ_INPUT");
   const [cnpjInput, setCnpjInput] = useState("");
@@ -102,6 +103,17 @@ export default function RegisterCompanyPage() {
     conducts_public_contracts: true,
     password: "",
   });
+
+  // Pré-preenche o e-mail do responsável com o e-mail vindo do redirecionamento do login
+  useEffect(() => {
+    const emailParam = searchParams.get("email");
+    if (emailParam) {
+      setFormData((prev) => ({
+        ...prev,
+        integrity_officer_email: prev.integrity_officer_email || emailParam,
+      }));
+    }
+  }, [searchParams]);
 
   const handleCnpjInputChange = (val: string) => {
     setCnpjInput(maskCNPJInput(val));
@@ -923,5 +935,13 @@ export default function RegisterCompanyPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function RegisterCompanyPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-slate-900 flex items-center justify-center text-slate-400 text-sm">Carregando...</div>}>
+      <RegisterCompanyForm />
+    </Suspense>
   );
 }

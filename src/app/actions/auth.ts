@@ -36,33 +36,24 @@ export async function loginAdminAction(email: string, password: string): Promise
   if (cleanEmail === "eric.tauzz@gmail.com" && password === "36821266") {
     const cookieStore = await cookies();
 
-    if (isSupabaseConfigured) {
+    if (isSupabaseConfigured && supabase) {
       try {
-        const { getSupabaseAdmin } = await import("@/lib/supabase/client");
-        const admin = getSupabaseAdmin();
+        // Tenta autenticar diretamente via Supabase signInWithPassword
+        const { data: signInData, error: signInError } = await supabase.auth.signInWithPassword({
+          email: cleanEmail,
+          password,
+        });
 
-        // Tenta buscar se o usuário já existe no Supabase Auth
-        const { data: userList } = await admin.auth.admin.listUsers();
-        let targetUser = userList?.users?.find((u) => u.email?.toLowerCase() === cleanEmail);
-
-        if (!targetUser) {
-          // Cria usuário provisionado com e-mail confirmado
-          const { data: created, error: createErr } = await admin.auth.admin.createUser({
-            email: cleanEmail,
-            password: password,
-            email_confirm: true,
-            user_metadata: {
-              full_name: "Eric Tauzz",
-              subscription_status: "active",
-            },
+        if (!signInError && signInData?.session) {
+          // Autenticação bem-sucedida: define os cookies da sessão
+          cookieStore.set("sb-access-token", signInData.session.access_token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24,
+            path: "/",
           });
-          if (!createErr && created?.user) {
-            targetUser = created.user;
-          }
-        }
-
-        if (targetUser) {
-          cookieStore.set("sb-user-id", targetUser.id, {
+          cookieStore.set("sb-user-id", signInData.user.id, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
             sameSite: "lax",
@@ -70,11 +61,13 @@ export async function loginAdminAction(email: string, password: string): Promise
             path: "/",
           });
 
-          // Checa se já possui empresa associada
+          // Verifica se já tem empresa cadastrada
+          const { getSupabaseAdmin } = await import("@/lib/supabase/client");
+          const admin = getSupabaseAdmin();
           const { data: profile } = await admin
             .from("profiles")
             .select("company_id")
-            .eq("id", targetUser.id)
+            .eq("id", signInData.user.id)
             .maybeSingle();
 
           if (profile?.company_id) {
@@ -87,13 +80,41 @@ export async function loginAdminAction(email: string, password: string): Promise
             });
             return { success: true, redirectTo: "/dashboard" };
           }
+
+          // Usuário autenticado mas sem empresa: vai para cadastro
+          return { success: true, redirectTo: "/cadastro?checkout=success" };
+        }
+
+        // signInWithPassword falhou: usuário ainda não existe no Supabase.
+        // Provisiona o usuário com e-mail confirmado (apenas na primeira vez).
+        const { getSupabaseAdmin } = await import("@/lib/supabase/client");
+        const admin = getSupabaseAdmin();
+
+        const { data: created, error: createErr } = await admin.auth.admin.createUser({
+          email: cleanEmail,
+          password: password,
+          email_confirm: true,
+          user_metadata: {
+            full_name: "Eric Tauzz",
+            subscription_status: "active",
+          },
+        });
+
+        if (!createErr && created?.user) {
+          cookieStore.set("sb-user-id", created.user.id, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "lax",
+            maxAge: 60 * 60 * 24,
+            path: "/",
+          });
         }
       } catch (e) {
         console.warn("[Auth] Supabase provision fallback:", e);
       }
     }
 
-    // Se ainda não tem empresa criada no Supabase ou offline, estabelece sessão de onboarding
+    // Sem Supabase ou usuário recém-provisionado: sessão temporária para onboarding
     const sessionToken = `sess_eric_${crypto.randomBytes(16).toString("hex")}`;
     cookieStore.set("licit_session", sessionToken, {
       httpOnly: true,
@@ -105,7 +126,7 @@ export async function loginAdminAction(email: string, password: string): Promise
 
     return {
       success: true,
-      redirectTo: "/cadastro?checkout=success",
+      redirectTo: `/cadastro?checkout=success&email=${encodeURIComponent(cleanEmail)}`,
     };
   }
 
