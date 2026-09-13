@@ -70,14 +70,27 @@ export async function submitOnboardingAction(rawInput: any) {
       const cleanEmail = validData.integrity_officer_email?.trim().toLowerCase();
       const userPassword = validData.password || "TechCompliance#2026";
 
-      // 1.1 Cria ou localiza o Usuário no Supabase Auth
+      // 1.1 Cria ou localiza o Usuário no Supabase Auth por EMAIL (não por UUID)
       if (cleanEmail) {
-        const { data: existingUser } = await admin.auth.admin.getUserById(cleanEmail).catch(() => ({ data: null }));
-        
-        let targetUser = existingUser?.user;
+        let targetUser: any = null;
 
-        if (!targetUser) {
-          // Cria usuário com e-mail confirmado automaticamente via Admin
+        // Busca o usuário existente por e-mail usando listUsers
+        try {
+          const { data: userList } = await admin.auth.admin.listUsers({ page: 1, perPage: 1000 });
+          targetUser = userList?.users?.find((u: any) => u.email?.toLowerCase() === cleanEmail) || null;
+        } catch {
+          // ignora erro de listagem
+        }
+
+        if (targetUser) {
+          // Usuário já existe: atualiza a senha para a definida no formulário
+          await admin.auth.admin.updateUserById(targetUser.id, {
+            password: userPassword,
+          }).catch(() => {
+            // ignora erro de atualização de senha (não crítico)
+          });
+        } else {
+          // Cria usuário novo com e-mail confirmado automaticamente via Admin
           const { data: createdAuth, error: authErr } = await admin.auth.admin.createUser({
             email: cleanEmail,
             password: userPassword,
@@ -87,7 +100,7 @@ export async function submitOnboardingAction(rawInput: any) {
             },
           });
 
-          if (authErr && !authErr.message.includes("already been registered")) {
+          if (authErr) {
             console.error("[Supabase Auth] Erro ao criar usuário:", authErr.message);
           } else {
             targetUser = createdAuth?.user;
