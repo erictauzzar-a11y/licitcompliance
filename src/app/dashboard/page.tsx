@@ -85,7 +85,7 @@ import { getPolicyAction } from "@/app/actions/policies";
 import { Employee, Policy, WhistleblowerReport } from "@/types";
 
 export default function DashboardOverviewPage() {
-  const { company, isLoading } = useCompany();
+  const { company, isLoading, snapshot } = useCompany();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [reports, setReports] = useState<WhistleblowerReport[]>([]);
   const [policy, setPolicy] = useState<Policy | null>(null);
@@ -121,14 +121,20 @@ export default function DashboardOverviewPage() {
     evaluated_at: new Date().toISOString(),
   };
 
-  // Métricas calculadas com dados reais
-  const totalEmployees = employees.length;
-  const acceptedPolicies = employees.filter((e) => !!e.policy_accepted_at).length;
-  const policyRate = totalEmployees > 0 ? Math.round((acceptedPolicies / totalEmployees) * 100) : 0;
-  const completedTrainings = 0;
-  const trainingRate = 0;
-  const totalReports = reports.length;
-  const resolvedReports = reports.filter((r) =>
+  // Métricas calculadas com dados reais e unificadas via snapshot central
+  const overallScore = snapshot ? snapshot.overallScore : diagnostic.overall_score;
+  const metRequirementsCount = snapshot ? snapshot.requirementsCount.met : diagnostic.met_count;
+  const totalRequirementsCount = snapshot ? snapshot.requirementsCount.total : (diagnostic.total_requirements || 19);
+  const totalEvidencesCount = snapshot ? snapshot.evidencesCount : diagnostic.total_evidences;
+  const statusLabel = snapshot ? snapshot.statusLabel : (overallScore > 0 ? "Programa Estruturado" : "Diagnóstico Inicial Pendente");
+
+  const totalEmployees = snapshot ? snapshot.employeeStats.total : employees.length;
+  const acceptedPolicies = snapshot ? snapshot.employeeStats.acceptedPolicies : employees.filter((e) => !!e.policy_accepted_at).length;
+  const policyRate = snapshot ? snapshot.employeeStats.policyRate : (totalEmployees > 0 ? Math.round((acceptedPolicies / totalEmployees) * 100) : 0);
+  const completedTrainings = snapshot ? snapshot.employeeStats.completedTrainings : 0;
+  const trainingRate = snapshot ? snapshot.employeeStats.trainingRate : 0;
+  const totalReports = snapshot ? snapshot.channelStats.totalReports : reports.length;
+  const resolvedReports = snapshot ? snapshot.channelStats.resolvedReports : reports.filter((r) =>
     r.status === "PROCEDENTE" || r.status === "IMPROCEDENTE" || r.status === "ARQUIVADA"
   ).length;
 
@@ -262,23 +268,23 @@ export default function DashboardOverviewPage() {
           
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-baseline gap-2">
-              Status de Preparação: <span className="text-emerald-400 font-mono">{diagnostic?.overall_score ?? 0}%</span> estruturado
+              Status de Preparação: <span className="text-emerald-400 font-mono">{overallScore}%</span> estruturado
             </h1>
             <p className="text-sm font-semibold text-slate-300 mt-1">
-              {(diagnostic?.overall_score ?? 0) === 0 ? (
+              {overallScore === 0 ? (
                 <span className="text-amber-300 font-bold">
                   Inicie o diagnóstico em 9 etapas para descobrir a maturidade da sua empresa.
                 </span>
               ) : (
                 <span className="text-emerald-300 font-bold">
-                  {diagnostic?.met_count ?? 0} de {diagnostic?.total_requirements ?? 0} requisitos atendidos no padrão exigido em contratações públicas.
+                  {metRequirementsCount} de {totalRequirementsCount} requisitos atendidos no padrão exigido em contratações públicas.
                 </span>
               )}
             </p>
           </div>
 
           <p className="text-xs text-slate-400 leading-relaxed max-w-xl">
-            * Indicador de maturidade documental e evidencial do Programa de Integridade da empresa, avaliado perante a Lei nº 14.133/2021 e Decreto nº 12.304/2024. Não constitui certificação oficial nem garantia jurídica automática.
+            * Indicador de maturidade documental e probatória do Programa de Integridade da empresa, avaliado conforme a Lei nº 14.133/2021 e Decreto nº 12.304/2024 ({statusLabel}).
           </p>
 
           <div className="pt-1">
@@ -396,6 +402,86 @@ export default function DashboardOverviewPage() {
         </div>
       </div>
 
+      {/* CENTRAL DE COMANDO: PRÓXIMA MELHOR AÇÃO */}
+      {snapshot && snapshot.nextBestActions && snapshot.nextBestActions.length > 0 && (
+        <div className="bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 rounded-3xl p-6 text-white border border-slate-800 shadow-xl space-y-4">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2.5">
+              <span className="p-2 rounded-xl bg-blue-600 text-white">
+                <Sparkles className="w-4 h-4" />
+              </span>
+              <div>
+                <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300 block">
+                  Central de Decisão • Recomendação Automatizada
+                </span>
+                <h2 className="text-base font-bold text-white">
+                  Próximas Melhores Ações para Habilitação
+                </h2>
+              </div>
+            </div>
+            <span className="text-xs text-slate-300 font-medium bg-blue-900/40 px-3 py-1 rounded-full border border-blue-700/50 self-start sm:self-auto">
+              Foco em Conformidade • Lei nº 14.133/2021
+            </span>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-1">
+            {snapshot.nextBestActions.map((nba, idx) => (
+              <div
+                key={nba.id}
+                className="bg-slate-950/70 border border-slate-800 hover:border-blue-500/60 p-4 rounded-2xl flex flex-col justify-between space-y-3 transition-all group"
+              >
+                <div className="space-y-2.5">
+                  <div className="flex items-center justify-between">
+                    <span
+                      className={`text-[10px] font-bold px-2 py-0.5 rounded uppercase tracking-wider ${
+                        nba.priority === "CRITICA"
+                          ? "bg-red-500/20 text-red-300 border border-red-500/30"
+                          : nba.priority === "ALTA"
+                          ? "bg-amber-500/20 text-amber-300 border border-amber-500/30"
+                          : "bg-blue-500/20 text-blue-300 border border-blue-500/30"
+                      }`}
+                    >
+                      Prioridade {nba.priority}
+                    </span>
+                    <span className="text-[11px] font-mono text-slate-500 font-bold">
+                      0{idx + 1}
+                    </span>
+                  </div>
+
+                  <h3 className="text-sm font-bold text-white group-hover:text-blue-200 transition-colors">
+                    {nba.title}
+                  </h3>
+
+                  <p className="text-xs text-slate-300 leading-relaxed line-clamp-3">
+                    {nba.description}
+                  </p>
+
+                  <div className="text-[11px] text-slate-400 font-medium pt-1">
+                    <span className="text-slate-500 font-semibold block text-[10px] uppercase tracking-wider">Fundamento Legal:</span>
+                    <span className="text-slate-300">{nba.legalBasis}</span>
+                  </div>
+                </div>
+
+                <div className="pt-3 border-t border-slate-800 space-y-2.5">
+                  <p className="text-[11px] text-emerald-400 font-medium flex items-center gap-1.5">
+                    <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
+                    <span>{nba.impactText}</span>
+                  </p>
+
+                  <Link
+                    href={nba.actionHref}
+                    className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-2 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 transition-colors shadow-sm"
+                  >
+                    <span>{nba.actionLabel}</span>
+                    <ArrowRight className="w-3.5 h-3.5" />
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 2. 4 CARDS ACIONÁVEIS COM LINKS DIRETOS */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         {/* Card 1: Requisitos */}
@@ -405,10 +491,10 @@ export default function DashboardOverviewPage() {
               Requisitos Avaliados
             </div>
             <div className="text-3xl font-black text-slate-900 mt-2 font-mono">
-              {diagnostic.total_requirements}
+              {totalRequirementsCount}
             </div>
             <p className="text-[11px] text-emerald-600 font-semibold mt-1">
-              {diagnostic.met_count} atendidos integralmente
+              {metRequirementsCount} atendidos integralmente
             </p>
           </div>
           <Link
@@ -427,7 +513,7 @@ export default function DashboardOverviewPage() {
               Evidências Registradas
             </div>
             <div className="text-3xl font-black text-blue-900 mt-2 font-mono">
-              {diagnostic.total_evidences}
+              {totalEvidencesCount}
             </div>
             <p className="text-[11px] text-slate-500 mt-1">
               Políticas, certificados, atas e logs

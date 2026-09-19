@@ -10,9 +10,10 @@ import {
   DiagnosticStatus,
   ActionPlanItem,
   ComplianceDiagnostic,
+  IntegrityProgramSnapshot,
 } from "@/types/compliance";
 import { DIAGNOSTIC_QUESTIONS } from "@/lib/diagnostic-questions";
-import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
+import { evaluateCompanyCompliance, buildIntegrityProgramSnapshot } from "@/lib/compliance-engine";
 
 /**
  * 1. Obtém o Perfil de Diagnóstico e Maturidade da empresa ativa
@@ -296,10 +297,137 @@ export async function getComplianceDiagnosticAction(): Promise<{
     return { success: false, diagnostic: null, error: "Sessão não autenticada." };
   }
 
+  const companyId = admin.companyId;
+
   try {
-    const diagnostic = evaluateCompanyCompliance(admin.companyId);
+    if (isSupabaseConfigured) {
+      const db = getSupabaseAdmin();
+      const { data } = await db
+        .from("company_diagnostic_profiles")
+        .select("*")
+        .eq("company_id", companyId)
+        .maybeSingle();
+
+      if (data) {
+        mockStore.saveDiagnosticProfile({
+          company_id: data.company_id,
+          status: data.status,
+          current_step: data.current_step || 1,
+          total_steps: data.total_steps || 9,
+          answers: data.answers || {},
+          started_at: data.started_at,
+          completed_at: data.completed_at,
+          updated_at: data.updated_at,
+          company_size_classification: data.company_size_classification,
+          has_high_value_contracts: data.has_high_value_contracts,
+        });
+      }
+    }
+
+    const diagnostic = evaluateCompanyCompliance(companyId);
     return { success: true, diagnostic };
   } catch (err: any) {
     return { success: false, diagnostic: null, error: err?.message || "Erro ao avaliar conformidade." };
   }
 }
+
+/**
+ * 7. Obtém o Snapshot Unificado do Programa de Integridade (Fonte Única de Verdade)
+ * Alimenta Sidebar, Header, Visão Geral, Diagnóstico, Políticas e Compartilhamento.
+ */
+export async function getIntegrityProgramSnapshotAction(): Promise<{
+  success: boolean;
+  snapshot: IntegrityProgramSnapshot | null;
+  error?: string;
+}> {
+  const admin = await getAuthenticatedAdmin();
+  if (!admin?.companyId) {
+    return { success: false, snapshot: null, error: "Sessão não autenticada." };
+  }
+
+  const companyId = admin.companyId;
+
+  try {
+    let company: any = null;
+    let employees: any[] = [];
+    let reports: any[] = [];
+    let policy: any = null;
+
+    if (isSupabaseConfigured) {
+      const db = getSupabaseAdmin();
+
+      // Sincroniza perfil de diagnóstico no mockStore da sessão
+      const { data: dData } = await db
+        .from("company_diagnostic_profiles")
+        .select("*")
+        .eq("company_id", companyId)
+        .maybeSingle();
+
+      if (dData) {
+        mockStore.saveDiagnosticProfile({
+          company_id: dData.company_id,
+          status: dData.status,
+          current_step: dData.current_step || 1,
+          total_steps: dData.total_steps || 9,
+          answers: dData.answers || {},
+          started_at: dData.started_at,
+          completed_at: dData.completed_at,
+          updated_at: dData.updated_at,
+          company_size_classification: dData.company_size_classification,
+          has_high_value_contracts: dData.has_high_value_contracts,
+        });
+      }
+
+      // Dados cadastrais da empresa
+      const { data: cData } = await db
+        .from("companies")
+        .select("*")
+        .eq("id", companyId)
+        .maybeSingle();
+      company = cData || mockStore.getCompany(companyId);
+
+      // Colaboradores reais cadastrados
+      const { data: eData } = await db
+        .from("employees")
+        .select("*")
+        .eq("company_id", companyId);
+      employees = eData || [];
+
+      // Chamados do canal de denúncias
+      const { data: rData } = await db
+        .from("whistleblower_reports")
+        .select("*")
+        .eq("company_id", companyId);
+      reports = rData || [];
+
+      // Política ativa
+      const { data: pData } = await db
+        .from("policies")
+        .select("*")
+        .eq("company_id", companyId)
+        .eq("is_active", true)
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      policy = pData || null;
+    } else {
+      company = mockStore.getCompany(companyId);
+      employees = mockStore.getEmployees(companyId);
+      reports = mockStore.getReports(companyId);
+      policy = mockStore.getPolicy(companyId);
+    }
+
+    const diagnostic = evaluateCompanyCompliance(companyId);
+    const snapshot = buildIntegrityProgramSnapshot(diagnostic, company, employees, reports, policy);
+
+    return { success: true, snapshot };
+  } catch (err: any) {
+    console.error("[getIntegrityProgramSnapshotAction] Erro:", err);
+    return {
+      success: false,
+      snapshot: null,
+      error: err?.message || "Erro ao gerar snapshot de conformidade.",
+    };
+  }
+}
+

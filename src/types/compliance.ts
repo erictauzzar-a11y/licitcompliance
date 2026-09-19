@@ -193,3 +193,52 @@ export interface ActionPlanItem {
   why_is_needed: string;
 }
 
+export interface NextBestAction {
+  id: string;
+  title: string;
+  description: string;
+  priority: "CRITICA" | "ALTA" | "MEDIA";
+  pillar: PillarCategory;
+  legalBasis: string;
+  actionLabel: string;
+  actionHref: string;
+  impactText: string;
+}
+
+export interface IntegrityProgramSnapshot {
+  companyId: string;
+  companyName: string;
+  overallScore: number; // 0 a 100
+  maturityLevel: CompanyMaturityLevel;
+  statusLabel: string;
+  requirementsCount: {
+    total: number;
+    met: number;
+    partial: number;
+    pending: number;
+  };
+  evidencesCount: number;
+  employeeStats: {
+    total: number;
+    acceptedPolicies: number;
+    policyRate: number;
+    completedTrainings: number;
+    trainingRate: number;
+  };
+  channelStats: {
+    active: boolean;
+    slug: string | null;
+    totalReports: number;
+    resolvedReports: number;
+  };
+  policyStats: {
+    hasPolicy: boolean;
+    version: string;
+    updatedAt: string | null;
+    nextReviewDate: string | null;
+    pillarScore: number;
+  };
+  nextBestActions: NextBestAction[];
+  evaluatedAt: string;
+}
+

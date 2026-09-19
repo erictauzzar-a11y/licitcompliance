@@ -14,6 +14,7 @@ import {
   UploadCloud,
   FileSpreadsheet,
   Sparkles,
+  Plus,
 } from "lucide-react";
 import { Employee } from "@/types";
 import { formatCPF, maskCPF } from "@/lib/utils";
@@ -207,106 +208,142 @@ export default function EmployeesManagementPage() {
         />
       </div>
 
-      {/* Tabela de Colaboradores */}
+      {/* Tabela ou Estado Vazio de Colaboradores */}
       <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs">
-            <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
-              <tr>
-                <th className="py-3 px-4">Colaborador</th>
-                <th className="py-3 px-4">CPF / Função</th>
-                <th className="py-3 px-4">Aceite Código</th>
-                <th className="py-3 px-4">Capacitação</th>
-                <th className="py-3 px-4 text-right">Link de Acesso</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 text-slate-700">
-              {filteredEmployees.map((emp) => {
-                const certs: any[] = [];
-                return (
-                  <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-3.5 px-4 font-semibold text-slate-900">
-                      <div>{emp.full_name}</div>
-                      <div className="text-[11px] text-slate-400 font-normal">{emp.phone}</div>
-                    </td>
+        {filteredEmployees.length === 0 ? (
+          <div className="py-16 px-6 text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl bg-blue-50 text-blue-600 flex items-center justify-center mx-auto border border-blue-100">
+              <Users className="w-7 h-7" />
+            </div>
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-slate-900">
+                {employees.length === 0 ? "Nenhum colaborador cadastrado ainda" : "Nenhum colaborador encontrado para a busca"}
+              </h3>
+              <p className="text-xs text-slate-500 max-w-md mx-auto leading-relaxed">
+                {employees.length === 0
+                  ? "Cadastre os colaboradores e gestores da empresa para coletar o aceite formal do Código de Conduta e liberar os treinamentos de integridade da Lei nº 14.133/2021."
+                  : "Tente buscar por outro termo ou limpe o filtro de busca acima."}
+              </p>
+            </div>
+            {employees.length === 0 ? (
+              <button
+                type="button"
+                onClick={() => setShowAddModal(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-blue-600 hover:bg-blue-500 text-white rounded-xl text-xs font-bold transition-all shadow-sm active:scale-98"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Cadastrar Primeiro Colaborador</span>
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setSearch("")}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-xl text-xs font-semibold transition-all"
+              >
+                <span>Limpar busca</span>
+              </button>
+            )}
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
+                <tr>
+                  <th className="py-3 px-4">Colaborador</th>
+                  <th className="py-3 px-4">CPF / Função</th>
+                  <th className="py-3 px-4">Aceite Código</th>
+                  <th className="py-3 px-4">Capacitação</th>
+                  <th className="py-3 px-4 text-right">Link de Acesso</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100 text-slate-700">
+                {filteredEmployees.map((emp) => {
+                  const certs: any[] = [];
+                  return (
+                    <tr key={emp.id} className="hover:bg-slate-50/50 transition-colors">
+                      <td className="py-3.5 px-4 font-semibold text-slate-900">
+                        <div>{emp.full_name}</div>
+                        <div className="text-[11px] text-slate-400 font-normal">{emp.phone}</div>
+                      </td>
 
-                    <td className="py-3.5 px-4">
-                      <div>{formatCPF(emp.cpf)}</div>
-                      <div className="text-[11px] text-slate-500">{emp.role}</div>
-                    </td>
+                      <td className="py-3.5 px-4">
+                        <div>{formatCPF(emp.cpf)}</div>
+                        <div className="text-[11px] text-slate-500">{emp.role}</div>
+                      </td>
 
-                    <td className="py-3.5 px-4">
-                      {emp.policy_accepted_at ? (
-                        <div className="space-y-0.5">
-                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                            <CheckCircle2 className="w-3 h-3 text-emerald-600" />
-                            Assinado
-                          </span>
-                          <div className="text-[10px] text-slate-400">
-                            {new Date(emp.policy_accepted_at).toLocaleDateString("pt-BR")}
+                      <td className="py-3.5 px-4">
+                        {emp.policy_accepted_at ? (
+                          <div className="space-y-0.5">
+                            <span className="inline-flex items-center gap-1 text-[10px] font-bold text-emerald-800 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                              <CheckCircle2 className="w-3 h-3 text-emerald-600" />
+                              Assinado
+                            </span>
+                            <div className="text-[10px] text-slate-400">
+                              {new Date(emp.policy_accepted_at).toLocaleDateString("pt-BR")}
+                            </div>
                           </div>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                            <Clock className="w-3 h-3 text-amber-600" />
+                            Pendente
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 px-4">
+                        {certs.length === 2 ? (
+                          <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
+                            2/2 Trilhas (100%)
+                          </span>
+                        ) : certs.length === 1 ? (
+                          <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
+                            1/2 Trilha (50%)
+                          </span>
+                        ) : (
+                          <span className="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
+                            Não iniciado
+                          </span>
+                        )}
+                      </td>
+
+                      <td className="py-3.5 px-4 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <button
+                            onClick={() => copyEmployeeLink(emp.access_token, emp.id)}
+                            title="Copiar link mobile"
+                            className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors"
+                          >
+                            <Copy className="w-3.5 h-3.5" />
+                          </button>
+                          <a
+                            href={getWhatsAppShareUrl(emp.access_token, emp.full_name)}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            title="Disparar via WhatsApp"
+                            className="p-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
+                          >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                          </a>
+                          <Link
+                            href={`/c/${emp.access_token}`}
+                            target="_blank"
+                            title="Abrir como Colaborador"
+                            className="p-1.5 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors"
+                          >
+                            <ExternalLink className="w-3.5 h-3.5" />
+                          </Link>
                         </div>
-                      ) : (
-                        <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                          <Clock className="w-3 h-3 text-amber-600" />
-                          Pendente
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-3.5 px-4">
-                      {certs.length === 2 ? (
-                        <span className="text-[10px] font-bold text-emerald-700 bg-emerald-50 border border-emerald-200 px-2 py-0.5 rounded-full">
-                          2/2 Trilhas (100%)
-                        </span>
-                      ) : certs.length === 1 ? (
-                        <span className="text-[10px] font-bold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">
-                          1/2 Trilha (50%)
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-slate-500 bg-slate-100 border border-slate-200 px-2 py-0.5 rounded-full">
-                          Não iniciado
-                        </span>
-                      )}
-                    </td>
-
-                    <td className="py-3.5 px-4 text-right">
-                      <div className="flex items-center justify-end gap-1.5">
-                        <button
-                          onClick={() => copyEmployeeLink(emp.access_token, emp.id)}
-                          title="Copiar link mobile"
-                          className="p-1.5 rounded-lg border border-slate-200 hover:bg-slate-100 text-slate-600 transition-colors"
-                        >
-                          <Copy className="w-3.5 h-3.5" />
-                        </button>
-                        <a
-                          href={getWhatsAppShareUrl(emp.access_token, emp.full_name)}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          title="Disparar via WhatsApp"
-                          className="p-1.5 rounded-lg border border-emerald-200 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 transition-colors"
-                        >
-                          <MessageSquare className="w-3.5 h-3.5" />
-                        </a>
-                        <Link
-                          href={`/c/${emp.access_token}`}
-                          target="_blank"
-                          title="Abrir como Colaborador"
-                          className="p-1.5 rounded-lg border border-blue-200 bg-blue-50 hover:bg-blue-100 text-blue-700 transition-colors"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </Link>
-                      </div>
-                      {copiedId === emp.id && (
-                        <div className="text-[10px] text-emerald-600 font-bold mt-1">Link Copiado!</div>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                        {copiedId === emp.id && (
+                          <div className="text-[10px] text-emerald-600 font-bold mt-1">Link Copiado!</div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Modal Cadastro Individual */}

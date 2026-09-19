@@ -57,7 +57,7 @@ import {
 type DiagnosticTab = "QUESTIONARIO" | "MATRIZ_REQUISITOS" | "PLANO_ACAO";
 
 export default function ProgramDiagnosticPage() {
-  const { company, isLoading } = useCompany();
+  const { company, isLoading, snapshot, refreshSnapshot } = useCompany();
 
   // Tab ativa
   const [activeTab, setActiveTab] = useState<DiagnosticTab>("QUESTIONARIO");
@@ -162,6 +162,7 @@ export default function ProgramDiagnosticPage() {
           }
         }
         await loadProfile();
+        await refreshSnapshot();
       }
     } catch (err) {
       console.error(err);

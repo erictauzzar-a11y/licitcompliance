@@ -27,7 +27,7 @@ import { getPolicyAction } from "@/app/actions/policies";
 import { Policy } from "@/types";
 
 export default function CompartilharProgramaPage() {
-  const { company, isLoading: companyLoading } = useCompany();
+  const { company, isLoading: companyLoading, snapshot } = useCompany();
   const [policy, setPolicy] = useState<Policy | null>(null);
 
   useEffect(() => {
@@ -179,11 +179,17 @@ export default function CompartilharProgramaPage() {
           </div>
           <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
             <span className="text-[10px] text-slate-400 block uppercase font-semibold">Código de Conduta</span>
-            <strong className="text-xs text-white block mt-0.5 font-mono">v{policy?.version || "1.0"} Vigente</strong>
+            <strong className="text-xs text-white block mt-0.5 font-mono">
+              v{snapshot?.policyStats.version || policy?.version || "1.0"} {snapshot?.policyStats.hasPolicy ? "Vigente" : "Pendente"}
+            </strong>
           </div>
           <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
             <span className="text-[10px] text-slate-400 block uppercase font-semibold">Adesão Registrada</span>
-            <strong className="text-xs text-blue-300 block mt-0.5">100% da Equipe</strong>
+            <strong className="text-xs text-blue-300 block mt-0.5">
+              {snapshot
+                ? `${snapshot.employeeStats.policyRate}% (${snapshot.employeeStats.acceptedPolicies}/${snapshot.employeeStats.total})`
+                : "Aguardando cadastro"}
+            </strong>
           </div>
           <div className="bg-slate-900/80 border border-slate-800 p-3 rounded-xl">
             <span className="text-[10px] text-slate-400 block uppercase font-semibold">Dossiê Probatório</span>

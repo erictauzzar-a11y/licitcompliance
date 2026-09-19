@@ -40,17 +40,38 @@ export default function TenderAnalysisPage() {
   const [edictText, setEdictText] = useState(SAMPLE_EDICT_TEXT);
   const [fileName, setFileName] = useState("Edital_Pregao_TRF_42_2026.pdf");
   const [analyzing, setAnalyzing] = useState(false);
+  const [analysisStep, setAnalysisStep] = useState(0);
   const [analysisResult, setAnalysisResult] = useState<TenderAnalysisResult | null>(null);
   const [generatingPdf, setGeneratingPdf] = useState(false);
+
+  const stepLabels = [
+    "Iniciando análise pericial...",
+    "1/4 Analisando texto e estrutura formal do edital...",
+    "2/4 Extraindo cláusulas de integridade e Lei 14.133...",
+    "3/4 Cruzando com o acervo probatório cadastrado...",
+    "4/4 Preparando plano de adequação e recomendações...",
+  ];
 
   const handleAnalyze = () => {
     if (!edictText.trim()) return;
     setAnalyzing(true);
+    setAnalysisStep(1);
+
     setTimeout(() => {
-      const res = analyzeEdictRequirements(edictText, fileName);
-      setAnalysisResult(res);
-      setAnalyzing(false);
-    }, 800);
+      setAnalysisStep(2);
+      setTimeout(() => {
+        setAnalysisStep(3);
+        setTimeout(() => {
+          setAnalysisStep(4);
+          setTimeout(() => {
+            const res = analyzeEdictRequirements(edictText, fileName);
+            setAnalysisResult(res);
+            setAnalyzing(false);
+            setAnalysisStep(0);
+          }, 350);
+        }, 400);
+      }, 400);
+    }, 350);
   };
 
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -194,17 +215,17 @@ export default function TenderAnalysisPage() {
           <button
             onClick={handleAnalyze}
             disabled={analyzing}
-            className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-400 text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2"
+            className="w-full bg-slate-900 hover:bg-slate-800 disabled:bg-slate-700 text-white font-bold py-3.5 rounded-xl text-xs sm:text-sm transition-all shadow-md flex items-center justify-center gap-2 cursor-pointer active:scale-98"
           >
             {analyzing ? (
               <>
-                <RefreshCw className="w-4 h-4 animate-spin" />
-                Extraindo Cláusulas e Confrontando Evidências...
+                <RefreshCw className="w-4 h-4 animate-spin text-blue-400" />
+                <span>{stepLabels[analysisStep] || "Analisando documento..."}</span>
               </>
             ) : (
               <>
                 <FileSearch className="w-4 h-4" />
-                Analisar Edital & Cruzar Evidências da Empresa
+                <span>Analisar Edital & Cruzar Evidências da Empresa</span>
               </>
             )}
           </button>
@@ -225,18 +246,21 @@ export default function TenderAnalysisPage() {
                   {analysisResult.organName} • {analysisResult.tenderNumber}
                 </h3>
                 <p className="text-xs text-slate-500 mt-0.5">
-                  Análise baseada nas evidências auditadas cadastradas no TechCompliance.
+                  Confronto de cláusulas do edital com o acervo probatório cadastrado no TechCompliance.
                 </p>
               </div>
 
               <div className="flex items-center gap-4">
                 <div className="text-right">
-                  <span className="text-[10px] uppercase font-bold text-slate-400 block">
-                    Aderência Documental
+                  <span className="text-[10px] uppercase font-bold text-slate-500 block">
+                    Aderência Estimada a este Edital
                   </span>
-                  <strong className="text-2xl font-black text-emerald-600 font-mono">
-                    {analysisResult.overallFitScore}%
-                  </strong>
+                  <div className="flex items-baseline justify-end gap-1.5">
+                    <strong className="text-2xl font-black text-emerald-600 font-mono">
+                      {analysisResult.overallFitScore}%
+                    </strong>
+                    <span className="text-[10px] text-slate-400 font-medium">(específica do certame)</span>
+                  </div>
                 </div>
 
                 <button

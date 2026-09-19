@@ -18,77 +18,94 @@ import { useRouter } from "next/navigation";
 import { logoutAdminAction } from "@/app/actions/auth";
 import { mockStore } from "@/lib/mock-data";
 import { formatCNPJ } from "@/lib/utils";
-import { evaluateCompanyCompliance } from "@/lib/compliance-engine";
 import { CompanyProvider, useCompany } from "@/contexts/CompanyContext";
 
 // Componente interno que consome o contexto
 function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
-  const { company, isLoading } = useCompany();
+  const { company, isLoading, snapshot } = useCompany();
 
-  // Calcula o diagnostico apenas quando a empresa real estiver carregada
-  const diagnostic = company ? evaluateCompanyCompliance(company.id) : null;
-
-  const navItems = [
+  const navGroups = [
     {
-      label: "Visão Geral",
-      href: "/dashboard",
-      icon: LayoutDashboard,
-      active: pathname === "/dashboard",
+      group: "Principal",
+      items: [
+        {
+          label: "Visão Geral",
+          href: "/dashboard",
+          icon: LayoutDashboard,
+          active: pathname === "/dashboard",
+        },
+      ],
     },
     {
-      label: "Diagnóstico do Programa",
-      href: "/dashboard/diagnostico",
-      icon: ShieldCheck,
-      active: pathname.startsWith("/dashboard/diagnostico"),
+      group: "Programa de Integridade",
+      items: [
+        {
+          label: "Diagnóstico do Programa",
+          href: "/dashboard/diagnostico",
+          icon: ShieldCheck,
+          active: pathname.startsWith("/dashboard/diagnostico"),
+          badge: snapshot ? `${snapshot.overallScore}%` : undefined,
+        },
+        {
+          label: "Código & Políticas",
+          href: "/dashboard/politicas",
+          icon: FileText,
+          active: pathname.startsWith("/dashboard/politicas"),
+        },
+        {
+          label: "Biblioteca de Modelos",
+          href: "/dashboard/biblioteca",
+          icon: BookOpen,
+          active: pathname.startsWith("/dashboard/biblioteca"),
+        },
+      ],
     },
     {
-      label: "Biblioteca de Integridade",
-      href: "/dashboard/biblioteca",
-      icon: BookOpen,
-      active: pathname.startsWith("/dashboard/biblioteca"),
+      group: "Operação & Pessoas",
+      items: [
+        {
+          label: "Colaboradores & Treinos",
+          href: "/dashboard/colaboradores",
+          icon: Users,
+          active: pathname.startsWith("/dashboard/colaboradores"),
+        },
+        {
+          label: "Canal de Denúncias",
+          href: "/dashboard/denuncias",
+          icon: AlertTriangle,
+          active: pathname.startsWith("/dashboard/denuncias"),
+        },
+        {
+          label: "Due Diligence (DDI)",
+          href: "/dashboard/due-diligence",
+          icon: ShieldCheck,
+          active: pathname.startsWith("/dashboard/due-diligence") || pathname.startsWith("/dashboard/fornecedores"),
+        },
+      ],
     },
     {
-      label: "Analisar Edital",
-      href: "/dashboard/analise-edital",
-      icon: FileText,
-      active: pathname.startsWith("/dashboard/analise-edital"),
-    },
-    {
-      label: "Due Diligence (DDI)",
-      href: "/dashboard/due-diligence",
-      icon: ShieldCheck,
-      active: pathname.startsWith("/dashboard/due-diligence") || pathname.startsWith("/dashboard/fornecedores"),
-    },
-    {
-      label: "Colaboradores & Treinos",
-      href: "/dashboard/colaboradores",
-      icon: Users,
-      active: pathname.startsWith("/dashboard/colaboradores"),
-    },
-    {
-      label: "Canal de Denúncias",
-      href: "/dashboard/denuncias",
-      icon: AlertTriangle,
-      active: pathname.startsWith("/dashboard/denuncias"),
-    },
-    {
-      label: "Código & Políticas",
-      href: "/dashboard/politicas",
-      icon: FileText,
-      active: pathname.startsWith("/dashboard/politicas"),
-    },
-    {
-      label: "Compartilhar Programa",
-      href: "/dashboard/compartilhar",
-      icon: ExternalLink,
-      active: pathname.startsWith("/dashboard/compartilhar"),
-    },
-    {
-      label: "Ajuda & Suporte",
-      href: "/dashboard/ajuda",
-      icon: HelpCircle,
-      active: pathname.startsWith("/dashboard/ajuda"),
+      group: "Evidências & Licitações",
+      items: [
+        {
+          label: "Analisar Edital",
+          href: "/dashboard/analise-edital",
+          icon: FileText,
+          active: pathname.startsWith("/dashboard/analise-edital"),
+        },
+        {
+          label: "Compartilhar Programa",
+          href: "/dashboard/compartilhar",
+          icon: ExternalLink,
+          active: pathname.startsWith("/dashboard/compartilhar"),
+        },
+        {
+          label: "Ajuda & Suporte",
+          href: "/dashboard/ajuda",
+          icon: HelpCircle,
+          active: pathname.startsWith("/dashboard/ajuda"),
+        },
+      ],
     },
   ];
 
@@ -126,25 +143,39 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
           )}
         </div>
 
-        {/* Links de Navegação */}
-        <nav className="p-3 space-y-1 flex-1">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
-                  item.active
-                    ? "bg-blue-600 text-white shadow-sm"
-                    : "text-slate-300 hover:bg-slate-800 hover:text-white"
-                }`}
-              >
-                <Icon className="w-4 h-4 shrink-0" />
-                <span>{item.label}</span>
-              </Link>
-            );
-          })}
+        {/* Links de Navegação Agrupados */}
+        <nav className="p-3 space-y-4 flex-1 overflow-y-auto">
+          {navGroups.map((group) => (
+            <div key={group.group} className="space-y-1">
+              <div className="px-3 text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                {group.group}
+              </div>
+              {group.items.map((item) => {
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-semibold transition-all ${
+                      item.active
+                        ? "bg-blue-600 text-white shadow-sm"
+                        : "text-slate-300 hover:bg-slate-800 hover:text-white"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <Icon className="w-4 h-4 shrink-0" />
+                      <span>{item.label}</span>
+                    </div>
+                    {item.badge && (
+                      <span className="text-[10px] px-1.5 py-0.2 rounded font-mono font-bold bg-white/20 text-white">
+                        {item.badge}
+                      </span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          ))}
         </nav>
 
         {/* Acesso aos Recursos Públicos do Programa */}
@@ -188,13 +219,13 @@ function DashboardLayoutInner({ children }: { children: React.ReactNode }) {
             Painel de Gestão de Integridade Licitatória (Lei 14.133) e NR-1 (Lei 14.457)
           </div>
           <div className="flex items-center gap-3 ml-auto">
-            {diagnostic && (
+            {snapshot && (
               <Link
                 href="/dashboard/diagnostico"
                 className="inline-flex items-center gap-1.5 text-xs font-semibold bg-blue-50 hover:bg-blue-100 text-blue-700 border border-blue-200 px-3 py-1.5 rounded-full transition-colors shadow-sm"
               >
                 <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
-                Programa Estruturado ({diagnostic.overall_score}%) • {diagnostic.met_count}/{diagnostic.total_requirements} Requisitos
+                Maturidade: {snapshot.overallScore}% • {snapshot.requirementsCount.met}/{snapshot.requirementsCount.total} Requisitos
               </Link>
             )}
             <Link

@@ -9,6 +9,9 @@ import {
   TenderRequirementAnalysis,
   ActionPlanItem,
   CompanyComplianceProfile,
+  IntegrityProgramSnapshot,
+  NextBestAction,
+  CompanyMaturityLevel,
 } from "@/types/compliance";
 import { DIAGNOSTIC_QUESTIONS } from "./diagnostic-questions";
 
@@ -66,8 +69,56 @@ export function evaluateCompanyCompliance(companyId?: string): ComplianceDiagnos
     return answers[qId]?.answer;
   };
 
-  // Definição dos 32 Requisitos Fundamentados da Base Normativa
+  // Definição dos 19 Requisitos Fundamentados da Base Normativa
   const requirements: ComplianceRequirement[] = [
+    // 0. GOVERNANÇA E ALTA ADMINISTRAÇÃO
+    {
+      id: "REQ-GOV-01",
+      pillar: "CODIGO_CONDUTA",
+      title: "Designação Formal de Responsável ou Instância de Integridade",
+      description: "Ato formal da alta administração designando formalmente pessoa ou comitê responsável por coordenar as ações de integridade.",
+      legal_basis: {
+        norm: "Decreto Federal nº 12.304/2024",
+        article: "Art. 4º, inciso I e Art. 5º",
+        type: "OBRIGATORIO",
+        description: "Comprometimento da alta direção e designação de instância responsável pelo programa.",
+        evaluation_rule: "Designação formal do encarregado/oficial de integridade cadastrado ou portaria homologada.",
+      },
+      status: (isDemo || Boolean(company?.integrity_officer_name) || findApprovedDoc("designa") || findApprovedDoc("portaria"))
+        ? "ATENDIDO"
+        : getAnswer("Q-GOV-02") === "SIM"
+        ? "PARCIALMENTE_ATENDIDO"
+        : "PENDENTE",
+      situation_summary: (isDemo || company?.integrity_officer_name)
+        ? `Responsável formal designado: ${company?.integrity_officer_name || "Compliance Officer"}.`
+        : "Pendente de designação formal da instância ou responsável pelo programa.",
+      why_status: {
+        evidences_found: (isDemo || company?.integrity_officer_name)
+          ? [`Instância de integridade formalizada para ${company?.integrity_officer_name || "Compliance Officer"}`]
+          : [],
+        what_is_missing: (!isDemo && !company?.integrity_officer_name)
+          ? "Formalizar a portaria ou termo de designação do responsável de integridade na Biblioteca."
+          : undefined,
+      },
+      responsible: company?.integrity_officer_name
+        ? `${company.integrity_officer_name} (Responsável pela Integridade)`
+        : "Diretoria Executiva",
+      updated_at: nowStr,
+      action_href: "/dashboard/biblioteca",
+      evidences: (isDemo || company?.integrity_officer_name)
+        ? [
+            {
+              id: "EVID-GOV-01",
+              title: "Ato de Designação do Responsável de Integridade",
+              type: "DOCUMENTAL",
+              description: "Formalização da liderança responsável pela condução do programa.",
+              date: nowStr,
+              module_source: "Governança",
+            },
+          ]
+        : [],
+    },
+
     // 1. CÓDIGO E CONDUTA
     {
       id: "REQ-COD-01",
@@ -1031,5 +1082,165 @@ export function analyzeEdictRequirements(
     submissionMoment: "HABILITACAO",
     requirements: reqAnalyses,
     summary: `Aderência documental de ${overallFit}% nas evidências estruturadas na plataforma.`,
+  };
+}
+
+/**
+ * Constrói o Snapshot Unificado do Programa de Integridade (Fonte Única de Verdade)
+ * Consumido por Sidebar, Header, Visão Geral, Diagnóstico, Políticas e Compartilhamento.
+ */
+export function buildIntegrityProgramSnapshot(
+  diagnostic: ComplianceDiagnostic,
+  company: any,
+  employees: any[] = [],
+  reports: any[] = [],
+  policy: any = null
+): IntegrityProgramSnapshot {
+  const totalEmployees = employees.length;
+  const acceptedPolicies = employees.filter((e) => Boolean(e.policy_accepted_at)).length;
+  const policyRate = totalEmployees > 0 ? Math.round((acceptedPolicies / totalEmployees) * 100) : 0;
+  const completedTrainings = employees.filter((e) => Boolean(e.training_completed)).length;
+  const trainingRate = totalEmployees > 0 ? Math.round((completedTrainings / totalEmployees) * 100) : 0;
+
+  const totalReports = reports.length;
+  const resolvedReports = reports.filter(
+    (r) => r.status === "PROCEDENTE" || r.status === "IMPROCEDENTE" || r.status === "ARQUIVADA"
+  ).length;
+
+  const score = diagnostic.overall_score;
+  let maturityLevel: CompanyMaturityLevel = "INICIAL";
+  let statusLabel = "Nível Inicial • Estruturação";
+  if (score >= 76) {
+    maturityLevel = "AVANCADO";
+    statusLabel = "Nível Avançado • Conforme Decreto 12.304/2024";
+  } else if (score >= 51) {
+    maturityLevel = "OPERACIONAL";
+    statusLabel = "Nível Operacional • Pronto para Licitações";
+  } else if (score >= 26) {
+    maturityLevel = "EM_ESTRUTURACAO";
+    statusLabel = "Em Estruturação • Adequação em Andamento";
+  }
+
+  const nextBestActions: NextBestAction[] = [];
+
+  // 1. Falta de política ativa (Crítica)
+  if (!policy || !policy.is_active) {
+    nextBestActions.push({
+      id: "NBA-POL-01",
+      title: "Homologar e Publicar o Código de Conduta",
+      description: "Requisito indispensável da Lei nº 14.133/2021 (Art. 25, § 4º) para participação e desempate em certames de grande vulto.",
+      priority: "CRITICA",
+      pillar: "CODIGO_CONDUTA",
+      legalBasis: "Lei Federal nº 14.133/2021, Art. 25, § 4º",
+      actionLabel: "Revisar e Publicar Código",
+      actionHref: "/dashboard/politicas",
+      impactText: "Eleva a maturidade jurídica e habilita a emissão do Dossiê Probatório.",
+    });
+  }
+
+  // 2. Aceites de colaboradores pendentes (Alta)
+  if (totalEmployees > 0 && acceptedPolicies < totalEmployees) {
+    const pendCount = totalEmployees - acceptedPolicies;
+    nextBestActions.push({
+      id: "NBA-EMP-01",
+      title: `Coletar ${pendCount} Aceite(s) Pendente(s) do Código`,
+      description: "O Decreto 12.304/2024 exige comprovação de ciência inequívoca de 100% da equipe através de termo formal.",
+      priority: "ALTA",
+      pillar: "CODIGO_CONDUTA",
+      legalBasis: "Decreto nº 12.304/2024, Art. 4º, II",
+      actionLabel: "Cobrar Aceites da Equipe",
+      actionHref: "/dashboard/colaboradores",
+      impactText: `Avanço de ${acceptedPolicies}/${totalEmployees} para 100% de adesão auditável.`,
+    });
+  } else if (totalEmployees === 0) {
+    nextBestActions.push({
+      id: "NBA-EMP-00",
+      title: "Cadastrar Colaboradores no Sistema",
+      description: "Cadastre os membros da equipe para enviar os termos digitais de adesão ao Código de Conduta.",
+      priority: "ALTA",
+      pillar: "CODIGO_CONDUTA",
+      legalBasis: "Decreto nº 12.304/2024, Art. 4º, II",
+      actionLabel: "Adicionar Colaborador",
+      actionHref: "/dashboard/colaboradores",
+      impactText: "Inicia o registro probatório da disseminação do programa na empresa.",
+    });
+  }
+
+  // 3. Questionário de diagnóstico pendente (Alta)
+  if (diagnostic.overall_score === 0) {
+    nextBestActions.push({
+      id: "NBA-DIAG-01",
+      title: "Concluir Diagnóstico Normativo do Programa",
+      description: "Responda as etapas do diagnóstico para parametrizar proporcionalmente as exigências ao porte da empresa.",
+      priority: "ALTA",
+      pillar: "MONITORAMENTO",
+      legalBasis: "Decreto nº 12.304/2024, Art. 5º",
+      actionLabel: "Responder Diagnóstico",
+      actionHref: "/dashboard/diagnostico",
+      impactText: "Calibra o motor e gera o plano de ação individualizado.",
+    });
+  }
+
+  // 4. Cartaz Mural do Canal de Denúncias (Média)
+  nextBestActions.push({
+    id: "NBA-DEN-01",
+    title: "Afixar Cartaz Mural do Canal de Denúncias",
+    description: "Imprima e afixe o cartaz com QR Code nas frentes de trabalho conforme exigência da NR-1 e Lei 14.457/2022.",
+    priority: "MEDIA",
+    pillar: "CANAL_DENUNCIAS",
+    legalBasis: "Lei Federal nº 14.457/2022 c/c NR-1",
+    actionLabel: "Baixar Cartaz em PDF",
+    actionHref: "/dashboard/denuncias",
+    impactText: "Evita autuações em fiscalizações trabalhistas e atende exigências de editais.",
+  });
+
+  // 5. Due Diligence de Fornecedores (Média)
+  nextBestActions.push({
+    id: "NBA-TER-01",
+    title: "Executar Due Diligence de Fornecedores Críticos",
+    description: "Consulte previamente se seus parceiros ou subcontratados possuem impedimentos nas bases CEIS/CNEP/CEPIM.",
+    priority: "MEDIA",
+    pillar: "GESTAO_TERCEIROS",
+    legalBasis: "Lei Federal nº 14.133/2021, Art. 122",
+    actionLabel: "Consultar Fornecedor",
+    actionHref: "/dashboard/due-diligence",
+    impactText: "Garante conformidade com as regras de subcontratação da Nova Lei de Licitações.",
+  });
+
+  return {
+    companyId: company?.id || "",
+    companyName: company?.trade_name || company?.legal_name || "Empresa",
+    overallScore: score,
+    maturityLevel,
+    statusLabel,
+    requirementsCount: {
+      total: diagnostic.total_requirements,
+      met: diagnostic.met_count,
+      partial: diagnostic.partial_count,
+      pending: diagnostic.pending_count,
+    },
+    evidencesCount: diagnostic.total_evidences,
+    employeeStats: {
+      total: totalEmployees,
+      acceptedPolicies,
+      policyRate,
+      completedTrainings,
+      trainingRate,
+    },
+    channelStats: {
+      active: Boolean(company?.slug),
+      slug: company?.slug || null,
+      totalReports,
+      resolvedReports,
+    },
+    policyStats: {
+      hasPolicy: Boolean(policy?.is_active),
+      version: policy?.version || "1.0",
+      updatedAt: policy?.updated_at || null,
+      nextReviewDate: policy?.next_review_date || null,
+      pillarScore: diagnostic.pillars?.CODIGO_CONDUTA?.score || 0,
+    },
+    nextBestActions: nextBestActions.slice(0, 3),
+    evaluatedAt: diagnostic.evaluated_at,
   };
 }

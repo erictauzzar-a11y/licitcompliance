@@ -29,7 +29,7 @@ import { getPolicyAction } from "@/app/actions/policies";
 import { getEmployeesAction } from "@/app/actions/employees";
 
 export default function PoliciesManagementPage() {
-  const { company, isLoading: companyLoading } = useCompany();
+  const { company, isLoading: companyLoading, snapshot } = useCompany();
   const [policy, setPolicy] = useState<Policy | null>(null);
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [content, setContent] = useState("");
@@ -69,11 +69,11 @@ export default function PoliciesManagementPage() {
     });
   }, [company]);
 
-  // Métricas calculadas com dados reais
+  // Métricas calculadas com dados reais a partir do snapshot
   const diagnostic = company ? evaluateCompanyCompliance(company.id) : null;
-  const codePillar = diagnostic?.pillars?.CODIGO_CONDUTA;
-  const totalEmployees = employees.length;
-  const acceptedPolicies = employees.filter((e) => !!e.policy_accepted_at).length;
+  const codePillarScore = snapshot?.policyStats.pillarScore ?? (diagnostic?.pillars?.CODIGO_CONDUTA?.score ?? 100);
+  const totalEmployees = snapshot ? snapshot.employeeStats.total : employees.length;
+  const acceptedPolicies = snapshot ? snapshot.employeeStats.acceptedPolicies : employees.filter((e) => !!e.policy_accepted_at).length;
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,14 +182,16 @@ export default function PoliciesManagementPage() {
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
           <span className="text-[10px] uppercase font-bold text-slate-400 block">Próxima Revisão</span>
           <strong className="text-xs font-bold text-slate-800 mt-1 block">
-            {new Date(policy.next_review_date).toLocaleDateString("pt-BR")}
+            {policy.next_review_date
+              ? new Date(policy.next_review_date).toLocaleDateString("pt-BR")
+              : "Em 12 meses (anual)"}
           </strong>
         </div>
 
         <div className="p-3.5 rounded-xl bg-white border border-slate-200 shadow-2xs">
           <span className="text-[10px] uppercase font-bold text-slate-400 block">Aprovação</span>
           <strong className="text-xs font-bold text-slate-800 mt-1 block truncate" title={policy.approved_by}>
-            {policy.approved_by}
+            {policy.approved_by || "Diretoria Executiva"}
           </strong>
         </div>
 
@@ -207,15 +209,15 @@ export default function PoliciesManagementPage() {
         <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-900 to-indigo-950 text-white shadow-xs space-y-3">
           <div className="flex items-center justify-between">
             <span className="text-[10px] font-bold uppercase tracking-wider text-blue-300">
-              Motor de Conformidade
+              Aderência do Pilar • Conduta
             </span>
             <span className="text-xs font-mono font-bold text-emerald-400 bg-emerald-500/20 px-2 py-0.5 rounded border border-emerald-400/30">
-              {codePillar?.score ?? 100}% Atendido
+              {codePillarScore}% Atendido
             </span>
           </div>
-          <h3 className="text-sm font-bold">Requisito: Código de Conduta e Integridade</h3>
+          <h3 className="text-sm font-bold">Pilar: Código de Conduta e Integridade</h3>
           <p className="text-[11px] text-slate-300 leading-relaxed">
-            Requisito formal auditado conforme o <strong>art. 25, § 4º da Lei nº 14.133/2021</strong> e <strong>art. 57 do Decreto nº 11.129/2022</strong>. Vinculado automaticamente ao Dossiê de Evidências.
+            Requisito formal auditado conforme o <strong>art. 25, § 4º da Lei nº 14.133/2021</strong> e <strong>art. 4º do Decreto nº 12.304/2024</strong>. Vinculado automaticamente ao Dossiê de Evidências.
           </p>
           <div className="pt-1 text-[11px] text-emerald-300 flex items-center gap-1.5 font-medium">
             <CheckCircle2 className="w-3.5 h-3.5" />
