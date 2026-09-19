@@ -56,7 +56,18 @@ export function SiteHeader() {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [mobileAccordion, setMobileAccordion] = useState<string | null>(null);
+  const [isScrolled, setIsScrolled] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Monitorar rolagem para compactar cabeçalho
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 20);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Fechar dropdown ao clicar fora
   useEffect(() => {
@@ -90,14 +101,25 @@ export function SiteHeader() {
   };
 
   return (
-    <header className="border-b border-white/10 bg-slate-950/80 backdrop-blur-xl sticky top-0 z-50 transition-colors">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 h-20 flex items-center justify-between" ref={dropdownRef}>
+    <header
+      className={`border-b sticky top-0 z-50 transition-all duration-300 ${
+        isScrolled
+          ? "bg-slate-950/95 backdrop-blur-2xl border-slate-800 shadow-xl shadow-black/50"
+          : "bg-slate-950/80 backdrop-blur-xl border-white/10"
+      }`}
+    >
+      <div
+        className={`max-w-7xl mx-auto px-4 sm:px-6 flex items-center justify-between transition-all duration-300 ${
+          isScrolled ? "h-16" : "h-20"
+        }`}
+        ref={dropdownRef}
+      >
         {/* LOGO INSTITUCIONAL */}
         <div className="flex items-center gap-8">
           <Link
             href="/"
             onClick={() => setActiveDropdown(null)}
-            className="flex items-center gap-3 font-bold text-lg text-white group"
+            className="flex items-center gap-3 font-bold text-lg text-white group focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-500 rounded-xl"
           >
             <div className="bg-blue-600 p-2.5 rounded-xl text-white shadow-lg shadow-blue-500/30 group-hover:scale-105 transition-transform">
               <ShieldCheck className="w-5 h-5" />

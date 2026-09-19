@@ -3,6 +3,7 @@ import { SiteHeader } from "@/components/SiteHeader";
 import { SiteFooter } from "@/components/SiteFooter";
 import { HeroSection } from "@/components/landing/HeroSection";
 import { WhyItMattersSection } from "@/components/landing/WhyItMattersSection";
+import { ProductFlowSection } from "@/components/landing/ProductFlowSection";
 import { FreeDiagnosticSection } from "@/components/landing/FreeDiagnosticSection";
 import { DiagnosticPreviewSection } from "@/components/landing/DiagnosticPreviewSection";
 import { ModulesGridSection } from "@/components/landing/ModulesGridSection";
@@ -44,34 +45,37 @@ export default function HomePage() {
       {/* 2. POR QUE ISSO IMPORTA */}
       <WhyItMattersSection />
 
-      {/* 3. DIAGNÓSTICO GRATUITO */}
+      {/* 3. FLUXO VISUAL DO PRODUTO (CNPJ -> Diagnóstico -> Pendências -> Evidências -> Edital -> Dossiê) */}
+      <ProductFlowSection />
+
+      {/* 4. DIAGNÓSTICO GRATUITO */}
       <FreeDiagnosticSection />
 
-      {/* 4. RESULTADO DO DIAGNÓSTICO */}
+      {/* 5. RESULTADO DO DIAGNÓSTICO */}
       <DiagnosticPreviewSection />
 
-      {/* 5. O QUE O TECHCOMPLIANCE RESOLVE */}
+      {/* 6. O QUE O TECHCOMPLIANCE RESOLVE */}
       <ModulesGridSection />
 
-      {/* 6. SISTEMA EM AÇÃO */}
+      {/* 7. SISTEMA EM AÇÃO */}
       <SystemInActionSection />
 
-      {/* 7. COMO FUNCIONA */}
+      {/* 8. COMO FUNCIONA */}
       <HowItWorksSection />
 
-      {/* 8. BASE NORMATIVA / CONFIANÇA */}
+      {/* 9. BASE NORMATIVA / CONFIANÇA */}
       <RegulatoryComplianceSection />
 
-      {/* 9. PREÇO */}
+      {/* 10. PREÇO */}
       <PricingSection />
 
-      {/* 10. FAQ */}
+      {/* 11. FAQ */}
       <FaqSection />
 
-      {/* 11. CTA FINAL */}
+      {/* 12. CTA FINAL */}
       <FinalCtaSection />
 
-      {/* 12. FOOTER */}
+      {/* 13. FOOTER */}
       <SiteFooter />
     </div>
   );

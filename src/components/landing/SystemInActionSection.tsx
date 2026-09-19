@@ -122,9 +122,14 @@ export function SystemInActionSection() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <span className="text-[10px] text-slate-400 font-medium">Ambiente Operacional Ativo</span>
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-mono uppercase tracking-wider text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded border border-amber-500/20 font-bold">
+                Simulação Visual
+              </span>
+              <div className="flex items-center gap-1.5">
+                <span className="text-[10px] text-slate-400 font-medium hidden sm:inline">Ambiente Operacional Ativo</span>
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              </div>
             </div>
           </div>
 
@@ -146,9 +151,10 @@ export function SystemInActionSection() {
                     </p>
                   </div>
                   <div className="flex items-center gap-2 bg-slate-900 px-4 py-2 rounded-xl border border-slate-800 shrink-0">
-                    <Gauge className="w-4 h-4 text-emerald-400" />
+                    <Gauge className="w-4 h-4 text-blue-400" />
                     <span className="text-xs font-bold text-slate-300">Maturidade:</span>
-                    <span className="text-sm font-black text-emerald-400">79%</span>
+                    <span className="text-sm font-black text-blue-400">61%</span>
+                    <span className="text-[10px] text-slate-400 font-medium">(14 atendidos)</span>
                   </div>
                 </div>
 
