@@ -127,7 +127,7 @@ export const INITIAL_TRAININGS: Training[] = [
         training_id: "c2eebc99-9c0b-4ef8-bb6d-6bb9bd380c33",
         order_index: 3,
         title: "Canal Seguro e Denúncia de Pressões",
-        content: "Qualquer pressão indevida ou tentativa de corrupção deve ser reportada imediatamente no nosso canal de denúncias, com sigilo absoluto e sem qualquer risco de retaliação para o colaborador.",
+        content: "Qualquer pressão indevida ou tentativa de corrupção deve ser reportada imediatamente no nosso canal de denúncias, com garantia de sigilo e proteção ao manifestante conforme a Lei nº 14.457/2022.",
       },
     ],
     questions: [
@@ -363,9 +363,13 @@ export interface TenantState {
   documents: CompanyDocument[];
   diagnosticProfile?: import("@/types/compliance").CompanyComplianceProfile;
   maturityHistory?: Array<{ id: string; event: string; date: string; score: number }>;
+  dueDiligenceRecords?: import("@/types").DueDiligenceRecord[];
+  edictAnalyses?: import("@/types/compliance").TenderAnalysisResult[];
 }
 
 const CLIENT_TENANT_STORAGE_KEY = "techcompliance_active_tenant";
+const CLIENT_DDI_STORAGE_KEY = "techcompliance_ddi_records";
+const CLIENT_EDICT_STORAGE_KEY = "techcompliance_edict_analyses";
 
 // GERENCIADOR DE ESTADO LOCAL MULTI-TENANT (COMPLIANCE MULTI-TENANT STORE)
 class ComplianceMockStore {
@@ -378,6 +382,10 @@ class ComplianceMockStore {
   trainings: Training[] = INITIAL_TRAININGS;
   // ID do tenant atualmente ativo / padrão para chamadas sem ID explícito
   private activeCompanyId: string = INITIAL_COMPANY.id;
+
+  // Cache global de validação pública por Hash (DDI e Editais)
+  private globalDueDiligenceByHash: Map<string, import("@/types").DueDiligenceRecord> = new Map();
+  private globalEdictAnalysesByHash: Map<string, import("@/types/compliance").TenderAnalysisResult> = new Map();
 
   constructor() {
     // Inicializa a Empresa Demo (apenas para auditoria/demonstração)
@@ -1165,6 +1173,210 @@ class ComplianceMockStore {
         score,
       });
     }
+  }
+
+  // --- MÉTODOS DE DUE DILIGENCE DE TERCEIROS (DDI) ---
+  saveDueDiligenceRecord(
+    record: import("@/types").DueDiligenceRecord,
+    companyId?: string
+  ): import("@/types").DueDiligenceRecord {
+    const targetId = companyId || record.company_id || this.activeCompanyId;
+    let tenant = this.tenants.get(targetId);
+    if (!tenant) {
+      this.getCompany(targetId);
+      tenant = this.tenants.get(targetId);
+    }
+    if (tenant) {
+      if (!tenant.dueDiligenceRecords) tenant.dueDiligenceRecords = [];
+      const idx = tenant.dueDiligenceRecords.findIndex((r) => r.id === record.id || r.report_hash === record.report_hash);
+      if (idx >= 0) {
+        tenant.dueDiligenceRecords[idx] = record;
+      } else {
+        tenant.dueDiligenceRecords.unshift(record);
+      }
+    }
+
+    if (record.report_hash) {
+      this.globalDueDiligenceByHash.set(record.report_hash.toUpperCase(), record);
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(CLIENT_DDI_STORAGE_KEY);
+        let list: any[] = stored ? JSON.parse(stored) : [];
+        list = [record, ...list.filter((r) => r.report_hash !== record.report_hash && r.id !== record.id)].slice(0, 50);
+        localStorage.setItem(CLIENT_DDI_STORAGE_KEY, JSON.stringify(list));
+      } catch (e) {
+        console.warn("Erro ao persistir DDI no localStorage:", e);
+      }
+    }
+
+    return record;
+  }
+
+  getDueDiligenceRecords(companyId?: string): import("@/types").DueDiligenceRecord[] {
+    const targetId = companyId || this.activeCompanyId;
+    let tenant = this.tenants.get(targetId);
+    if (!tenant) {
+      this.getCompany(targetId);
+      tenant = this.tenants.get(targetId);
+    }
+    const tenantRecords = tenant?.dueDiligenceRecords || [];
+    if (tenantRecords.length > 0) return [...tenantRecords];
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(CLIENT_DDI_STORAGE_KEY);
+        if (stored) {
+          const list = JSON.parse(stored);
+          if (Array.isArray(list)) {
+            list.forEach((r) => {
+              if (r?.report_hash) this.globalDueDiligenceByHash.set(r.report_hash.toUpperCase(), r);
+            });
+            return list;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    return [];
+  }
+
+  findDueDiligenceByHash(hash: string): import("@/types").DueDiligenceRecord | null {
+    if (!hash) return null;
+    const clean = hash.trim().toUpperCase();
+    if (this.globalDueDiligenceByHash.has(clean)) {
+      return this.globalDueDiligenceByHash.get(clean)!;
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(CLIENT_DDI_STORAGE_KEY);
+        if (stored) {
+          const list: import("@/types").DueDiligenceRecord[] = JSON.parse(stored);
+          const found = list.find((r) => r.report_hash?.toUpperCase() === clean);
+          if (found) {
+            this.globalDueDiligenceByHash.set(clean, found);
+            return found;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    for (const tenant of this.tenants.values()) {
+      const match = tenant.dueDiligenceRecords?.find((r) => r.report_hash?.toUpperCase() === clean);
+      if (match) {
+        this.globalDueDiligenceByHash.set(clean, match);
+        return match;
+      }
+    }
+
+    return null;
+  }
+
+  // --- MÉTODOS DE ANÁLISE DE EDITAIS ---
+  saveEdictAnalysis(
+    analysis: import("@/types/compliance").TenderAnalysisResult,
+    companyId?: string
+  ): import("@/types/compliance").TenderAnalysisResult {
+    const targetId = companyId || this.activeCompanyId;
+    let tenant = this.tenants.get(targetId);
+    if (!tenant) {
+      this.getCompany(targetId);
+      tenant = this.tenants.get(targetId);
+    }
+    if (tenant) {
+      if (!tenant.edictAnalyses) tenant.edictAnalyses = [];
+      const idx = tenant.edictAnalyses.findIndex((a) => a.id === analysis.id);
+      if (idx >= 0) {
+        tenant.edictAnalyses[idx] = analysis;
+      } else {
+        tenant.edictAnalyses.unshift(analysis);
+      }
+    }
+
+    if (analysis.id) {
+      this.globalEdictAnalysesByHash.set(analysis.id.toUpperCase(), analysis);
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(CLIENT_EDICT_STORAGE_KEY);
+        let list: any[] = stored ? JSON.parse(stored) : [];
+        list = [analysis, ...list.filter((a) => a.id !== analysis.id)].slice(0, 50);
+        localStorage.setItem(CLIENT_EDICT_STORAGE_KEY, JSON.stringify(list));
+      } catch (e) {
+        console.warn("Erro ao salvar análise de edital no localStorage:", e);
+      }
+    }
+
+    return analysis;
+  }
+
+  getEdictAnalyses(companyId?: string): import("@/types/compliance").TenderAnalysisResult[] {
+    const targetId = companyId || this.activeCompanyId;
+    let tenant = this.tenants.get(targetId);
+    if (!tenant) {
+      this.getCompany(targetId);
+      tenant = this.tenants.get(targetId);
+    }
+    const tenantAnalyses = tenant?.edictAnalyses || [];
+    if (tenantAnalyses.length > 0) return [...tenantAnalyses];
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(CLIENT_EDICT_STORAGE_KEY);
+        if (stored) {
+          const list = JSON.parse(stored);
+          if (Array.isArray(list)) {
+            list.forEach((a) => {
+              if (a?.id) this.globalEdictAnalysesByHash.set(a.id.toUpperCase(), a);
+            });
+            return list;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+    return [];
+  }
+
+  findEdictAnalysisByHash(hash: string): import("@/types/compliance").TenderAnalysisResult | null {
+    if (!hash) return null;
+    const clean = hash.trim().toUpperCase();
+    if (this.globalEdictAnalysesByHash.has(clean)) {
+      return this.globalEdictAnalysesByHash.get(clean)!;
+    }
+
+    if (typeof window !== "undefined") {
+      try {
+        const stored = localStorage.getItem(CLIENT_EDICT_STORAGE_KEY);
+        if (stored) {
+          const list: import("@/types/compliance").TenderAnalysisResult[] = JSON.parse(stored);
+          const found = list.find((a) => a.id?.toUpperCase() === clean);
+          if (found) {
+            this.globalEdictAnalysesByHash.set(clean, found);
+            return found;
+          }
+        }
+      } catch (e) {
+        // ignore
+      }
+    }
+
+    for (const tenant of this.tenants.values()) {
+      const match = tenant.edictAnalyses?.find((a) => a.id?.toUpperCase() === clean);
+      if (match) {
+        this.globalEdictAnalysesByHash.set(clean, match);
+        return match;
+      }
+    }
+
+    return null;
   }
 }
 

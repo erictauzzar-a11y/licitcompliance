@@ -250,14 +250,14 @@ export async function generateDueDiligenceReportPDF(
   // --- SCORECARD DE RISCO ---
   let y = 40;
   let bannerColor: [number, number, number] = [16, 185, 129]; // Verde Aprovado
-  let statusText = "RISCO BAIXO - APTO PARA CONTRATAÇÃO";
+  let statusText = "SEM APONTAMENTOS ENCONTRADOS NAS BASES OFICIAIS";
 
   if (record.risk_status === "BLOQUEADO") {
     bannerColor = [220, 38, 38]; // Vermelho
-    statusText = "RISCO CRÍTICO - IMPEDIMENTO IDENTIFICADO";
+    statusText = "RISCO CRÍTICO - SANÇÃO OU IMPEDIMENTO IDENTIFICADO";
   } else if (record.risk_status === "ALERTA") {
     bannerColor = [217, 119, 6]; // Âmbar
-    statusText = "RISCO MÉDIO - EXIGE DILIGÊNCIA ADICIONAL (PEP)";
+    statusText = "RISCO MODERADO - EXIGE DILIGÊNCIA ADICIONAL (PEP)";
   }
 
   doc.setFillColor(...bannerColor);
@@ -407,8 +407,8 @@ export async function generateDueDiligenceReportPDF(
   doc.setTextColor(51, 65, 85);
   const parecerText =
     record.risk_status === "APROVADO"
-      ? "O terceiro consultado apresentou situação plenamente regular em todas as consultas governamentais cabíveis, sem registros restritivos no CEIS, CNEP e MTE, estando habilitado sob a ótica de riscos éticos e legais para atuar como fornecedor ou subcontratado na execução do objeto público."
-      : "Foram localizados apontamentos de risco que recomendam a abstenção ou adoção de medidas cautelares rigorosas de integridade conforme preconizado pelo art. 25, § 4º da Lei nº 14.133/2021 e princípios da boa administração.";
+      ? "Consulta automatizada realizada nas bases públicas governamentais oficiais (CEIS/CGU, CNEP/CGU e Cadastro de Empregadores do MTE) até a data da consulta. Não foram identificados apontamentos restritivos ativos para o CNPJ nas fontes abertas consultadas.\n\nRessalva jurídica: Este relatório constitui verificação preliminar e informativa em bases públicas oficiais. Não consubstancia certificação pública de aptidão, homologação estatal ou garantia de inexistência de outros processos, cabendo ao contratante a conferência das certidões e atendimento às exigências específicas do respectivo procedimento licitatório ou contrato."
+      : "Foram localizados apontamentos de risco ou necessidade de diligência complementar conforme preconizado pelo art. 25, § 4º da Lei nº 14.133/2021 e princípios da boa administração pública.";
 
   const splitParecer = doc.splitTextToSize(parecerText, 182);
   doc.text(splitParecer, 14, y);

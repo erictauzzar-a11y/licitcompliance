@@ -77,7 +77,7 @@ export default function WhistleblowerReportPage({ params }: { params: Promise<{ 
             <div className="space-y-2">
               <h1 className="text-2xl font-bold text-slate-900">Relato Registrado com Sucesso!</h1>
               <p className="text-sm text-slate-600 max-w-md mx-auto">
-                Sua manifestação foi encaminhada para análise imparcial da Comissão de Ética da <strong>{company.trade_name}</strong> com garantia absoluta de não retaliação.
+                Sua manifestação foi encaminhada para análise da Comissão de Ética da <strong>{company.trade_name}</strong> com garantia de sigilo e proteção contra retaliação nos termos da Lei Federal nº 14.457/2022.
               </p>
             </div>
 

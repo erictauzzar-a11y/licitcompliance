@@ -49,6 +49,9 @@ export async function POST(request: NextRequest) {
       result.supplier.company_id = company.id;
     }
 
+    // Persiste no acervo da plataforma para validação pública imediata
+    mockStore.saveDueDiligenceRecord(result, company.id);
+
     return NextResponse.json(result);
   } catch (error) {
     return NextResponse.json(

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ShieldAlert,
   Search,
@@ -21,6 +21,7 @@ import { DueDiligenceRecord } from "@/types";
 import { formatCNPJ, formatCPF } from "@/lib/utils";
 import { generateDueDiligenceReportPDF } from "@/lib/due-diligence-service";
 import { useCompany } from "@/contexts/CompanyContext";
+import { mockStore } from "@/lib/mock-data";
 
 export default function DueDiligencePage() {
   const { company, isLoading: companyLoading } = useCompany();
@@ -31,6 +32,16 @@ export default function DueDiligencePage() {
   const [currentAnalysis, setCurrentAnalysis] = useState<DueDiligenceRecord | null>(null);
   const [recentAnalyses, setRecentAnalyses] = useState<DueDiligenceRecord[]>([]);
   const [downloadingPdf, setDownloadingPdf] = useState(false);
+
+  useEffect(() => {
+    if (company?.id) {
+      const records = mockStore.getDueDiligenceRecords(company.id);
+      setRecentAnalyses(records);
+      if (records.length > 0 && !currentAnalysis) {
+        setCurrentAnalysis(records[0]);
+      }
+    }
+  }, [company]);
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -56,6 +67,7 @@ export default function DueDiligencePage() {
       if (!res.ok) {
         setErrorMsg(data.error || "Falha ao consultar fornecedor.");
       } else {
+        mockStore.saveDueDiligenceRecord(data, company?.id);
         setCurrentAnalysis(data);
         setRecentAnalyses((prev) => [data, ...prev.filter((r) => r.supplier?.cnpj !== cleanCnpj)]);
       }

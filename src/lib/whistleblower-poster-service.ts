@@ -65,7 +65,7 @@ export async function generateWhistleblowerPosterPDF(
   doc.setFontSize(9.5);
   doc.setTextColor(51, 65, 85);
   const infoText =
-    "Este canal é sigiloso, seguro e independente. Você pode relatar fatos de forma 100% ANÔNIMA. A empresa assegura garantia irrestrita de não retaliação a qualquer relator de boa-fé.";
+    "Este canal é sigiloso, seguro e independente. Você pode relatar fatos de forma ANÔNIMA com garantia de sigilo protetivo e vedação a qualquer ato de retaliação, nos termos da Lei Federal nº 14.457/2022.";
   doc.text(doc.splitTextToSize(infoText, pageWidth - 55), pageWidth / 2, 91, { align: "center" });
 
   // 4. Geração do QR Code

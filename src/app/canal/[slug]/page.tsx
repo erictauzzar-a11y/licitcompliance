@@ -344,10 +344,10 @@ export default function PublicWhistleblowerPage({
                   >
                     <div className="font-bold text-sm flex items-center gap-2">
                       <Lock className="w-4 h-4 text-blue-600" />
-                      Modo 100% Anônimo
+                      Modo Anônimo com Sigilo
                     </div>
                     <div className="text-xs text-slate-500 mt-1 leading-relaxed">
-                      Não solicita nome, e-mail nem telefone. O sistema não armazena IP nem dados de rastreamento.
+                      Não solicita nome, e-mail nem telefone. O sistema não armazena IP nem dados de rastreamento de rede.
                     </div>
                   </button>
 

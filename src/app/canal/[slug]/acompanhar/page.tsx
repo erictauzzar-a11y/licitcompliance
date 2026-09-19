@@ -159,7 +159,7 @@ export default function PublicWhistleblowerTrackingPage({
               <h1>Acompanhamento de Denúncia</h1>
             </div>
             <p className="text-xs text-slate-500 mt-1">
-              Consulte a situação da sua manifestação em sigilo absoluto, sem necessidade de login.
+              Consulte a situação da sua manifestação com garantia de sigilo e proteção ao manifestante, sem necessidade de login.
             </p>
           </div>
 
@@ -235,7 +235,7 @@ export default function PublicWhistleblowerTrackingPage({
                       <span className="text-slate-400 font-medium block">Identificação do Relator:</span>
                       <strong className="text-slate-800 text-sm mt-0.5 block flex items-center gap-1.5">
                         <Lock className="w-3.5 h-3.5 text-emerald-600" />
-                        {report.is_anonymous ? "Relato 100% Anônimo" : "Relato Identificado sob Sigilo"}
+                        {report.is_anonymous ? "Relato Anônimo com Sigilo Protetivo" : "Relato Identificado sob Sigilo"}
                       </strong>
                     </div>
                   </div>

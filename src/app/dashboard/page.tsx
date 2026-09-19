@@ -85,7 +85,7 @@ import { getPolicyAction } from "@/app/actions/policies";
 import { Employee, Policy, WhistleblowerReport } from "@/types";
 
 export default function DashboardOverviewPage() {
-  const { company, isLoading, snapshot } = useCompany();
+  const { company, isLoading, snapshot, isSnapshotLoading } = useCompany();
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [reports, setReports] = useState<WhistleblowerReport[]>([]);
   const [policy, setPolicy] = useState<Policy | null>(null);
@@ -154,8 +154,8 @@ export default function DashboardOverviewPage() {
     }
   };
 
-  // Loading state: enquanto a empresa não carrega, exibe skeleton
-  if (isLoading || !company) {
+  // Loading state: enquanto a empresa ou o snapshot não carregarem, exibe skeleton seguro sem flicker
+  if (isLoading || !company || (isSnapshotLoading && !snapshot)) {
     return (
       <div className="max-w-6xl mx-auto space-y-8 animate-pulse pb-12">
         <div className="h-48 rounded-3xl bg-slate-200" />
@@ -268,12 +268,23 @@ export default function DashboardOverviewPage() {
           
           <div>
             <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-baseline gap-2">
-              Status de Preparação: <span className="text-emerald-400 font-mono">{overallScore}%</span> estruturado
+              {overallScore < 25 ? (
+                <>
+                  Maturidade Provisória: <span className="text-amber-400 font-mono">{overallScore}%</span>
+                </>
+              ) : (
+                <>
+                  Status de Preparação: <span className="text-emerald-400 font-mono">{overallScore}%</span> estruturado
+                </>
+              )}
             </h1>
             <p className="text-sm font-semibold text-slate-300 mt-1">
-              {overallScore === 0 ? (
-                <span className="text-amber-300 font-bold">
-                  Inicie o diagnóstico em 9 etapas para descobrir a maturidade da sua empresa.
+              {overallScore < 25 ? (
+                <span className="text-amber-300 font-medium">
+                  {overallScore === 0
+                    ? "Diagnóstico inicial ainda não iniciado. Conclua as 9 etapas para calcular seu índice."
+                    : `${metRequirementsCount} de ${totalRequirementsCount} requisitos atendidos na etapa preliminar de estruturação.`}{" "}
+                  Siga a trilha de implantação abaixo para habilitar o Dossiê de Integridade oficial.
                 </span>
               ) : (
                 <span className="text-emerald-300 font-bold">
@@ -326,6 +337,155 @@ export default function DashboardOverviewPage() {
             <FileDown className="w-4 h-4" />
             <span>{generatingPdf ? "Compilando Dossiê..." : "Gerar Dossiê de Evidências (PDF)"}</span>
           </button>
+        </div>
+      </div>
+
+      {/* TRILHA DE IMPLANTAÇÃO DO PROGRAMA (ONBOARDING 7 ETAPAS) */}
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-slate-100 pb-3">
+          <div>
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-50 text-blue-700 text-xs font-bold mb-1">
+              <Sparkles className="w-3.5 h-3.5" />
+              Roteiro de Implantação do Programa
+            </div>
+            <h2 className="text-base font-bold text-slate-900">
+              7 Etapas para Concluir a Estruturação do seu Programa de Integridade
+            </h2>
+            <p className="text-xs text-slate-500">
+              Roteiro normativo para conformidade progressiva com a Lei nº 14.133/2021 e Decreto nº 12.304/2024.
+            </p>
+          </div>
+          <span className="text-xs font-bold text-slate-600 px-3 py-1 bg-slate-100 rounded-lg">
+            Progresso Geral: {metRequirementsCount} de {totalRequirementsCount} requisitos
+          </span>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 pt-1">
+          {/* Etapa 1 */}
+          <Link
+            href="/dashboard/diagnostico"
+            className="p-3.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-xs transition bg-slate-50/60 flex items-start gap-3 group"
+          >
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs ${overallScore > 0 ? "bg-emerald-100 text-emerald-700" : "bg-blue-600 text-white"}`}>
+              {overallScore > 0 ? <CheckCircle2 className="w-4 h-4" /> : "1"}
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
+                1. Diagnóstico Normativo
+              </strong>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {overallScore > 0 ? "Diagnóstico respondido" : "Responder 9 etapas rápidas"}
+              </p>
+            </div>
+          </Link>
+
+          {/* Etapa 2 */}
+          <Link
+            href="/dashboard/politicas"
+            className="p-3.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-xs transition bg-slate-50/60 flex items-start gap-3 group"
+          >
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs ${policy?.is_active ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}`}>
+              {policy?.is_active ? <CheckCircle2 className="w-4 h-4" /> : "2"}
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
+                2. Código de Conduta
+              </strong>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {policy?.is_active ? "Código ativo e vigente" : "Homologar texto oficial"}
+              </p>
+            </div>
+          </Link>
+
+          {/* Etapa 3 */}
+          <Link
+            href="/dashboard/colaboradores"
+            className="p-3.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-xs transition bg-slate-50/60 flex items-start gap-3 group"
+          >
+            <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs ${employees.length > 0 ? "bg-emerald-100 text-emerald-700" : "bg-slate-200 text-slate-700"}`}>
+              {employees.length > 0 ? <CheckCircle2 className="w-4 h-4" /> : "3"}
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
+                3. Equipe & Treinamentos
+              </strong>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                {employees.length > 0 ? `${employees.length} cadastrados` : "Cadastrar equipe e coletar ciência"}
+              </p>
+            </div>
+          </Link>
+
+          {/* Etapa 4 */}
+          <Link
+            href="/dashboard/denuncias"
+            className="p-3.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-xs transition bg-slate-50/60 flex items-start gap-3 group"
+          >
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs bg-emerald-100 text-emerald-700">
+              <CheckCircle2 className="w-4 h-4" />
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
+                4. Canal de Denúncias
+              </strong>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Ativo com opção anônima e protocolo
+              </p>
+            </div>
+          </Link>
+
+          {/* Etapa 5 */}
+          <Link
+            href="/dashboard/biblioteca"
+            className="p-3.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-xs transition bg-slate-50/60 flex items-start gap-3 group"
+          >
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs bg-slate-200 text-slate-700">
+              5
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
+                5. Biblioteca de Modelos
+              </strong>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Homologar POPs e normas internas
+              </p>
+            </div>
+          </Link>
+
+          {/* Etapa 6 */}
+          <Link
+            href="/dashboard/due-diligence"
+            className="p-3.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-xs transition bg-slate-50/60 flex items-start gap-3 group"
+          >
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs bg-slate-200 text-slate-700">
+              6
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
+                6. Due Diligence (DDI)
+              </strong>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Checar terceiros contra CEIS/CNEP
+              </p>
+            </div>
+          </Link>
+
+          {/* Etapa 7 */}
+          <div
+            onClick={handleGenerateDossier}
+            className="p-3.5 rounded-xl border border-slate-200 hover:border-blue-500 hover:shadow-xs transition bg-slate-50/60 flex items-start gap-3 group cursor-pointer sm:col-span-2 lg:col-span-3"
+          >
+            <div className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0 font-bold text-xs bg-blue-50 text-blue-700 border border-blue-200">
+              <FileDown className="w-4 h-4" />
+            </div>
+            <div>
+              <strong className="text-xs font-bold text-slate-900 group-hover:text-blue-600 transition-colors block">
+                7. Emissão do Dossiê Consolidado de Evidências em PDF
+              </strong>
+              <p className="text-[11px] text-slate-500 mt-0.5">
+                Compilar acervo probatório com validação por QR Code pronto para anexar na habilitação do certame.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
 

@@ -336,7 +336,7 @@ export default function WhistleblowerManagementPage() {
               <div>
                 <span className="text-[10px] uppercase font-bold text-slate-400 block">Manifestante</span>
                 <strong className="text-slate-900">
-                  {selectedReport.is_anonymous ? "Anônimo (Sigilo Absoluto)" : selectedReport.reporter_name}
+                  {selectedReport.is_anonymous ? "Anônimo (Sigilo Protetivo - Lei 14.457)" : selectedReport.reporter_name}
                 </strong>
               </div>
               <div>

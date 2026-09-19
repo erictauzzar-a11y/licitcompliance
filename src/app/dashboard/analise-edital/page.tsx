@@ -21,7 +21,9 @@ import {
 } from "lucide-react";
 import { analyzeEdictRequirements } from "@/lib/compliance-engine";
 import { TenderAnalysisResult, TenderRequirementMatch } from "@/types/compliance";
-import { generateDossierPDF } from "@/lib/pdf-generator";
+import { generateEdictAnalysisReportPDF } from "@/lib/edict-pdf-generator";
+import { useCompany } from "@/contexts/CompanyContext";
+import { mockStore } from "@/lib/mock-data";
 
 const SAMPLE_EDICT_TEXT = `EDITAL DE PREGÃO ELETRÔNICO Nº 42/2026
 ÓRGÃO: TRIBUNAL REGIONAL FEDERAL - 1ª REGIÃO
@@ -37,6 +39,7 @@ CLÁUSULA 9 - DA HABILITAÇÃO E DO PROGRAMA DE INTEGRIDADE
 9.3. Os documentos comprobatórios deverão ser anexados no sistema no momento da habilitação técnica.`;
 
 export default function TenderAnalysisPage() {
+  const { company } = useCompany();
   const [edictText, setEdictText] = useState(SAMPLE_EDICT_TEXT);
   const [fileName, setFileName] = useState("Edital_Pregao_TRF_42_2026.pdf");
   const [analyzing, setAnalyzing] = useState(false);
@@ -65,6 +68,7 @@ export default function TenderAnalysisPage() {
           setAnalysisStep(4);
           setTimeout(() => {
             const res = analyzeEdictRequirements(edictText, fileName);
+            mockStore.saveEdictAnalysis(res, company?.id);
             setAnalysisResult(res);
             setAnalyzing(false);
             setAnalysisStep(0);
@@ -265,15 +269,25 @@ export default function TenderAnalysisPage() {
 
                 <button
                   onClick={async () => {
+                    if (!analysisResult) return;
                     setGeneratingPdf(true);
-                    await generateDossierPDF();
-                    setGeneratingPdf(false);
+                    try {
+                      await generateEdictAnalysisReportPDF(
+                        analysisResult,
+                        company?.legal_name || company?.trade_name || "Empresa Licitante",
+                        company?.cnpj
+                      );
+                    } catch (err) {
+                      console.error("Erro ao gerar PDF do Edital:", err);
+                    } finally {
+                      setGeneratingPdf(false);
+                    }
                   }}
                   disabled={generatingPdf}
                   className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-4 py-2.5 rounded-xl text-xs transition-all shadow-sm flex items-center gap-2"
                 >
                   <Download className="w-3.5 h-3.5" />
-                  {generatingPdf ? "Compilando..." : "Baixar Dossiê Completo (PDF)"}
+                  {generatingPdf ? "Compilando..." : "Baixar Relatório de Aderência (PDF)"}
                 </button>
               </div>
             </div>
