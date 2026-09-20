@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import {
   ShieldCheck,
   CheckCircle2,
@@ -429,10 +430,13 @@ export function HeroLiveSoftwareDemo() {
                       <QrCode className="w-3.5 h-3.5 text-blue-400" />
                       <span>Hash SHA-256: 8f4a...29c1</span>
                     </div>
-                    <span className="text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer">
-                      <span>Ver Prévia Ilustrativa</span>
+                    <Link
+                      href="/acessar-demo"
+                      className="text-[11px] font-bold text-blue-400 hover:text-blue-300 flex items-center gap-1 cursor-pointer transition-colors"
+                    >
+                      <span>Acessar versão demo</span>
                       <ArrowRight className="w-3 h-3" />
-                    </span>
+                    </Link>
                   </div>
                 </div>
               )}

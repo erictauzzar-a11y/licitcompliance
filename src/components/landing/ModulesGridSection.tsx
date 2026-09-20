@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import {
   Gauge,
   FileText,
@@ -10,6 +11,7 @@ import {
   Search,
   FileDown,
   Sparkles,
+  ArrowRight,
 } from "lucide-react";
 
 export function ModulesGridSection() {
@@ -113,6 +115,17 @@ export function ModulesGridSection() {
               </div>
             );
           })}
+        </div>
+
+        {/* CTA da Seção */}
+        <div className="text-center pt-4">
+          <Link
+            href="/acessar-demo"
+            className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/30 hover:shadow-blue-500/40 text-sm transition-all"
+          >
+            <span>Acessar versão demo</span>
+            <ArrowRight className="w-4 h-4" />
+          </Link>
         </div>
       </div>
     </section>
