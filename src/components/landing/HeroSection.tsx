@@ -33,21 +33,14 @@ export function HeroSection() {
               Descubra o que sua empresa já possui, o que pode ser exigido em suas contratações e quais pontos precisam ser estruturados e evidenciados.
             </p>
 
-            {/* 4. CTAs com Micro-interações */}
+            {/* 4. CTA Principal */}
             <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2 animate-fade-in-up [animation-delay:300ms]">
               <Link
-                href="/diagnostico"
-                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold px-7 py-4 rounded-xl shadow-xl shadow-blue-600/30 hover:shadow-blue-500/50 hover:ring-1 hover:ring-blue-300/50 text-sm flex items-center justify-center gap-2 transition-all group focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-400"
-              >
-                <span>FAZER DIAGNÓSTICO GRATUITO</span>
-                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
-              </Link>
-
-              <Link
                 href="/acessar-demo"
-                className="w-full sm:w-auto bg-white/10 hover:bg-white/20 active:scale-[0.98] text-white font-bold px-6 py-4 rounded-xl border border-white/20 backdrop-blur-md transition-all text-sm flex items-center justify-center gap-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/40"
+                className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/30 hover:shadow-blue-500/50 hover:ring-1 hover:ring-blue-300/50 text-sm flex items-center justify-center gap-2 transition-all group focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-400"
               >
                 <span>Acessar versão demo</span>
+                <ArrowRight className="w-4 h-4 group-hover:translate-x-0.5 transition-transform" />
               </Link>
             </div>
 
@@ -55,7 +48,7 @@ export function HeroSection() {
             <div className="flex flex-wrap items-center justify-center lg:justify-start gap-4 pt-2 text-xs font-semibold text-slate-300 animate-fade-in [animation-delay:400ms]">
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
-                <span>Diagnóstico inicial gratuito</span>
+                <span>Demonstração completa</span>
               </div>
               <div className="flex items-center gap-1.5">
                 <CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />

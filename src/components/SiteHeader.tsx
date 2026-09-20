@@ -345,25 +345,19 @@ export function SiteHeader() {
           </Link>
           <Link
             href="/acessar-demo"
-            className="text-xs font-bold text-slate-100 hover:text-white px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 transition-all active:scale-[0.98]"
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98] flex items-center gap-1.5"
           >
-            Acessar versão demo
-          </Link>
-          <Link
-            href="/diagnostico"
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98] flex items-center gap-1.5"
-          >
-            <span>Diagnóstico Gratuito</span>
+            <span>Acessar versão demo</span>
           </Link>
         </div>
 
         {/* BOTÃO MOBILE (MENU HAMBÚRGUER) */}
         <div className="flex lg:hidden items-center gap-2">
           <Link
-            href="/diagnostico"
+            href="/acessar-demo"
             className="bg-blue-600 text-white text-xs font-bold px-3 py-2 rounded-lg"
           >
-            Diagnóstico
+            Demo
           </Link>
           <button
             type="button"
@@ -525,13 +519,6 @@ export function SiteHeader() {
               className="w-full py-3.5 rounded-xl bg-blue-600 text-center text-sm font-bold text-white block shadow-lg shadow-blue-600/40 hover:bg-blue-500 transition-all"
             >
               Acessar versão demo
-            </Link>
-            <Link
-              href="/diagnostico"
-              onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-3 rounded-xl bg-white/10 border border-white/20 text-center text-sm font-bold text-white block hover:bg-white/15 transition-all"
-            >
-              Fazer Diagnóstico Gratuito
             </Link>
             <Link
               href="/login"

@@ -149,10 +149,10 @@ export function DiagnosticPreviewSection() {
             </div>
 
             <Link
-              href="/diagnostico"
+              href="/acessar-demo"
               className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold px-7 py-3.5 rounded-xl shadow-lg shadow-blue-600/30 text-sm flex items-center justify-center gap-2 transition-all shrink-0"
             >
-              <span>Quero organizar meu programa →</span>
+              <span>Acessar versão demo →</span>
             </Link>
           </div>
         </div>

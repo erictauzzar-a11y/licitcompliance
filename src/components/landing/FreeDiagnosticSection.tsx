@@ -160,10 +160,10 @@ export function FreeDiagnosticSection() {
           {/* CTA para a Tela Exclusiva /diagnostico */}
           <div className="pt-2 text-center space-y-3">
             <Link
-              href="/diagnostico"
+              href="/acessar-demo"
               className="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-extrabold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm transition-all"
             >
-              <span>COMEÇAR DIAGNÓSTICO GRATUITO →</span>
+              <span>Acessar versão demo →</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
 

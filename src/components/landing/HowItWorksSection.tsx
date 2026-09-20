@@ -132,10 +132,10 @@ export function HowItWorksSection() {
         {/* CTA Compacto */}
         <div className="text-center pt-2">
           <Link
-            href="/diagnostico"
+            href="/acessar-demo"
             className="inline-flex items-center gap-2 bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold px-7 py-3.5 rounded-xl shadow-lg shadow-blue-600/30 text-xs transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-blue-400"
           >
-            <span>INICIAR COM O DIAGNÓSTICO GRATUITO</span>
+            <span>Acessar versão demo</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

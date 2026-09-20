@@ -299,10 +299,10 @@ export function ProductFlowSection() {
           </div>
 
           <Link
-            href="/diagnostico"
+            href="/acessar-demo"
             className="w-full sm:w-auto bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold px-6 py-3.5 rounded-xl shadow-lg shadow-blue-600/30 text-xs flex items-center justify-center gap-2 transition-all shrink-0"
           >
-            <span>FAZER DIAGNÓSTICO GRATUITO</span>
+            <span>Acessar versão demo</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
         </div>

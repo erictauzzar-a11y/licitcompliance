@@ -178,12 +178,6 @@ export default function ComoFuncionaPage() {
               showIcon={false}
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/30 text-sm"
             />
-            <Link
-              href="/diagnostico"
-              className="bg-white/10 hover:bg-white/15 text-white font-semibold px-6 py-3.5 rounded-xl border border-white/15 transition-all text-sm"
-            >
-              Fazer diagnóstico gratuito
-            </Link>
           </div>
         </div>
       </section>

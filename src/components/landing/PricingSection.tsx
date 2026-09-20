@@ -39,7 +39,7 @@ export function PricingSection() {
                   Comece a estruturar seu Programa de Integridade
                 </h2>
                 <p className="text-slate-300 text-sm sm:text-base mt-3 leading-relaxed">
-                  Depois do diagnóstico gratuito, continue organizando seu programa em um único ambiente.
+                  Estruture e comprove seu programa de integridade em um único ambiente integrado.
                 </p>
               </div>
 
@@ -99,17 +99,6 @@ export function PricingSection() {
                   <span>•</span>
                   <span>Sem Cartão de Crédito</span>
                 </div>
-              </div>
-
-              {/* Link Alternativo para Diagnóstico Gratuito Primeiro */}
-              <div className="pt-4 border-t border-slate-800 text-xs space-y-1">
-                <div className="text-slate-400">Ainda não conhece seu nível de preparação?</div>
-                <Link
-                  href="/diagnostico"
-                  className="font-bold text-blue-400 hover:text-blue-300 inline-flex items-center gap-1 transition-colors"
-                >
-                  <span>Faça o diagnóstico gratuito primeiro →</span>
-                </Link>
               </div>
             </div>
           </div>

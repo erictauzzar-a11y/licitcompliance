@@ -352,10 +352,10 @@ function RegisterCompanyForm() {
 
           <div className="space-y-2.5 pt-2">
             <Link
-              href="/diagnostico"
+              href="/acessar-demo"
               className="w-full bg-blue-600 hover:bg-blue-500 text-white font-extrabold py-3.5 px-4 rounded-xl shadow-lg shadow-blue-600/30 text-xs flex items-center justify-center gap-2 transition-all"
             >
-              <span>Fazer Diagnóstico Gratuito primeiro</span>
+              <span>Acessar versão demo</span>
               <ArrowRight className="w-3.5 h-3.5" />
             </Link>
 
