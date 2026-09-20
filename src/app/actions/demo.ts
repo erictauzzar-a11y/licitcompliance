@@ -36,16 +36,9 @@ export interface DemoRequestInput {
   website_hp?: string;
 }
 
-export interface DemoLeadRecord {
-  id: string;
-  name: string;
-  phone: string;
-  email: string;
-  company_name: string;
-  source: string;
-  status: string;
-  created_at: string;
-}
+import { dispatchCrmWebhook, type DemoLeadRecord } from "@/lib/crm-service";
+
+export type { DemoLeadRecord };
 
 // Fallback em memória para resiliência contínua
 declare global {
@@ -125,6 +118,11 @@ export async function submitDemoRequest(input: DemoRequestInput): Promise<{
         console.error("[DemoLeads] Exceção na conexão com banco:", dbErr);
       }
     }
+
+    // 6. Integração com CRM: dispara webhook assíncrono em tempo real se configurado
+    dispatchCrmWebhook(leadRecord).catch((webhookErr) => {
+      console.error("[DemoLeads] Falha não impeditiva no disparo do webhook CRM:", webhookErr);
+    });
 
     return {
       success: true,
