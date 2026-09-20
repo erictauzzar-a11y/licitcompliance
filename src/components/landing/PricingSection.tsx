@@ -73,17 +73,15 @@ export function PricingSection() {
 
             {/* Lado Direito: Preço e Botão */}
             <div className="lg:col-span-5 bg-gradient-to-b from-blue-950/40 via-slate-900/80 to-slate-950 p-7 sm:p-8 rounded-2xl border border-blue-500/30 text-center space-y-6 shadow-xl relative overflow-hidden">
-              <div className="space-y-1">
+              <div className="space-y-2 py-2">
                 <div className="text-xs uppercase font-bold text-slate-400 tracking-wider">
-                  Assinatura Mensal
+                  TechCompliance Premium
                 </div>
-                <div className="flex items-baseline justify-center gap-1.5 text-white">
-                  <span className="text-2xl font-bold text-slate-300">R$</span>
-                  <span className="text-5xl sm:text-6xl font-black tracking-tight text-white">189,90</span>
-                  <span className="text-sm font-semibold text-slate-400">/mês</span>
+                <div className="text-2xl sm:text-3xl font-black text-white tracking-tight">
+                  Acesso Completo à Plataforma
                 </div>
-                <p className="text-[11px] text-blue-300 font-medium">
-                  Ativação imediata da plataforma
+                <p className="text-xs text-blue-300 font-medium pt-1">
+                  Ativação imediata • Suporte especializado
                 </p>
               </div>
 

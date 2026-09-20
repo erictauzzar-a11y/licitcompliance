@@ -118,7 +118,7 @@ export default function ParaEmpresasPage() {
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <CheckoutButton
-              label="Começar teste por R$ 189,90/mês"
+              label="Começar agora"
               showIcon={false}
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/30 text-sm"
             />
@@ -246,11 +246,11 @@ export default function ParaEmpresasPage() {
       <section className="py-16 px-4 bg-slate-900 border-t border-slate-800 text-center space-y-5">
         <h2 className="text-3xl font-black text-white">Comece agora a preparar sua empresa</h2>
         <p className="text-slate-300 text-sm max-w-lg mx-auto">
-          Tenha acesso imediato a todas as ferramentas por R$ 189,90/mês, sem taxa de adesão ou fidelidade.
+          Tenha acesso imediato a todas as ferramentas, sem taxa de adesão ou fidelidade.
         </p>
         <div className="pt-2">
           <CheckoutButton
-            label="Cadastrar Minha Empresa • R$ 189,90"
+            label="Cadastrar Minha Empresa"
             className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
           />
         </div>

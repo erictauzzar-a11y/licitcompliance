@@ -370,11 +370,11 @@ export default async function RecursoPage({ params }: { params: Promise<{ slug: 
             Tenha acesso completo a todos os recursos do sistema
           </h2>
           <p className="text-slate-300 text-sm max-w-xl mx-auto">
-            Sem custos ocultos. Plano único de <strong className="text-white">R$ 189,90/mês</strong> com suporte e atualizações inclusas.
+            Sem custos ocultos. Plano completo com suporte e atualizações inclusas.
           </p>
           <div className="pt-2">
             <CheckoutButton
-              label="Cadastrar Empresa por R$ 189,90"
+              label="Cadastrar Empresa"
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
             />
           </div>

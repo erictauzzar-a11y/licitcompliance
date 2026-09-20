@@ -71,13 +71,12 @@ export default function SimularPagamentoPage() {
             </div>
             <div className="flex items-center justify-between text-sm">
               <span className="text-slate-400">Taxa de Adesão</span>
-              <span className="text-emerald-400 font-bold">R$ 0,00</span>
+              <span className="text-emerald-400 font-bold">Isenta</span>
             </div>
             <div className="pt-3 border-t border-slate-800/80 flex items-baseline justify-between">
-              <span className="font-bold text-white text-base">Total a Pagar</span>
+              <span className="font-bold text-white text-base">Status do Plano</span>
               <div className="text-right">
-                <span className="text-2xl font-black text-white">R$ 189,90</span>
-                <span className="text-xs text-slate-400 block">/mês</span>
+                <span className="text-lg font-bold text-emerald-400">Acesso Premium</span>
               </div>
             </div>
           </div>

@@ -80,7 +80,7 @@ export function SiteFooter() {
               ))}
               <li className="pt-2">
                 <Link href="/precos" className="text-emerald-400 font-bold hover:underline">
-                  Planos e Preços →
+                  Planos de Acesso →
                 </Link>
               </li>
             </ul>

@@ -826,7 +826,7 @@ function DiagnosticTool() {
                         </li>
                       </ul>
                       <div className="text-[10px] text-slate-400 pt-1">
-                        Plano Completo por R$ 189,90/mês • Sem taxa de adesão • Cancele quando quiser
+                        Plano Completo Empresarial • Sem taxa de adesão • Cancele quando quiser
                       </div>
                     </div>
                   )}
@@ -843,7 +843,7 @@ function DiagnosticTool() {
                         <span>Iniciando checkout seguro...</span>
                       ) : (
                         <>
-                          <span>CONTRATAR AGORA (R$ 189,90/mês) →</span>
+                          <span>CONTRATAR AGORA →</span>
                         </>
                       )}
                     </button>

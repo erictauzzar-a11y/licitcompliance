@@ -15,7 +15,7 @@ interface CheckoutButtonProps {
 
 export function CheckoutButton({
   className = "",
-  label = "Assinar Agora • R$ 189,90/mês",
+  label = "Assinar Agora",
   showIcon = true,
   companyName,
   cnpj,

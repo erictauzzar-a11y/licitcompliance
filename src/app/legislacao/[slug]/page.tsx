@@ -377,11 +377,11 @@ export default async function LegislacaoPage({ params }: { params: Promise<{ slu
             Estruture o compliance da sua empresa hoje mesmo
           </h2>
           <p className="text-slate-300 text-sm max-w-xl mx-auto">
-            Acesso imediato a todas as ferramentas por apenas <strong className="text-white">R$ 189,90/mês</strong>.
+            Acesso imediato a todas as ferramentas e modelos prontos da plataforma.
           </p>
           <div className="pt-2">
             <CheckoutButton
-              label="Começar agora por R$ 189,90"
+              label="Começar agora"
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
             />
           </div>

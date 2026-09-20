@@ -337,7 +337,7 @@ export default function ComoFuncionaPage() {
           </p>
           <div className="pt-2">
             <CheckoutButton
-              label="Cadastrar empresa por R$ 189,90/mês"
+              label="Cadastrar empresa agora"
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
             />
           </div>

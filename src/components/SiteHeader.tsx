@@ -522,7 +522,7 @@ export function SiteHeader() {
               Acessar Conta (Entrar)
             </Link>
             <CheckoutButton
-              label="Começar agora por R$ 189,90"
+              label="Começar agora"
               showIcon={false}
               className="w-full py-3 rounded-xl bg-blue-600 text-center text-sm font-bold text-white shadow-lg shadow-blue-600/40"
             />

@@ -18,7 +18,7 @@ import { CheckoutButton } from "@/components/CheckoutButton";
 export const metadata: Metadata = {
   title: "Planos e Preços | TechCompliance",
   description:
-    "Plano completo de gestão de integridade licitatória por apenas R$ 189,90/mês. Sem taxa de adesão, sem carência e com cancelamento a qualquer momento.",
+    "Plano completo de gestão de integridade licitatória. Sem taxa de adesão, sem carência e com cancelamento a qualquer momento.",
 };
 
 const INCLUDED_FEATURES = [
@@ -38,7 +38,7 @@ const FAQS = [
   {
     question: "Existe fidelidade ou carência contratual?",
     answer:
-      "Não. A assinatura é mensal no valor de R$ 189,90. Você pode cancelar a qualquer momento diretamente pelo painel da empresa, sem multa ou taxa rescisória.",
+      "Não. A assinatura é mensal e sem fidelidade. Você pode cancelar a qualquer momento diretamente pelo painel da empresa, sem multa ou taxa rescisória.",
   },
   {
     question: "O sistema emite uma certificação oficial válida perante a lei?",
@@ -99,15 +99,13 @@ export default function PrecosPage() {
                 PLANO COMPLETO EMPRESARIAL
               </div>
               <h2 className="text-2xl sm:text-3xl font-black text-white mt-2">
-                Assinatura Mensal TechCompliance
+                Plano Premium TechCompliance
               </h2>
             </div>
 
             <div className="text-right">
-              <div className="flex items-baseline justify-end gap-1 text-white">
-                <span className="text-2xl font-bold text-slate-400">R$</span>
-                <span className="text-5xl sm:text-6xl font-black tracking-tight text-white">189,90</span>
-                <span className="text-sm font-semibold text-slate-400">/mês</span>
+              <div className="text-2xl sm:text-3xl font-black text-white">
+                Acesso Completo
               </div>
               <span className="text-xs text-emerald-400 font-semibold">Sem taxa de adesão • Cancele quando quiser</span>
             </div>
@@ -141,7 +139,7 @@ export default function PrecosPage() {
               </div>
 
               <CheckoutButton
-                label="Assinar por R$ 189,90/mês"
+                label="Assinar Agora"
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 text-sm"
               />
 
