@@ -25,7 +25,6 @@ import {
 } from "lucide-react";
 import { maskCNPJInput, cleanCNPJ, isValidCNPJFormat } from "@/lib/utils";
 import { saveFreeDiagnosticAction } from "@/app/actions/free-diagnostic";
-import { createCheckoutSessionAction } from "@/app/actions/stripe";
 
 type Step = 1 | 2 | 3 | 4 | 5;
 
@@ -52,7 +51,6 @@ function DiagnosticTool() {
   const [errorMsg, setErrorMsg] = useState("");
   const [diagnosticId, setDiagnosticId] = useState<string>("");
   const [showCommercialDetails, setShowCommercialDetails] = useState(false);
-  const [checkoutLoading, setCheckoutLoading] = useState(false);
 
   const [answers, setAnswers] = useState<DiagnosticAnswers>({
     cnpj: "",
@@ -214,21 +212,6 @@ function DiagnosticTool() {
     } finally {
       setLoading(false);
       setStep(5);
-    }
-  };
-
-  // Iniciar contratação quando o usuário desejar
-  const handleInitiateSubscription = async () => {
-    setCheckoutLoading(true);
-    try {
-      await createCheckoutSessionAction({
-        cnpj: cleanCNPJ(answers.cnpj),
-        companyName: answers.tradeName || answers.legalName,
-        diagnosticId: diagnosticId || undefined,
-      });
-    } catch (err: any) {
-      // Redirecionamento é tratado no server action
-      setCheckoutLoading(false);
     }
   };
 
@@ -833,20 +816,13 @@ function DiagnosticTool() {
 
                   {/* CTAs Comerciais */}
                   <div className="flex flex-col sm:flex-row items-center gap-3 pt-1">
-                    <button
-                      type="button"
-                      disabled={checkoutLoading}
-                      onClick={handleInitiateSubscription}
-                      className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-extrabold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer disabled:opacity-50"
+                    <Link
+                      href="/acessar-demo"
+                      className="w-full sm:flex-1 bg-blue-600 hover:bg-blue-500 active:scale-[0.99] text-white font-extrabold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 text-xs sm:text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
                     >
-                      {checkoutLoading ? (
-                        <span>Iniciando checkout seguro...</span>
-                      ) : (
-                        <>
-                          <span>CONTRATAR AGORA →</span>
-                        </>
-                      )}
-                    </button>
+                      <span>Acessar versão demo</span>
+                      <ArrowRight className="w-4 h-4" />
+                    </Link>
 
                     <button
                       type="button"
@@ -861,7 +837,7 @@ function DiagnosticTool() {
                   <div className="text-[11px] text-slate-400 text-center sm:text-left flex items-center gap-1.5">
                     <ShieldCheck className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
                     <span>
-                      Seu diagnóstico ({diagnosticId || "salvo"}) será vinculado automaticamente à sua empresa após a confirmação do pagamento.
+                      Solicite a demonstração com nossa equipe para apresentar o diagnóstico e estruturar o programa da sua empresa.
                     </span>
                   </div>
                 </div>

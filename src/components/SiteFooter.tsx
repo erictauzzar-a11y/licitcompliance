@@ -109,10 +109,9 @@ export function SiteFooter() {
             >
               <span>Fale Conosco: suportegrupodigitalajuda@gmail.com</span>
             </a>
-            <Link href="/acessar-demo" className="hover:text-white transition-colors">Acessar Demo</Link>
+            <Link href="/acessar-demo" className="hover:text-white transition-colors font-medium">Acessar versão demo</Link>
             <Link href="/login" className="hover:text-white transition-colors">Acesso ao Painel</Link>
-            <Link href="/cadastro" className="hover:text-white transition-colors">Cadastre sua Empresa</Link>
-            <Link href="/precos" className="hover:text-white transition-colors">Assinatura</Link>
+            <Link href="/precos" className="hover:text-white transition-colors">Planos de Acesso</Link>
           </div>
         </div>
       </div>

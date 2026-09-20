@@ -87,17 +87,17 @@ export function PricingSection() {
 
               <div className="space-y-3">
                 <CheckoutButton
-                  label="COMEÇAR AGORA"
+                  label="Acessar versão demo"
                   className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 text-sm"
                 />
 
                 <div className="flex items-center justify-center gap-3 text-[11px] text-slate-400">
                   <div className="flex items-center gap-1">
                     <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
-                    <span>Pagamento Seguro</span>
+                    <span>Demonstração Guiada</span>
                   </div>
                   <span>•</span>
-                  <span>Acesso Instantâneo</span>
+                  <span>Sem Cartão de Crédito</span>
                 </div>
               </div>
 

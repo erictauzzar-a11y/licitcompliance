@@ -28,7 +28,6 @@ import {
   LEGISLATION_ITEMS,
   NavItem,
 } from "@/config/navigation";
-import { CheckoutButton } from "@/components/CheckoutButton";
 
 // Mapeamento dinâmico de ícones
 const ICON_MAP: Record<string, any> = {
@@ -523,9 +522,16 @@ export function SiteHeader() {
             <Link
               href="/acessar-demo"
               onClick={() => setMobileMenuOpen(false)}
-              className="w-full py-3 rounded-xl bg-white/10 border border-white/20 text-center text-sm font-bold text-white block hover:bg-white/15 transition-all"
+              className="w-full py-3.5 rounded-xl bg-blue-600 text-center text-sm font-bold text-white block shadow-lg shadow-blue-600/40 hover:bg-blue-500 transition-all"
             >
               Acessar versão demo
+            </Link>
+            <Link
+              href="/diagnostico"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full py-3 rounded-xl bg-white/10 border border-white/20 text-center text-sm font-bold text-white block hover:bg-white/15 transition-all"
+            >
+              Fazer Diagnóstico Gratuito
             </Link>
             <Link
               href="/login"
@@ -534,11 +540,6 @@ export function SiteHeader() {
             >
               Acessar Conta (Entrar)
             </Link>
-            <CheckoutButton
-              label="Começar agora"
-              showIcon={false}
-              className="w-full py-3 rounded-xl bg-blue-600 text-center text-sm font-bold text-white shadow-lg shadow-blue-600/40"
-            />
           </div>
         </div>
       )}

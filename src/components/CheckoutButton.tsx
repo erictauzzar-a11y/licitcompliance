@@ -1,8 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { CreditCard, Loader2, ArrowRight } from "lucide-react";
-import { createCheckoutSessionAction } from "@/app/actions/stripe";
+import Link from "next/link";
+import { ArrowRight, Sparkles } from "lucide-react";
 
 interface CheckoutButtonProps {
   className?: string;
@@ -15,43 +14,17 @@ interface CheckoutButtonProps {
 
 export function CheckoutButton({
   className = "",
-  label = "Assinar Agora",
-  showIcon = true,
-  companyName,
-  cnpj,
-  email,
+  label = "Acessar versão demo",
+  showIcon = false,
 }: CheckoutButtonProps) {
-  const [loading, setLoading] = useState(false);
-
-  const handleCheckout = async () => {
-    try {
-      setLoading(true);
-      await createCheckoutSessionAction({ companyName, cnpj, email });
-    } catch (err) {
-      console.error(err);
-      setLoading(false);
-    }
-  };
-
   return (
-    <button
-      type="button"
-      onClick={handleCheckout}
-      disabled={loading}
-      className={`relative inline-flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] disabled:opacity-75 disabled:cursor-not-allowed ${className}`}
+    <Link
+      href="/acessar-demo"
+      className={`relative inline-flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.98] ${className}`}
     >
-      {loading ? (
-        <>
-          <Loader2 className="w-4 h-4 animate-spin text-white" />
-          <span>Redirecionando para o Stripe Seguro...</span>
-        </>
-      ) : (
-        <>
-          {showIcon && <CreditCard className="w-4 h-4 text-blue-200" />}
-          <span>{label}</span>
-          <ArrowRight className="w-4 h-4" />
-        </>
-      )}
-    </button>
+      {showIcon && <Sparkles className="w-4 h-4 text-blue-300" />}
+      <span>{label || "Acessar versão demo"}</span>
+      <ArrowRight className="w-4 h-4" />
+    </Link>
   );
 }

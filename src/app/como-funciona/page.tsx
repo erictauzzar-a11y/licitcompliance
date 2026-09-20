@@ -174,15 +174,15 @@ export default function ComoFuncionaPage() {
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <CheckoutButton
-              label="Começar teste da sua empresa"
+              label="Acessar versão demo"
               showIcon={false}
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/30 text-sm"
             />
             <Link
-              href="/precos"
+              href="/diagnostico"
               className="bg-white/10 hover:bg-white/15 text-white font-semibold px-6 py-3.5 rounded-xl border border-white/15 transition-all text-sm"
             >
-              Ver valores e planos
+              Fazer diagnóstico gratuito
             </Link>
           </div>
         </div>
@@ -337,7 +337,7 @@ export default function ComoFuncionaPage() {
           </p>
           <div className="pt-2">
             <CheckoutButton
-              label="Cadastrar empresa agora"
+              label="Acessar versão demo"
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
             />
           </div>

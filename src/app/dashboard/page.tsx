@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { CheckoutButton } from "@/components/CheckoutButton";
 import {
   FileDown,
   ShieldCheck,

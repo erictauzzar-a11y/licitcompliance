@@ -252,10 +252,10 @@ export default async function LegislacaoPage({ params }: { params: Promise<{ slu
 
           <div className="pt-4 flex flex-wrap items-center justify-center gap-4">
             <Link
-              href="/cadastro"
+              href="/acessar-demo"
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/30 transition-all text-sm flex items-center gap-2 active:scale-95"
             >
-              <span>Adequar Minha Empresa</span>
+              <span>Acessar versão demo</span>
               <ArrowRight className="w-4 h-4" />
             </Link>
             <Link
@@ -381,7 +381,7 @@ export default async function LegislacaoPage({ params }: { params: Promise<{ slu
           </p>
           <div className="pt-2">
             <CheckoutButton
-              label="Começar agora"
+              label="Acessar versão demo"
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
             />
           </div>

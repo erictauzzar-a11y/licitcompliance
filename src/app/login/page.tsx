@@ -123,10 +123,16 @@ function LoginForm() {
         </button>
       </div>
 
-      <div className="text-center">
+      <div className="text-center space-y-2">
+        <Link
+          href="/acessar-demo"
+          className="block text-xs text-blue-400 hover:text-blue-300 transition-colors font-medium"
+        >
+          Ainda não tem acesso? Acessar versão demo →
+        </Link>
         <Link
           href="/"
-          className="text-xs text-slate-400 hover:text-slate-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded px-1"
+          className="block text-xs text-slate-400 hover:text-slate-200 transition-colors focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:outline-none rounded px-1"
         >
           ← Voltar para a página inicial
         </Link>

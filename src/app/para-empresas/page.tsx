@@ -118,7 +118,7 @@ export default function ParaEmpresasPage() {
 
           <div className="flex flex-wrap items-center justify-center gap-4 pt-4">
             <CheckoutButton
-              label="Começar agora"
+              label="Acessar versão demo"
               showIcon={false}
               className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-7 py-3.5 rounded-xl shadow-xl shadow-blue-600/30 text-sm"
             />
@@ -250,7 +250,7 @@ export default function ParaEmpresasPage() {
         </p>
         <div className="pt-2">
           <CheckoutButton
-            label="Cadastrar Minha Empresa"
+            label="Acessar versão demo"
             className="bg-blue-600 hover:bg-blue-500 text-white font-bold px-8 py-4 rounded-xl shadow-xl shadow-blue-600/40 text-sm inline-flex items-center gap-2"
           />
         </div>

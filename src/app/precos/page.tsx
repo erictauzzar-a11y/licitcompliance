@@ -139,22 +139,22 @@ export default function PrecosPage() {
               </div>
 
               <CheckoutButton
-                label="Assinar Agora"
+                label="Acessar versão demo"
                 className="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-4 px-6 rounded-xl shadow-xl shadow-blue-600/40 text-sm"
               />
 
               <div className="pt-2 border-t border-slate-800 space-y-2 text-[11px] text-slate-400">
                 <div className="flex items-center justify-center gap-1.5 text-blue-300">
-                  <Lock className="w-3.5 h-3.5 text-blue-400" />
-                  <span>Pagamento Seguro SSL 256-bit</span>
+                  <ShieldCheck className="w-3.5 h-3.5 text-blue-400" />
+                  <span>Demonstração Guiada • Sem Compromisso</span>
                 </div>
-                <div>Garantia incondicional de satisfação</div>
+                <div>Apresentação focada na realidade da sua empresa</div>
                 <div className="pt-1">
                   <Link
-                    href="/simular-pagamento"
-                    className="inline-flex items-center gap-1 text-[10px] text-amber-400 hover:text-amber-300 font-semibold underline"
+                    href="/acessar-demo"
+                    className="inline-flex items-center gap-1 text-[10px] text-blue-400 hover:text-blue-300 font-semibold underline"
                   >
-                    <span>🧪 Deseja testar o fluxo simulado sem cartão?</span>
+                    <span>Solicitar demonstração personalizada para sua equipe →</span>
                   </Link>
                 </div>
               </div>
