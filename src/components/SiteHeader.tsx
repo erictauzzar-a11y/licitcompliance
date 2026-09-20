@@ -337,16 +337,22 @@ export function SiteHeader() {
         </div>
 
         {/* CTAS DESKTOP */}
-        <div className="hidden lg:flex items-center gap-3">
+        <div className="hidden lg:flex items-center gap-2.5">
           <Link
             href="/login"
-            className="text-xs font-semibold text-slate-200 hover:text-white px-3.5 py-2 transition-colors rounded-xl hover:bg-white/10"
+            className="text-xs font-semibold text-slate-200 hover:text-white px-3 py-2 transition-colors rounded-xl hover:bg-white/10"
           >
             Entrar
           </Link>
           <Link
+            href="/acessar-demo"
+            className="text-xs font-bold text-slate-100 hover:text-white px-3.5 py-2 rounded-xl bg-white/10 hover:bg-white/15 border border-white/15 transition-all active:scale-[0.98]"
+          >
+            Acessar versão demo
+          </Link>
+          <Link
             href="/diagnostico"
-            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2.5 rounded-xl shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98] flex items-center gap-1.5"
+            className="bg-blue-600 hover:bg-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg shadow-blue-600/30 transition-all active:scale-[0.98] flex items-center gap-1.5"
           >
             <span>Diagnóstico Gratuito</span>
           </Link>
@@ -514,6 +520,13 @@ export function SiteHeader() {
           </div>
 
           <div className="pt-4 space-y-2.5">
+            <Link
+              href="/acessar-demo"
+              onClick={() => setMobileMenuOpen(false)}
+              className="w-full py-3 rounded-xl bg-white/10 border border-white/20 text-center text-sm font-bold text-white block hover:bg-white/15 transition-all"
+            >
+              Acessar versão demo
+            </Link>
             <Link
               href="/login"
               onClick={() => setMobileMenuOpen(false)}

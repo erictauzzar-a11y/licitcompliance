@@ -225,3 +225,25 @@ BEGIN
   LIMIT 1;
 END;
 $$;
+
+-- =========================================================================
+-- 9. Solitações de Acesso à Versão Demo (Leads)
+-- =========================================================================
+CREATE TABLE IF NOT EXISTS demo_leads (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  name VARCHAR(255) NOT NULL,
+  phone VARCHAR(50) NOT NULL,
+  email VARCHAR(255) NOT NULL,
+  company_name VARCHAR(255) NOT NULL,
+  source VARCHAR(50) DEFAULT 'demo_request' NOT NULL,
+  status VARCHAR(50) DEFAULT 'pending' NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+-- RLS para demo_leads
+ALTER TABLE demo_leads ENABLE ROW LEVEL SECURITY;
+
+-- Apenas admins autenticados leem leads (inserção via service_role ou backend seguro)
+CREATE POLICY "Admins leem leads de demo" ON demo_leads
+  FOR SELECT USING (auth.role() = 'authenticated');
+

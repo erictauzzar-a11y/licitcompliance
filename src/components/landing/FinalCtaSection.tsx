@@ -31,6 +31,12 @@ export function FinalCtaSection() {
             <span>FAZER DIAGNÓSTICO GRATUITO</span>
             <ArrowRight className="w-4 h-4" />
           </Link>
+          <Link
+            href="/acessar-demo"
+            className="w-full sm:w-auto bg-white/10 hover:bg-white/15 active:scale-[0.98] text-white font-bold px-7 py-4 rounded-xl border border-white/20 text-sm flex items-center justify-center gap-2 transition-all cursor-pointer"
+          >
+            <span>Acessar versão demo</span>
+          </Link>
         </div>
 
         <div className="flex flex-wrap items-center justify-center gap-4 text-xs font-semibold text-slate-400 pt-1">

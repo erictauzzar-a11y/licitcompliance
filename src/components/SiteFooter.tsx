@@ -79,6 +79,11 @@ export function SiteFooter() {
                 </li>
               ))}
               <li className="pt-2">
+                <Link href="/acessar-demo" className="text-blue-400 font-bold hover:underline">
+                  Acessar Versão Demo →
+                </Link>
+              </li>
+              <li>
                 <Link href="/precos" className="text-emerald-400 font-bold hover:underline">
                   Planos de Acesso →
                 </Link>
@@ -104,6 +109,7 @@ export function SiteFooter() {
             >
               <span>Fale Conosco: suportegrupodigitalajuda@gmail.com</span>
             </a>
+            <Link href="/acessar-demo" className="hover:text-white transition-colors">Acessar Demo</Link>
             <Link href="/login" className="hover:text-white transition-colors">Acesso ao Painel</Link>
             <Link href="/cadastro" className="hover:text-white transition-colors">Cadastre sua Empresa</Link>
             <Link href="/precos" className="hover:text-white transition-colors">Assinatura</Link>

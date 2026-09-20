@@ -44,10 +44,10 @@ export function HeroSection() {
               </Link>
 
               <Link
-                href="#como-funciona"
+                href="/acessar-demo"
                 className="w-full sm:w-auto bg-white/10 hover:bg-white/20 active:scale-[0.98] text-white font-bold px-6 py-4 rounded-xl border border-white/20 backdrop-blur-md transition-all text-sm flex items-center justify-center gap-2 focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-white/40"
               >
-                <span>Ver como funciona →</span>
+                <span>Acessar versão demo</span>
               </Link>
             </div>
 
